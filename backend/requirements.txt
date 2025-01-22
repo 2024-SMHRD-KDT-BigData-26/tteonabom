@@ -1,0 +1,5 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.5
+starlette==0.41.3
+mysql-connector-python  # MySQL 연결을 위한 라이브러리
