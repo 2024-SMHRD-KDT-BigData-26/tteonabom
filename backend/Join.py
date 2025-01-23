@@ -7,6 +7,7 @@ import mysql.connector
 from mysql.connector import Error
 import os
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
 
 # 환경 변수 로드
 load_dotenv()
@@ -14,8 +15,13 @@ load_dotenv()
 # FastAPI 앱 생성
 app = FastAPI()
 
-# 템플릿 설정
-templates = Jinja2Templates(directory="templates")
+# 템플릿 경로 설정
+TEMPLATES_DIR = r"C:\projects\tteonabom\frontend\src\assets\html"
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+# 정적 파일 경로 설정
+STATIC_DIR = r"C:\projects\tteonabom\frontend\src\assets"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # 데이터베이스 연결 함수
 def get_db_connection():
