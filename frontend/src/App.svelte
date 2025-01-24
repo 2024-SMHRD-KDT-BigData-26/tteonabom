@@ -1,52 +1,66 @@
 <script>
-  let data = null;
-  let isLoading = true;
-  let error = null;
+  // Navbar와 Footer 컴포넌트를 가져옴
+  import Navbar from './components/Navbar.svelte';
+  import Footer from './components/Footer.svelte';
 
-  // 백엔드 API 호출
-  async function getData() {
-    try {
-      const response = await fetch('http://localhost:9000/api/data');  // 백엔드 URL
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      data = await response.json();  // 백엔드에서 받아온 JSON 데이터
-    } catch (e) {
-      error = e.message;  // 오류가 있으면 오류 메시지 표시
-    } finally {
-      isLoading = false;  // 로딩 완료
-    }
+  // 플로팅 버튼 함수
+  import FloatingButton from './components/FloatingButton.svelte';
+
+  // 라우터 연결
+  import Router from 'svelte-spa-router';
+  import Home from "./routes/Home.svelte";
+  import AIIntro from "./routes/AIIntro.svelte";
+  import AIChat from "./routes/AIChat.svelte";
+  import ShoppingList from "./routes/ShoppingList.svelte";
+  import SpotList from "./routes/SpotList.svelte";
+  import SpotView from './routes/SpotView.svelte';
+  import FestList from './routes/FestList.svelte';
+  import FestView from './routes/FestView.svelte';
+  import ReviewList from './routes/ReviewList.svelte';
+  import ReviewInsert from './routes/ReviewInsert.svelte';
+  import ReviewView from './routes/ReviewView.svelte';
+  import ReviewUpdate from './routes/ReviewUpdate.svelte';
+  import MyChatlogList from './routes/myChatlogList.svelte';
+  import MyChatlogView from './routes/myChatlogView.svelte';
+  import MyReviewList from './routes/myReviewList.svelte';
+  import MyReviewView from './routes/myReviewView.svelte';
+  import MyInfoUpdate from './routes/myInfoUpdate.svelte';
+
+  const routes = {
+  '/': Home,
+  '/AI/': AIIntro,
+  '/AIChat/': AIChat,
+  '/Shopping/': ShoppingList,
+  '/Spot/': SpotList,
+  '/SpotView/': SpotView,
+  '/Fest/': FestList,
+  '/FestView/': FestView,
+  '/Review/': ReviewList,
+  '/ReviewInsert/': ReviewInsert,
+  '/ReviewView/': ReviewView,
+  '/ReviewUpdate/': ReviewUpdate,
+  '/My/': MyChatlogList,
+  '/MyChatlogView/': MyChatlogView,
+  '/MyReview/': MyReviewList,
+  '/MyReviewView/': MyReviewView,
+  '/MyInfo/': MyInfoUpdate
   }
-
-  // API 호출
-  getData();
+  
 </script>
 
-<main>
-  <h1>Data from Backend</h1>
-  {#if isLoading}
-    <p>Loading...</p>
-  {:else if error}
-    <p>Error: {error}</p>
-  {:else}
-    <pre>{JSON.stringify(data, null, 2)}</pre>  <!-- JSON 데이터 출력 -->
-  {/if}
-</main>
+<!-- 전체 페이지 구성 -->
+<div class="d-flex flex-column">
+  <!-- 헤더 -->
+  <Navbar />
 
-<style>
-  h1 {
-    color: #333;
-    font-size: 2em;
-  }
+  <!-- 메인 컨텐츠 영역 : 여기에 페이지 컨텐츠 넣기 -->
+  <main>
+    <Router {routes}/>
+  </main>
 
-  pre {
-    background-color: #f4f4f4;
-    padding: 1em;
-    border-radius: 8px;
-    white-space: pre-wrap;  /* 긴 줄을 자동으로 감싸도록 설정 */
-    word-wrap: break-word;  /* 긴 단어를 자동으로 줄 바꿈 */
-    font-family: monospace; /* 가독성을 위한 고정폭 글꼴 사용 */
-    max-width: 100%;  /* 화면을 넘어가지 않도록 설정 */
-    overflow-x: auto;  /* 내용이 넘칠 경우 가로스크롤 */
-  }
-</style>
+  <!-- 푸터 -->
+  <Footer />
+
+  <!-- 플로팅 버튼 -->
+  <FloatingButton />
+</div>

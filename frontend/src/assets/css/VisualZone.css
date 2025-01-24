@@ -1,0 +1,58 @@
+/* 비주얼 존 영역 스타일 */
+.visual-zone {
+    height: 200px; /* 비주얼 존의 높이 */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* 비주얼 존 내부 텍스트 스타일 */
+  .visual-zone p {
+    margin-bottom: 0;
+  }
+
+  .visual-zone h1 {
+    font-size: 40px;
+    font-weight: bold;
+  }
+
+  /* 페이지별 배경 이미지 */
+  /* 여행AI */
+  .visual_AI {
+    background: url('../src/assets/img/visual_AI.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  /* 여행준비 */
+  .visual_shopping {
+    background: url('../src/assets/img/visual_shopping.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  /* 여행지 */
+  .visual_spot {
+    background: url('../src/assets/img/visual_spot.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  /* 행사·축제*/
+  .visual_fest {
+    background: url('../src/assets/img/visual_fest.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  /* 여행후기 */
+  .visual_review {
+    background: url('../src/assets/img/visual_review.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  /* 내여행 */
+  .visual_my {
+    background: url('../src/assets/img/visual_my.png') no-repeat center center;
+    background-size: cover;
+  }

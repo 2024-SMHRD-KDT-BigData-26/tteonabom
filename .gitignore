@@ -1,0 +1,30 @@
+# Python 관련 무시할 파일들
+backend/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 가상환경 (venv)
+venv/
+backend/venv/
+backend/.idea/
+
+
+# 환경변수 파일
+.env
+
+# SQL 관련 파일 (SQLite 또는 MySQL 관련 설정 무시)
+*.sqlite3
+*.db
+*.sql  # SQL dump 파일 등
+
+# 로그 파일
+*.log
+
+.idea
+myapi.db
+*.pyc
+__pycache__
+migrations
+alembic.ini
