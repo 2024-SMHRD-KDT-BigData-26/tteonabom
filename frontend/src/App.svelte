@@ -9,6 +9,8 @@
   // 라우터 연결
   import Router from 'svelte-spa-router';
   import Home from "./routes/Home.svelte";
+  import Join from './routes/Join.svelte';
+  import Login from './routes/Login.svelte';
   import AIIntro from "./routes/AIIntro.svelte";
   import AIChat from "./routes/AIChat.svelte";
   import ShoppingList from "./routes/ShoppingList.svelte";
@@ -28,6 +30,8 @@
 
   const routes = {
   '/': Home,
+  '/Join/': Join,
+  '/Login/': Login,
   '/AI/': AIIntro,
   '/AIChat/': AIChat,
   '/Shopping/': ShoppingList,

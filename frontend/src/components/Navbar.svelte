@@ -40,7 +40,7 @@
 
       <!-- 로그인 버튼 -->
       <div class="d-flex align-items-center">
-        <a href="#" class="btn btn-primary login-btn"><img src="..\src\assets\img\login_btn_img.png" class="login_btn_img">로그인</a>
+        <a use:link href="/Login" class="btn btn-primary login-btn"><img src="..\src\assets\img\login_btn_img.png" class="login_btn_img">로그인</a>
       </div>
       <!-- 로그아웃 버튼 -->
       <div class="d-flex align-items-center">
