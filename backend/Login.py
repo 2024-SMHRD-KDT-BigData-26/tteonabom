@@ -22,14 +22,14 @@ templates = Jinja2Templates(directory="templates")
 
 # 데이터베이스 연결 함수
 def get_db_connection():
-    """데이터베이스
+    """데이터베이스 연결 함수"""
+    try:
         connection = mysql.connector.connect(
             host=os.getenv('DB_HOST'),
             port=int(os.getenv('DB_PORT', 3306)),
             user=os.getenv('DB_USER'),
             password=os.getenv('DB_PASSWORD'),
-            database=os.getenv('DB_NAME')연결 함수"""
-    try:
+            database=os.getenv('DB_NAME')
         )
         if connection.is_connected():
             return connection

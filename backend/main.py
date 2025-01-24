@@ -3,15 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 임포�
 import uvicorn  # 서버 실행을 위한 uvicorn 임포트
 from services import generate_answer  # GPT API 호출을 위한 서비스 함수 임포트
 from database import get_db_connection  # DB 연결 함수 임포트
-from services import get_all_users
 from dotenv import load_dotenv  # .env 파일을 불러오기 위한 라이브러리
 import os  # 환경 변수 접근을 위한 라이브러리
 
-# .env 파일에서 환경 변수 로드
-load_dotenv()  # .env 파일을 로드하여 환경 변수들을 가져옵니다.
+# .env 파일의 경로를 명시적으로 지정
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))  # backend 폴더 내 .env 파일을 명시적으로 로드
 
 # API_KEY를 환경 변수에서 가져오기
-API_KEY = os.getenv('API_KEY')  # .env 파일에서 API_KEY를 가져옵니다.
+API_KEY = os.getenv('OPENAI_API_KEY')  # .env 파일에서 API_KEY를 가져옵니다.
 
 app = FastAPI()  # FastAPI 앱 객체 생성
 

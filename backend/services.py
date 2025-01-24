@@ -3,9 +3,8 @@ from database import get_db_connection
 import os
 
 # 환경 변수에서 API 키 로드
-API_KEY = os.getenv('API_KEY')
+API_KEY = os.getenv('OPENAI_API_KEY')
 openai.api_key = API_KEY  # OpenAI API 키 설정
-
 
 def get_all_users():
     """DB에서 모든 사용자 조회"""
