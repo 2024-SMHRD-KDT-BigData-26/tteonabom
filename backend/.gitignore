@@ -17,3 +17,10 @@ venv/
 
 # 로그 파일
 *.log
+
+# IDE 관련 파일들 (VSCode, PyCharm 등)
+.idea/
+
+# Windows 시스템 관련 파일
+Thumbs.db
+Desktop.ini
