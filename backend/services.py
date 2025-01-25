@@ -19,7 +19,6 @@ def get_all_users():
         print("Failed to connect to the database.")
         return None
 
-
 async def generate_answer(prompt: str):
     """GPT-4 모델을 이용한 답변 생성"""
     try:
