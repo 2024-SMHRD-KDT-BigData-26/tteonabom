@@ -3,6 +3,8 @@
     background-color: #fff; /* 배경색 */
     height: 90px; /* 높이 */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 하단 그림자 */
+    background-color: rgba(255, 255, 255, 0);  /* 반투명 배경 */
+    z-index: 1000;  /* 상단바가 다른 요소들 위에 오도록 설정 */
   }
 
   /* 상단바 컨텐츠 영역 */
@@ -30,7 +32,7 @@
 
   .navbar-nav .nav-link {
     text-decoration: none; /* 밑줄 제거 */
-    color: #000; /* 기본 메뉴 색상 */
+    color: #000000; /* 기본 메뉴 색상 */
     font-weight: 400; /* 기본 폰트 두께 */
     position: relative; /* 하단 바 위치를 위한 설정 */
     transition: all 0.3s ease; /* 부드러운 애니메이션 */
@@ -90,4 +92,10 @@
   #mypage_menu {
     display: none;
   } */
+
+  /* Home 페이지에서만 색상 변경 */
+  .navbar-nav .nav-link.isHome {
+    color: #fff; 
+  }
+
   

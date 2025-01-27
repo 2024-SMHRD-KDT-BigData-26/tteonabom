@@ -29,37 +29,41 @@
   import MyInfoUpdate from './routes/myInfoUpdate.svelte';
 
   const routes = {
-  '/': Home,
-  '/Join/': Join,
-  '/Login/': Login,
-  '/AI/': AIIntro,
-  '/AIChat/': AIChat,
-  '/Shopping/': ShoppingList,
-  '/Spot/': SpotList,
-  '/SpotView/': SpotView,
-  '/Fest/': FestList,
-  '/FestView/': FestView,
-  '/Review/': ReviewList,
-  '/ReviewInsert/': ReviewInsert,
-  '/ReviewView/': ReviewView,
-  '/ReviewUpdate/': ReviewUpdate,
-  '/My/': MyChatlogList,
-  '/MyChatlogView/': MyChatlogView,
-  '/MyReview/': MyReviewList,
-  '/MyReviewView/': MyReviewView,
-  '/MyInfo/': MyInfoUpdate
+    '/': Home,
+    '/Join/': Join,
+    '/Login/': Login,
+    '/AI/': AIIntro,
+    '/AIChat/': AIChat,
+    '/Shopping/': ShoppingList,
+    '/Spot/': SpotList,
+    '/SpotView/': SpotView,
+    '/Fest/': FestList,
+    '/FestView/': FestView,
+    '/Review/': ReviewList,
+    '/ReviewInsert/': ReviewInsert,
+    '/ReviewView/': ReviewView,
+    '/ReviewUpdate/': ReviewUpdate,
+    '/My/': MyChatlogList,
+    '/MyChatlogView/': MyChatlogView,
+    '/MyReview/': MyReviewList,
+    '/MyReviewView/': MyReviewView,
+    '/MyInfo/': MyInfoUpdate
+  };
+
+  // 페이지 경로에 따라 isHomePage 상태 설정
+  let isHomePage = false;
+  $: {
+    isHomePage = location.pathname === '/';
   }
-  
 </script>
 
-<!-- 전체 페이지 구성 -->
 <div class="d-flex flex-column">
-  <!-- 헤더 -->
-  <Navbar />
+  <!-- 헤더 (Navbar에 페이지 정보 전달) -->
+  <Navbar {isHomePage} />
 
   <!-- 메인 컨텐츠 영역 : 여기에 페이지 컨텐츠 넣기 -->
   <main>
-    <Router {routes}/>
+    <Router {routes} />
   </main>
 
   <!-- 푸터 -->
@@ -68,3 +72,4 @@
   <!-- 플로팅 버튼 -->
   <FloatingButton />
 </div>
+
