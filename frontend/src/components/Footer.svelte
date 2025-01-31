@@ -10,13 +10,14 @@
 
     /* 푸터 배경 */
     footer {
-        display: flex;
-        align-items: center;
-        background-color: #333; /* 푸터 배경색 */
-        color: #fff; /* 푸터 텍스트 색상 */
-        height: 100px;
-        width: 100%;
-    }
+      flex-shrink: 0;
+      background-color: #333;
+      color: #fff;
+      height: 100px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+   }
 
     /* 부트스트랩에 자동으로 들어간 마진 제거 */
     footer p {

@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6b642cc1-fb9b-48f4-934d-d8914cbe78ac" name="Changes" comment="" />
+    <list default="true" id="6b642cc1-fb9b-48f4-934d-d8914cbe78ac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/css/Navbar.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/assets/css/Navbar.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Navbar.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Navbar.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/routes/Home.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/routes/Home.svelte" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
