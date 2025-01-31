@@ -6,6 +6,10 @@
   // 플로팅 버튼 함수
   import FloatingButton from './components/FloatingButton.svelte';
 
+  // Router 연결
+  import routes from '../src/assets/js/routes.js';
+  import Router from "svelte-spa-router";
+
 </script>
 
 <div class="d-flex flex-column">
