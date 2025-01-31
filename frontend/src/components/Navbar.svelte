@@ -11,6 +11,7 @@
 
   // 라우터
   import { link } from 'svelte-spa-router';
+  import routes from '.././assets/js/routes.js';
 
   // App.svelte에서 전달받은 isHomePage 값
   export let isHomePage = false;
