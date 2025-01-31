@@ -1,73 +1,58 @@
-from fastapi import FastAPI, Request, HTTPException  # FastAPI와 Request, HTTPException을 임포트
-from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 임포트
-import uvicorn  # 서버 실행을 위한 uvicorn 임포트
-from services import generate_answer  # GPT API 호출을 위한 서비스 함수 임포트
-from database import get_db_connection  # DB 연결 함수 임포트
-from dotenv import load_dotenv  # .env 파일을 불러오기 위한 라이브러리
-from services import get_all_users
-import os  # 환경 변수 접근을 위한 라이브러리
+import openai
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
+from services import generate_answer  # 수정된 services.py에서 import
 
-# .env 파일에서 환경 변수 로드
-load_dotenv()   # .env 파일을 로드하여 환경 변수들을 가져옵니다.
+# 환경 변수 로드
+load_dotenv()
 
 # API_KEY를 환경 변수에서 가져오기
-API_KEY = os.getenv('OPENAI_API_KEY')  # .env 파일에서 API_KEY를 가져옵니다.
+API_KEY = os.getenv('OPENAI_API_KEY')
+if not API_KEY:
+    raise ValueError("API_KEY is not set in the environment variables")
+
+openai.api_key = API_KEY  # OpenAI API 키 설정
 
 app = FastAPI()  # FastAPI 앱 객체 생성
 
-# CORS 미들웨어 추가 (프론트엔드와 백엔드 간의 도메인 차이를 해결)
-origins = [
-    "http://localhost:9001",  # 프론트엔드 주소
-    "http://127.0.0.1:9001"  # 로컬 주소로도 허용
-]
+# Pydantic 모델 정의
+class PromptRequest(BaseModel):
+    prompt: str  # 'prompt' 값을 반드시 받아오도록 설정
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,  # 허용할 출처
-    allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메소드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
-)
 
 # 기본 홈 엔드포인트
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the homepage!"}
 
-# DB에서 사용자 목록을 가져오는 엔드포인트
-@app.get("/api/data")
-def get_data():
-    """DB에서 사용자 목록을 가져옴"""
-    users = get_all_users()  # DB에서 사용자 목록을 가져오는 함수 호출
-    return {"users": users}
-
-# DB 연결 상태를 확인하는 엔드포인트
-@app.get("/api/db-status")
-def db_status():
-    """DB 연결 상태 확인"""
-    connection = get_db_connection()  # DB 연결 함수 호출
-    if connection:
-        return {"status": "success", "message": "Connected to the database!"}
-    else:
-        return {"status": "error", "message": "Failed to connect to the database!"}
 
 # GPT API를 호출하는 엔드포인트 (POST 요청을 통해 챗봇 응답 받기)
 @app.post("/prompt")
-async def generate_answer(request: Request):
+async def generate_answer_from_prompt(request: PromptRequest):
     try:
-        body = await request.json()  # 요청 데이터 받기
-        prompt = body["prompt"]  # 받은 데이터에서 'prompt' 값 추출
+        prompt = request.prompt.strip()  # 공백 제거
+        print(f"Received prompt: {prompt}")  # 디버깅을 위해 prompt 출력
 
-        # 서비스에서 정의한 generate_answer 함수 호출
+        # Prompt가 비어있으면 오류 반환
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt cannot be empty")
+
+        # GPT-4 모델을 이용한 답변 생성
         answer = await generate_answer(prompt)
 
-        return {"answer": answer}  # GPT 응답 반환
+        return {"answer": answer}
 
+    except HTTPException as e:
+        # HTTPException 발생 시 처리
+        raise e
     except Exception as e:
-        # 서버에서 발생한 오류 출력
-        print(f"Error processing the request: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        # 그 외의 예외 처리
+        print(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 # 서버 실행 (포트 9000번에서 실행)
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=9000)  # 9000번 포트에서 FastAPI 서버 실행

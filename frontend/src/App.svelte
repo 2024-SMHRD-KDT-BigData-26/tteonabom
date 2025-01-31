@@ -12,7 +12,7 @@
   import Join from './routes/Join.svelte';
   import Login from './routes/Login.svelte';
   import AIIntro from "./routes/AIIntro.svelte";
-  import AIChat from "./routes/AIChat.svelte";
+  import AIChat from "./routes/AIChat.svelte";  // AIChat 컴포넌트를 가져옴
   import ShoppingList from "./routes/ShoppingList.svelte";
   import SpotList from "./routes/SpotList.svelte";
   import SpotView from './routes/SpotView.svelte';
@@ -29,27 +29,26 @@
   import MyInfoUpdate from './routes/myInfoUpdate.svelte';
 
   const routes = {
-  '/': Home,
-  '/Join/': Join,
-  '/Login/': Login,
-  '/AI/': AIIntro,
-  '/AIChat/': AIChat,
-  '/Shopping/': ShoppingList,
-  '/Spot/': SpotList,
-  '/SpotView/': SpotView,
-  '/Fest/': FestList,
-  '/FestView/': FestView,
-  '/Review/': ReviewList,
-  '/ReviewInsert/': ReviewInsert,
-  '/ReviewView/': ReviewView,
-  '/ReviewUpdate/': ReviewUpdate,
-  '/My/': MyChatlogList,
-  '/MyChatlogView/': MyChatlogView,
-  '/MyReview/': MyReviewList,
-  '/MyReviewView/': MyReviewView,
-  '/MyInfo/': MyInfoUpdate
+    '/': Home,
+    '/Join/': Join,
+    '/Login/': Login,
+    '/AI/': AIIntro,
+    '/AIChat/': AIChat,  // AIChat 페이지 경로 연결
+    '/Shopping/': ShoppingList,
+    '/Spot/': SpotList,
+    '/SpotView/': SpotView,
+    '/Fest/': FestList,
+    '/FestView/': FestView,
+    '/Review/': ReviewList,
+    '/ReviewInsert/': ReviewInsert,
+    '/ReviewView/': ReviewView,
+    '/ReviewUpdate/': ReviewUpdate,
+    '/My/': MyChatlogList,
+    '/MyChatlogView/': MyChatlogView,
+    '/MyReview/': MyReviewList,
+    '/MyReviewView/': MyReviewView,
+    '/MyInfo/': MyInfoUpdate
   }
-  
 </script>
 
 <!-- 전체 페이지 구성 -->
@@ -59,7 +58,7 @@
 
   <!-- 메인 컨텐츠 영역 : 여기에 페이지 컨텐츠 넣기 -->
   <main>
-    <Router {routes}/>
+    <Router {routes} />
   </main>
 
   <!-- 푸터 -->
