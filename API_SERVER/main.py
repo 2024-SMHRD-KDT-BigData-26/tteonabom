@@ -2,8 +2,8 @@ from fastapi import FastAPI
 import uvicorn
 from DataBase.conn import engine
 from DataBase.models import Base
-from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment
-from Join import join_router
+from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment, like  # ✅ like 추가
+
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
@@ -12,7 +12,6 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 # API 라우팅
-app.include_router(join_router)
 app.include_router(user.router)
 app.include_router(chatting.router)
 app.include_router(croom.router)
@@ -26,6 +25,7 @@ app.include_router(shopping_mall.router)
 app.include_router(timetable.router)
 app.include_router(poi_reco.router)
 app.include_router(line_comment.router)
+app.include_router(like.router)
 
 if __name__ == "__main__":
     uvicorn.run(
