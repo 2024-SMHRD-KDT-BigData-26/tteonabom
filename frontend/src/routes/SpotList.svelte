@@ -68,7 +68,7 @@ function changePage(page) {
 
 // 상세 페이지로 이동하는 함수 (navigate 사용)
 function goToDetail(id) {
-    window.location.href = `/spot/${id}`;
+    window.location.href = `#/spotView/`; // 백과 연결 시 /${id} 추가 필요
   }
 </script>
 
