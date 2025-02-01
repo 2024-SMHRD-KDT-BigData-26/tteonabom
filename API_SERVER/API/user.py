@@ -30,6 +30,7 @@ async def create_user(user: User, db: Session = Depends(get_db)):
     user_dict = {
         "user_id": user.user_id,
         "user_pw": user.user_pw
+
     }
     return user_dict
 

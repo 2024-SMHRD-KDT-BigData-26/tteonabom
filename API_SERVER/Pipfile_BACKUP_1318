@@ -7,8 +7,11 @@ name = "pypi"
 fastapi = {extras = ["all"], version = "*"}
 sqlalchemy = "*"
 pymysql = "*"
+<<<<<<< HEAD
+=======
 bcrypt = "*"
 mysql = "*"
+>>>>>>> af8ceba8e4eb91c1cd28e85feb572d54abd382f8
 
 [dev-packages]
 

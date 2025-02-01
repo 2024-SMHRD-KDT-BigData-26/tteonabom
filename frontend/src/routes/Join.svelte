@@ -1,57 +1,54 @@
 <script>
-  // 가입 관련 함수 임포트
-  import { handleSubmit, handleProfileUpload } from '../assets/js/Join.js';
+  import { handleSubmit, handleProfileUpload, openFileDialog } from '../assets/js/Join.js';
   import { createEventDispatcher } from 'svelte';
-
-  // 가입 CSS 임포트
   import '../assets/css/Join.css';
 
-  // 이벤트 디스패처 생성
   const dispatch = createEventDispatcher();
 
-  // 상태 변수들
-  let profilePreview = '';  // 프로필 사진 미리보기
-  let profileUpload;        // 파일 입력 요소 참조
-  let userId = '';          // 사용자 아이디
-  let password = '';        // 비밀번호
-  let confirmPassword = ''; // 비밀번호 확인
-  let nickname = '';        // 닉네임
+  let profilePreview = '';
+  let profileUpload;
+  let userId = '';
+  let password = '';
+  let confirmPassword = '';
+  let nickname = '';
+  let errors = { idError: '', passwordError: '', nickError: '' };
 
-  // 백엔드 제출 함수
-  async function submitToBackend(userData) {
+  async function submitToBackend(data) {
     try {
-      const response = await fetch('/api/join', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData)
-      });
+        console.log("🔍 요청 데이터:", data);
 
-      if (response.ok) {
-        dispatch('joinSuccess', userData);
-        alert('회원가입 성공!');
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || '회원가입에 실패했습니다.');
-      }
+        const payload = {
+            userId: data.userId,
+            password: data.password,
+            nickname: data.nickname
+        };
+
+        const response = await fetch('http://localhost:9000/api/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const responseBody = await response.text();
+        console.log("🔍 서버 응답:", responseBody);
+
+        if (!response.ok) {
+            throw new Error(`서버 오류: ${responseBody}`);
+        }
+
+        const result = JSON.parse(responseBody);
+        console.log('✅ 회원가입 성공:', result);
     } catch (error) {
-      console.error('회원가입 중 오류:', error);
-      alert('서버와 통신 중 오류가 발생했습니다.');
+        console.error('❌ 회원가입 중 오류:', error);
     }
   }
 
-  // 프로필 사진 선택
   function onProfileUpload(event) {
     handleProfileUpload(event, (preview) => {
       profilePreview = preview;
     });
   }
 
-  // 프로필 사진 클릭 시 파일 입력창 열기
-  function openFileDialog() {
-    profileUpload.click();
-  }
 
   // 취소 버튼 클릭 시
   function handleCancel() {
