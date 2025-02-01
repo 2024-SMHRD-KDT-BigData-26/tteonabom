@@ -5,11 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6b642cc1-fb9b-48f4-934d-d8914cbe78ac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/Tteonabom.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Tteonabom.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/assets/css/Navbar.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/assets/css/Navbar.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/Navbar.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Navbar.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/routes/Home.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/routes/Home.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API_SERVER/Pipfile" beforeDir="false" afterPath="$PROJECT_DIR$/API_SERVER/Pipfile" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,12 +24,12 @@
     &quot;assignee&quot;: &quot;hyubaobao&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/2024-SMHRD-KDT-BigData-26/tteonabom.git",
-    "accountId": "0c2fff5d-0a6a-4fc8-a2c6-14d202e15b4a"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/2024-SMHRD-KDT-BigData-26/tteonabom.git&quot;,
+    &quot;accountId&quot;: &quot;0c2fff5d-0a6a-4fc8-a2c6-14d202e15b4a&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
@@ -46,7 +45,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/tteonabom/backend",
+    "last_opened_file_path": "C:/projects/tteonabom/API_SERVER",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
