@@ -83,8 +83,6 @@ class TB_REVIEW(Base):
     poi_idx = Column(Integer, comment="여행지 고유번호")
     user_id = Column(String(50), comment="사용자 아이디")
     review_content = Column(Text, comment="후기 내용")
-    review_views = Column(Integer, default=0, comment="후기 조회수")
-    review_likes = Column(Integer, default=0, comment="후기 좋아요수")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="생성 일시")
     updated_at = Column(TIMESTAMP, comment="수정 일시")
 
@@ -179,3 +177,12 @@ class TB_FESTIVAL(Base):
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="수정 일시")
 
 
+
+class TB_LIKE(Base) :
+    __tavlename__ = "TB_LIKE"
+
+    like_idx = Column(Integer, primary_key=True, autoincrement=True, comment="좋아요 식별자")
+    user_id = Column(String(50), comment="사용자 아이디")
+    mall_idx = Column(Integer, comment="몰 고유번호")
+    poi_idx = Column(Integer, comment="여행지 고유번호")
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="생성 일시")
