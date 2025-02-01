@@ -17,7 +17,9 @@ class Croom(BaseModel):
     croom_status: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
 
 # ✅ 채팅방 생성
 @router.post("/crooms")

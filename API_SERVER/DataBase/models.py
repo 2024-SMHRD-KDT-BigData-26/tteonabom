@@ -179,7 +179,7 @@ class TB_FESTIVAL(Base):
 
 
 class TB_LIKE(Base) :
-    __tavlename__ = "TB_LIKE"
+    __tablename__ = "TB_LIKE"
 
     like_idx = Column(Integer, primary_key=True, autoincrement=True, comment="좋아요 식별자")
     user_id = Column(String(50), comment="사용자 아이디")

@@ -23,7 +23,7 @@ class POI(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ✅ 여행지 추가
 @router.post("/pois")

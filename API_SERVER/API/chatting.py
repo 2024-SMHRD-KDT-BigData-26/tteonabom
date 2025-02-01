@@ -9,15 +9,16 @@ router = APIRouter()
 
 class Chat(BaseModel):
     chat_idx: int
-    croom_idx: int
-    chatter: str
-    chat_content: str
-    chat_file: str = None
-    chat_emotion: str = None
-    created_at: datetime
+    #croom_idx: int
+    #chatter: str
+    #chat_content: str
+    #chat_file: str = None
+    #chat_emotion: str = None
+    #created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 # ✅ 채팅 메시지 생성
 @router.post("/chats")

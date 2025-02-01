@@ -18,7 +18,7 @@ class User(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 사용자 생성 API
 @router.post("/users")
