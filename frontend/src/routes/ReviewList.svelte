@@ -5,6 +5,10 @@
   // 네비바 CSS
   import '../assets/css/VisualZone.css';
 
+  // 라우터
+  import { link } from 'svelte-spa-router';
+  import routes from '.././assets/js/routes.js';
+
   // 목록
   import { onMount } from 'svelte';
   import Masonry from 'masonry-layout';
@@ -41,7 +45,7 @@
 
   // 이미지 클릭 시 이동할 함수
   function goToEvent(reviewId) {
-    window.location.href = `/review/${reviewId}`; // 예시: /review/1
+    window.location.href = `/#/reviewView/`; // ${reviewId}
   }
 
 </script>
@@ -143,7 +147,7 @@
       <!-- 여행후기 상세 컨텐츠 영역 -->
       <div class="content">   
         <div class="d-flex justify-content-end">
-          <button class="btn text-white review-insert-btn">등록</button>
+          <a use:link href="/ReviewInsert" class="nav-link"><button class="btn text-white review-insert-btn">등록</button></a>
         </div>
         <!-- 여행후기 목록 -->  
         <div class="masonry-grid">
