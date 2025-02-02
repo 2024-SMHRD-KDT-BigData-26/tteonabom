@@ -437,11 +437,11 @@
     <div class="masonry-grid">
       {#each $displayedReviews as review}
         <div class="review-item" 
-             on:click={() => goToEvent(review.id)}
+             on:click={() => goToEvent(review.REVIEW_IDX)}
              role="link"
              tabindex="0">
              <img 
-             src={review.image} 
+             src={review.FILE_NM} 
              alt="여행 후기 이미지" 
              class="review-image"
              on:load={() => {
