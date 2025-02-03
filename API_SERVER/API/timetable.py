@@ -8,24 +8,31 @@ from DataBase.models import TB_TIMETABLE
 router = APIRouter()
 
 
-class Timetable(BaseModel):
-    TT_IDX: int
+class TimetableCreate(BaseModel):
     SCHE_IDX: str
     TT_DATE: date
     ST_TIME: time
     POI_IDX: int
-    TT_ORDER: int
-    CREATED_AT: datetime
-    UPDATED_AT: datetime
+    TT_ORDER: int = 0  # 기본값 0 설정
 
     class Config:
         from_attributes = True
 
 
+class TimetableResponse(TimetableCreate):
+    TT_IDX: int
+    CREATED_AT: datetime
+    UPDATED_AT: datetime | None  # 수정되지 않았을 경우 None 허용
+
+
 # ✅ 일정 세부 정보 생성
-@router.post("/timetables")
-async def create_timetable(timetable: Timetable, db: Session = Depends(get_db)):
-    db_timetable = TB_TIMETABLE(**timetable.dict())
+@router.post("/timetables", response_model=TimetableResponse)
+async def create_timetable(timetable: TimetableCreate, db: Session = Depends(get_db)):
+    db_timetable = TB_TIMETABLE(
+        **timetable.dict(),
+        CREATED_AT=datetime.utcnow(),
+        UPDATED_AT=None
+    )
     db.add(db_timetable)
     db.commit()
     db.refresh(db_timetable)
@@ -33,13 +40,13 @@ async def create_timetable(timetable: Timetable, db: Session = Depends(get_db)):
 
 
 # ✅ 전체 일정 세부 정보 조회
-@router.get("/timetables")
+@router.get("/timetables", response_model=list[TimetableResponse])
 async def get_all_timetables(db: Session = Depends(get_db)):
     return db.query(TB_TIMETABLE).all()
 
 
 # ✅ 특정 일정 세부 정보 조회
-@router.get("/timetables/{TT_IDX}")
+@router.get("/timetables/{TT_IDX}", response_model=TimetableResponse)
 async def get_timetable(TT_IDX: int, db: Session = Depends(get_db)):
     timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.TT_IDX == TT_IDX).first()
     if not timetable:
@@ -48,15 +55,15 @@ async def get_timetable(TT_IDX: int, db: Session = Depends(get_db)):
 
 
 # ✅ 특정 일정(`SCHE_IDX`)에 속한 세부 일정 조회
-@router.get("/timetables/schedule/{SCHE_IDX}")
+@router.get("/timetables/schedule/{SCHE_IDX}", response_model=list[TimetableResponse])
 async def get_timetables_by_schedule(SCHE_IDX: str, db: Session = Depends(get_db)):
     timetables = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.SCHE_IDX == SCHE_IDX).all()
     return timetables
 
 
 # ✅ 일정 세부 정보 수정
-@router.put("/timetables/{TT_IDX}")
-async def update_timetable(TT_IDX: int, timetable: Timetable, db: Session = Depends(get_db)):
+@router.put("/timetables/{TT_IDX}", response_model=TimetableResponse)
+async def update_timetable(TT_IDX: int, timetable: TimetableCreate, db: Session = Depends(get_db)):
     db_timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.TT_IDX == TT_IDX).first()
     if not db_timetable:
         raise HTTPException(status_code=404, detail="Timetable not found")
@@ -64,6 +71,7 @@ async def update_timetable(TT_IDX: int, timetable: Timetable, db: Session = Depe
     for key, value in timetable.dict().items():
         setattr(db_timetable, key, value)
 
+    db_timetable.UPDATED_AT = datetime.utcnow()  # 수정 시간 업데이트
     db.commit()
     db.refresh(db_timetable)
     return db_timetable

@@ -8,7 +8,22 @@ from DataBase.models import TB_POI
 router = APIRouter()
 
 
-class POI(BaseModel):
+class POICreate(BaseModel):
+    POI_NM: str
+    POI_INFO: str
+    POI_ADDR: str
+    POI_URL: str
+    POI_REGION: str
+    POI_TEL: str
+    POI_PERIOD: str
+    LAT: float = 0.0  # 기본값 설정
+    LON: float = 0.0  # 기본값 설정
+
+    class Config:
+        from_attributes = True
+
+
+class POIResponse(BaseModel):
     POI_IDX: int
     POI_NM: str
     POI_INFO: str
@@ -19,18 +34,23 @@ class POI(BaseModel):
     POI_PERIOD: str
     LAT: float
     LON: float
-    POI_LIKES: int = 0
+    POI_LIKES: int
     CREATED_AT: datetime
-    UPDATED_AT: datetime
+    UPDATED_AT: datetime = None
 
     class Config:
         from_attributes = True
 
 
-# ✅ 여행지 추가
-@router.post("/pois")
-async def create_poi(poi: POI, db: Session = Depends(get_db)):
-    db_poi = TB_POI(**poi.dict())
+# ✅ 여행지 추가 (등록)
+@router.post("/pois", response_model=POIResponse)
+async def create_poi(poi: POICreate, db: Session = Depends(get_db)):
+    db_poi = TB_POI(
+        **poi.dict(),
+        POI_LIKES=0,  # 좋아요 초기값 설정
+        CREATED_AT=datetime.utcnow(),
+        UPDATED_AT=datetime.utcnow()
+    )
     db.add(db_poi)
     db.commit()
     db.refresh(db_poi)
@@ -38,13 +58,13 @@ async def create_poi(poi: POI, db: Session = Depends(get_db)):
 
 
 # ✅ 전체 여행지 조회
-@router.get("/pois")
+@router.get("/pois", response_model=list[POIResponse])
 async def get_all_pois(db: Session = Depends(get_db)):
     return db.query(TB_POI).all()
 
 
 # ✅ 특정 여행지 조회
-@router.get("/pois/{POI_IDX}")
+@router.get("/pois/{POI_IDX}", response_model=POIResponse)
 async def get_poi(POI_IDX: int, db: Session = Depends(get_db)):
     poi = db.query(TB_POI).filter(TB_POI.POI_IDX == POI_IDX).first()
     if not poi:
@@ -53,21 +73,23 @@ async def get_poi(POI_IDX: int, db: Session = Depends(get_db)):
 
 
 # ✅ 특정 지역의 여행지 조회
-@router.get("/pois/region/{POI_REGION}")
+@router.get("/pois/region/{POI_REGION}", response_model=list[POIResponse])
 async def get_pois_by_region(POI_REGION: str, db: Session = Depends(get_db)):
     pois = db.query(TB_POI).filter(TB_POI.POI_REGION == POI_REGION).all()
     return pois
 
 
 # ✅ 여행지 수정
-@router.put("/pois/{POI_IDX}")
-async def update_poi(POI_IDX: int, poi: POI, db: Session = Depends(get_db)):
+@router.put("/pois/{POI_IDX}", response_model=POIResponse)
+async def update_poi(POI_IDX: int, poi: POICreate, db: Session = Depends(get_db)):
     db_poi = db.query(TB_POI).filter(TB_POI.POI_IDX == POI_IDX).first()
     if not db_poi:
         raise HTTPException(status_code=404, detail="POI not found")
 
     for key, value in poi.dict().items():
         setattr(db_poi, key, value)
+
+    db_poi.UPDATED_AT = datetime.utcnow()  # 수정 시간 갱신
 
     db.commit()
     db.refresh(db_poi)
@@ -93,7 +115,7 @@ async def like_poi(POI_IDX: int, db: Session = Depends(get_db)):
     if not db_poi:
         raise HTTPException(status_code=404, detail="POI not found")
 
-    db_poi.POI_LIKES += 1  # 좋아요 수 증가
+    db_poi.POI_LIKES += 1  # 좋아요 증가
     db.commit()
     db.refresh(db_poi)
     return {"detail": "POI liked successfully", "POI_LIKES": db_poi.POI_LIKES}
