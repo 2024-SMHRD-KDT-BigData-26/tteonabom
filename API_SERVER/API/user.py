@@ -21,7 +21,7 @@ class User(BaseModel):
         from_attributes = True
 
 # ✅ 사용자 생성 API
-@router.post("/users")
+@router.post("/Join")
 async def create_user(user: User, db: Session = Depends(get_db)):
     db_user = TB_USERS(**user.dict())
     db.add(db_user)
