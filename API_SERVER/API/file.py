@@ -9,16 +9,16 @@ router = APIRouter()
 
 
 class File(BaseModel):
-    file_idx: int
-    poi_idx: int
-    file_nm: str
-    file_size: int
-    file_ext: str
-    created_at: datetime
-    updated_at: datetime
-    user_id: str
-    disp_order: int
-    review_idx: int
+    FILE_IDX: int
+    POI_IDX: int
+    FILE_NM: str
+    FILE_SIZE: int
+    FILE_EXT: str
+    CREATED_AT: datetime
+    UPDATED_AT: datetime
+    USER_ID: str
+    DISP_ORDER: int
+    REVIEW_IDX: int
 
     class Config:
         from_attributes = True
@@ -41,32 +41,32 @@ async def get_all_files(db: Session = Depends(get_db)):
 
 
 # ✅ 특정 파일 조회
-@router.get("/file/{file_idx}")
-async def get_file(file_idx: int, db: Session = Depends(get_db)):
-    file = db.query(TB_FILE).filter(TB_FILE.file_idx == file_idx).first()
+@router.get("/file/{FILE_IDX}")
+async def get_file(FILE_IDX: int, db: Session = Depends(get_db)):
+    file = db.query(TB_FILE).filter(TB_FILE.FILE_IDX == FILE_IDX).first()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
     return file
 
 
 # ✅ 특정 여행지 관련 파일 조회
-@router.get("/file/poi/{poi_idx}")
-async def get_files_by_poi(poi_idx: int, db: Session = Depends(get_db)):
-    files = db.query(TB_FILE).filter(TB_FILE.poi_idx == poi_idx).all()
+@router.get("/file/poi/{POI_IDX}")
+async def get_files_by_poi(POI_IDX: int, db: Session = Depends(get_db)):
+    files = db.query(TB_FILE).filter(TB_FILE.POI_IDX == POI_IDX).all()
     return files
 
 
 # ✅ 특정 리뷰 관련 파일 조회
-@router.get("/file/review/{review_idx}")
-async def get_files_by_review(review_idx: int, db: Session = Depends(get_db)):
-    files = db.query(TB_FILE).filter(TB_FILE.review_idx == review_idx).all()
+@router.get("/file/review/{REVIEW_IDX}")
+async def get_files_by_review(REVIEW_IDX: int, db: Session = Depends(get_db)):
+    files = db.query(TB_FILE).filter(TB_FILE.REVIEW_IDX == REVIEW_IDX).all()
     return files
 
 
 # ✅ 파일 정보 수정
-@router.put("/file/{file_idx}")
-async def update_file(file_idx: int, file: File, db: Session = Depends(get_db)):
-    db_file = db.query(TB_FILE).filter(TB_FILE.file_idx == file_idx).first()
+@router.put("/file/{FILE_IDX}")
+async def update_file(FILE_IDX: int, file: File, db: Session = Depends(get_db)):
+    db_file = db.query(TB_FILE).filter(TB_FILE.FILE_IDX == FILE_IDX).first()
     if not db_file:
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -79,9 +79,9 @@ async def update_file(file_idx: int, file: File, db: Session = Depends(get_db)):
 
 
 # ✅ 파일 삭제
-@router.delete("/file/{file_idx}")
-async def delete_file(file_idx: int, db: Session = Depends(get_db)):
-    db_file = db.query(TB_FILE).filter(TB_FILE.file_idx == file_idx).first()
+@router.delete("/file/{FILE_IDX}")
+async def delete_file(FILE_IDX: int, db: Session = Depends(get_db)):
+    db_file = db.query(TB_FILE).filter(TB_FILE.FILE_IDX == FILE_IDX).first()
     if not db_file:
         raise HTTPException(status_code=404, detail="File not found")
 
