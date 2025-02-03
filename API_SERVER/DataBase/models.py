@@ -11,7 +11,7 @@ Base = declarative_base()
 class TB_USERS(Base):
     __tablename__ = "TB_USERS"
 
-    USER_ID = Column(String(50), primary_key=True, comment="아이디")
+    USER_ID = Column(String(50), nullable=False, primary_key=True, comment="아이디")
     USER_PW = Column(String(255), comment="비밀번호")
     USER_NICK = Column(String(50), comment="닉네임")
     USER_PROFILE_IMG = Column(String(1000), comment="프로필 사진")
@@ -24,7 +24,7 @@ class TB_USERS(Base):
 class TB_CROOM(Base):
     __tablename__ = "TB_CROOM"
 
-    CROOM_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="방 고유번호")
+    CROOM_IDX = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="방 고유번호")
     CROOM_TITLE = Column(String(1000), comment="방 제목")
     CROOM_INFO = Column(Text, comment="방 소개")
     USER_ID = Column(String(50), comment="방 개설자")
@@ -36,7 +36,7 @@ class TB_CROOM(Base):
 class TB_POI(Base):
     __tablename__ = "TB_POI"
 
-    POI_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="여행지 고유번호")
+    POI_IDX = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="여행지 고유번호")
     POI_NM = Column(String(255), comment="여행지 명")
     POI_INFO = Column(Text, comment="여행지 설명")
     POI_ADDR = Column(String(1000), comment="여행지 주소")
@@ -54,7 +54,7 @@ class TB_POI(Base):
 class TB_SHOPPING_MALL(Base):
     __tablename__ = "TB_SHOPPING_MALL"
 
-    MALL_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="몰 고유번호")
+    MALL_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="몰 고유번호")
     CATEGORY = Column(String(100), comment="카테고리 명")
     MALL_NM = Column(String(255), comment="쇼핑몰 이름")
     MALL_URL = Column(String(1000), comment="쇼핑몰 URL")
@@ -67,7 +67,7 @@ class TB_SHOPPING_MALL(Base):
 class TB_CHATTING(Base):
     __tablename__ = "TB_CHATTING"
 
-    CHAT_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="채팅 고유번호")
+    CHAT_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="채팅 고유번호")
     CROOM_IDX = Column(Integer, comment="방 고유번호")
     USER_ID = Column(String(50), comment="발화자")
     CHAT_CONTENT = Column(Text, comment="챗봇 응답 내용")
@@ -80,7 +80,7 @@ class TB_CHATTING(Base):
 class TB_REVIEW(Base):
     __tablename__ = "TB_REVIEW"
 
-    REVIEW_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="후기 식별자")
+    REVIEW_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="후기 식별자")
     POI_IDX = Column(Integer, comment="여행지 고유번호")
     USER_ID = Column(String(50), comment="사용자 아이디")
     REVIEW_CONTENT = Column(Text, comment="후기 내용")
@@ -91,7 +91,7 @@ class TB_REVIEW(Base):
 class TB_SCHEDULE(Base):
     __tablename__ = "TB_SCHEDULE"
 
-    SCHE_IDX = Column(String(60), primary_key=True, comment="일정 고유번호")
+    SCHE_IDX = Column(String(60),nullable=False, primary_key=True, comment="일정 고유번호")
     TOUR_NM = Column(String(255), comment="여행 명")
     TOUR_TYPE = Column(String(50), comment="여행 형태")
     TOUR_DESC = Column(Text, comment="여행 소개")
@@ -105,7 +105,7 @@ class TB_SCHEDULE(Base):
 class TB_TIMETABLE(Base):
     __tablename__ = "TB_TIMETABLE"
 
-    TT_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="세부 고유번호")
+    TT_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="세부 고유번호")
     SCHE_IDX = Column(String(60), comment="일정 고유번호")
     TT_DATE = Column(Date, comment="여행 날짜")
     ST_TIME = Column(Time, comment="여행 시작 시간")
@@ -118,7 +118,7 @@ class TB_TIMETABLE(Base):
 class TB_POI_RECO(Base):
     __tablename__ = "TB_POI_RECO"
 
-    RECO_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="여추 고유번호")
+    RECO_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="여추 고유번호")
     USER_ID = Column(String(50), comment="사용자 아이디")
     POI_IDX = Column(Integer, comment="여행지 고유번호")
     CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="추천 일시")
@@ -128,7 +128,7 @@ class TB_POI_RECO(Base):
 class TB_MALL_RECO(Base):
     __tablename__ = "TB_MALL_RECO"
 
-    RECO_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="쇼추 고유번호")
+    RECO_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="쇼추 고유번호")
     CHAT_IDX = Column(Integer, comment="채팅 고유번호")
     MALL_IDX = Column(Integer, comment="몰 고유번호")
     CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="추천 일시")
@@ -138,7 +138,7 @@ class TB_MALL_RECO(Base):
 class TB_LINE_COMMENT(Base):
     __tablename__ = "TB_LINE_COMMENT"
 
-    LINE_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="한줄 고유번호")
+    LINE_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="한줄 고유번호")
     POI_IDX = Column(Integer, comment="여행지 고유번호")
     LINE_CONTENT = Column(String(300), comment="한줄 내용")
     CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="한줄 작성일자")
@@ -148,7 +148,7 @@ class TB_LINE_COMMENT(Base):
 class TB_FILE(Base):
     __tablename__ = "TB_FILE"
 
-    FILE_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="파일 식별자")
+    FILE_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="파일 식별자")
     POI_IDX = Column(Integer, comment="여행지 고유번호")
     FILE_NM = Column(String(1000), comment="파일 명")
     FILE_SIZE = Column(Integer, default=0, comment="파일 사이즈")
@@ -163,7 +163,7 @@ class TB_FILE(Base):
 class TB_FESTIVAL(Base):
     __tablename__ = "TB_FESTIVAL"
 
-    FEST_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="행사 식별자")
+    FEST_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="행사 식별자")
     FEST_NM = Column(String(100), comment="행사 이름")
     FEST_DESC = Column(Text, comment="행사 소개")
     FEST_ADDR = Column(String(1000), comment="행사 주소")
@@ -180,7 +180,7 @@ class TB_FESTIVAL(Base):
 class TB_LIKE(Base):
     __tablename__ = "TB_LIKE"
 
-    LIKE_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="좋아요 식별자")
+    LIKE_IDX = Column(Integer,nullable=False, primary_key=True, autoincrement=True, comment="좋아요 식별자")
     USER_ID = Column(String(50), comment="사용자 아이디")
     MALL_IDX = Column(Integer, comment="몰 고유번호")
     POI_IDX = Column(Integer, comment="여행지 고유번호")

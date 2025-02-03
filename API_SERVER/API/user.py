@@ -57,7 +57,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 # ✅ 회원가입 API (비밀번호 해싱 적용)
-@router.post("/Join")
+@router.post("/api/join")
 async def create_user(user: User, db: Session = Depends(get_db)):
     # 비밀번호 해싱
     hashed_pw = hash_password(user.USER_PW)
@@ -66,11 +66,6 @@ async def create_user(user: User, db: Session = Depends(get_db)):
         USER_ID=user.USER_ID,
         USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
         USER_NICK=user.USER_NICK,
-        USER_PROFILE_IMG=user.USER_PROFILE_IMG,
-        KAKAO_ID=user.KAKAO_ID,
-        AUTH_PROVIDER=user.AUTH_PROVIDER,
-        CREATED_AT=user.CREATED_AT,
-        UPDATED_AT=user.UPDATED_AT
     )
 
     db.add(db_user)
