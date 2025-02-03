@@ -20,7 +20,7 @@
 
   <!-- 여행AI 소개 컨텐츠 영역 -->
   <div class="content">
-    <!-- ✅ 위쪽 영역 (챗봇 소개) -->
+    <!-- 위쪽 영역 (챗봇 소개) -->
     <div class="intro-section">
       <p>여행의 시작부터 끝까지<br />떠나봄의 AI와 함께하세요</p>
       <h1>AI가 당신의 완벽한 여행을 도와드립니다!</h1>
@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <!-- ✅ 아래 영역 (버튼 + yellow_wave) -->
+  <!-- 아래 영역 (버튼 + yellow_wave) -->
   <div class="bottom-section">
     <div class="footer">
       <button on:click={navigateToChat}>
@@ -96,7 +96,7 @@
   /* AI 소개 섹션 */
   .intro-section {
     text-align: center;
-    margin-bottom: 20px; /* ✅ intro-section과 bottom-section 간격 줄임 */
+    margin-top: -100px;
   }
 
   .intro-section p {
@@ -117,17 +117,17 @@
     margin-bottom: 10px;
   }
 
-  /* 하단 섹션 (페이지 너비 전체) */
-  .bottom-section {
-    width: 100vw;
-    height: 180px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-  }
-
+/* 하단 섹션 */
+.bottom-section {
+  width: 100vw;
+  height: 200px; /* yellow-wave보다 약간 더 크게 설정 */
+  margin-top: -200px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
   /* 버튼 스타일 */
   .footer button {
     position: absolute;
@@ -150,11 +150,11 @@
 
   /* yellow_wave 설정 (깨짐 방지) */
   .yellow-wave {
-    width: 100%; /* 화면 너비에 꽉 차게 */
-    height: auto; /* 높이는 자동으로 조정 (비율 유지) */
-    object-fit: contain; /* 이미지 비율 유지 */
-    position: absolute;
-    bottom: 0;
-    z-index: 1;
-  }
+  width: 100vw; /* 화면 너비에 꽉 차게 */
+  height: 150px; /* 고정된 높이 */
+  object-fit: cover; /* 이미지가 잘리지 않도록 유지 */
+  position: absolute;
+  bottom: 0;
+  z-index: 1;
+}
 </style>
