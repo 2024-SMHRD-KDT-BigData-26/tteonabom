@@ -158,9 +158,7 @@ function goToDetail(id) {
     margin-top: 0px;
     margin-bottom: 30px;
   }
-  .page-item {
-    margin: 0 0.25rem;
-  }
+  
   .page-link {
     cursor: pointer;
     padding: 0.5rem 0.75rem;

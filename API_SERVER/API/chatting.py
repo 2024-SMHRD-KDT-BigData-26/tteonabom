@@ -4,98 +4,75 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from DataBase.conn import get_db
 from DataBase.models import TB_CHATTING
+from config import OPENAI_API_KEY
+import openai
 
 router = APIRouter()
 
+# ✅ OpenAI API 키 설정
+openai.api_key = OPENAI_API_KEY
+
+
 class Chat(BaseModel):
-    CHAT_IDX: int
-    # CROOM_IDX: int
-    # CHATTER: str
-    # CHAT_CONTENT: str
-    # CHAT_FILE: str = None
-    # CHAT_EMOTION: str = None
-    # CREATED_AT: datetime
+    CROOM_IDX: int
+    CHATTER: str
+    CHAT_CONTENT: str
+    CHAT_FILE: str = None
+    CHAT_EMOTION: str = None
+    CREATED_AT: datetime = datetime.utcnow()
 
     class Config:
         from_attributes = True
 
 
-# ✅ 채팅 메시지 생성
-@router.post("/chats")
-async def create_chat(chat: Chat, db: Session = Depends(get_db)):
-    db_chat = TB_CHATTING(**chat.dict())
-    db.add(db_chat)
+async def generate_gpt_response(user_input: str) -> str:
+    """ OpenAI GPT API를 호출하여 응답을 생성하는 함수 """
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4-turbo",
+            messages=[{"role": "user", "content": user_input}]
+        )
+        return response["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"GPT API 호출 오류: {e}")
+        return "죄송합니다. 현재 응답을 생성할 수 없습니다."
+
+
+# ✅ 사용자 메시지 저장 + GPT 응답 저장 API
+@router.post("/chat/gpt")
+async def chat_with_gpt(chat: Chat, db: Session = Depends(get_db)):
+    """ 사용자의 입력을 DB에 저장하고, GPT 응답을 생성하여 저장하는 API """
+
+    # 1️⃣ 사용자 입력을 DB에 저장 (CHAT_IDX 없이 저장)
+    db_user_chat = TB_CHATTING(
+        CROOM_IDX=chat.CROOM_IDX,
+        CHATTER=chat.CHATTER,
+        CHAT_CONTENT=chat.CHAT_CONTENT,
+        CHAT_FILE=chat.CHAT_FILE,
+        CHAT_EMOTION=chat.CHAT_EMOTION,
+        CREATED_AT=chat.CREATED_AT
+    )
+    db.add(db_user_chat)
     db.commit()
-    db.refresh(db_chat)
-    return db_chat
+    db.refresh(db_user_chat)
 
-# ✅ 특정 채팅방의 모든 메시지 조회
-@router.get("/chats/{CROOM_IDX}")
-async def get_chats_by_croom(CROOM_IDX: int, db: Session = Depends(get_db)):
-    chats = db.query(TB_CHATTING).filter(TB_CHATTING.CROOM_IDX == CROOM_IDX).all()
-    return chats
+    # 2️⃣ GPT 응답 생성
+    gpt_response = await generate_gpt_response(chat.CHAT_CONTENT)
 
-# ✅ 특정 사용자의 메시지 조회 (채팅방 내)
-@router.get("/chats/{CROOM_IDX}/{CHATTER}")
-async def get_chats_by_user(CROOM_IDX: int, CHATTER: str, db: Session = Depends(get_db)):
-    chats = db.query(TB_CHATTING).filter(
-        TB_CHATTING.CROOM_IDX == CROOM_IDX,
-        TB_CHATTING.CHATTER == CHATTER
-    ).all()
-    return chats
-
-# ✅ 특정 채팅방의 최근 N개 메시지 조회
-@router.get("/chats/recent/{CROOM_IDX}")
-async def get_recent_chats(CROOM_IDX: int, limit: int = 10, db: Session = Depends(get_db)):
-    chats = db.query(TB_CHATTING).filter(TB_CHATTING.CROOM_IDX == CROOM_IDX)\
-        .order_by(TB_CHATTING.CREATED_AT.desc())\
-        .limit(limit)\
-        .all()
-    return chats
-
-# ✅ 특정 메시지 조회
-@router.get("/chats/message/{CHAT_IDX}")
-async def get_chat(CHAT_IDX: int, db: Session = Depends(get_db)):
-    chat = db.query(TB_CHATTING).filter(TB_CHATTING.CHAT_IDX == CHAT_IDX).first()
-    if not chat:
-        raise HTTPException(status_code=404, detail="Chat message not found")
-    return chat
-
-# ✅ 메시지 수정
-@router.put("/chats/{CHAT_IDX}")
-async def update_chat(CHAT_IDX: int, chat: Chat, db: Session = Depends(get_db)):
-    db_chat = db.query(TB_CHATTING).filter(TB_CHATTING.CHAT_IDX == CHAT_IDX).first()
-    if not db_chat:
-        raise HTTPException(status_code=404, detail="Chat message not found")
-
-    for key, value in chat.dict().items():
-        setattr(db_chat, key, value)
-
+    # 3️⃣ GPT 응답을 DB에 저장 (CHAT_IDX 자동 증가)
+    db_gpt_chat = TB_CHATTING(
+        CROOM_IDX=chat.CROOM_IDX,
+        CHATTER="GPT",
+        CHAT_CONTENT=gpt_response,
+        CHAT_FILE=None,
+        CHAT_EMOTION=None,
+        CREATED_AT=datetime.utcnow()
+    )
+    db.add(db_gpt_chat)
     db.commit()
-    db.refresh(db_chat)
-    return db_chat
+    db.refresh(db_gpt_chat)
 
-# ✅ 메시지 삭제
-@router.delete("/chats/{CHAT_IDX}")
-async def delete_chat(CHAT_IDX: int, db: Session = Depends(get_db)):
-    db_chat = db.query(TB_CHATTING).filter(TB_CHATTING.CHAT_IDX == CHAT_IDX).first()
-    if not db_chat:
-        raise HTTPException(status_code=404, detail="Chat message not found")
-
-    db.delete(db_chat)
-    db.commit()
-    return {"detail": "Chat message deleted successfully"}
-
-# ✅ 🔥 **테스트용 API (주석 처리된 간단한 버전)**
-@router.post("/chat/test")
-async def create_chat_test(chat: Chat, db: Session = Depends(get_db)):
-    chat_dict = {
-        "CHAT_IDX": chat.CHAT_IDX
-        # "CROOM_IDX": chat.CROOM_IDX,
-        # "CHATTER": chat.CHATTER,
-        # "CHAT_CONTENT": chat.CHAT_CONTENT,
-        # "CHAT_FILE": chat.CHAT_FILE,
-        # "CHAT_EMOTION": chat.CHAT_EMOTION,
-        # "CREATED_AT": chat.CREATED_AT
+    return {
+        "user_message": chat.CHAT_CONTENT,
+        "gpt_response": gpt_response
     }
-    return chat_dict
