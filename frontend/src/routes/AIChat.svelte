@@ -1,55 +1,127 @@
 <script>
-  // 비주얼존 배경명
-  let currentPage = 'visual_AI';
+  import { onMount } from "svelte";
+  import { initializeChat, sendMessage, scrollToBottom } from "../assets/js/AIChat.js";
 
-  // 비주얼존 CSS
-  import '../assets/css/VisualZone.css';
+  let messages = [];
+  let showCalendar = false;
+  let startDate = "";
+  let endDate = "";
+  let showConfirmButton = false;
+
+  onMount(() => {
+    initializeChat((initialMessages) => {
+      messages = initialMessages;
+      scrollToBottom();
+    });
+  });
+
+  function updateMessages(newMessage) {
+    messages = [...messages, newMessage];
+    scrollToBottom();
+  }
+
+  function handleUserMessage(text) {
+    const { updatedMessages } = sendMessage(messages, text, (value) => {
+      showCalendar = value;
+    });
+
+    messages = updatedMessages;
+  }
+
+  function handleButtonClick(text) {
+    // 사용자 메시지 중복 방지를 위해 updateMessages() 호출 제거
+    handleUserMessage(text);
+  }
+
+  function handleDateChange(event, type) {
+    if (type === "start") {
+      startDate = event.target.value;
+      endDate = "";
+    } else if (type === "end") {
+      if (!startDate) {
+        alert("먼저 여행 시작일을 선택해주세요.");
+        return;
+      }
+      if (event.target.value < startDate) {
+        alert("종료일은 시작일보다 이후여야 합니다.");
+        return;
+      }
+      endDate = event.target.value;
+    }
+    checkConfirmButton();
+  }
+
+  function checkConfirmButton() {
+    showConfirmButton = startDate !== "" && endDate !== "";
+  }
+
+  function confirmDates() {
+    if (!startDate || !endDate) return;
+
+    const dateMessage = `📅 여행 일정: ${startDate} ~ ${endDate}`;
+
+    // 중복 방지를 위해 사용자 메시지만 추가
+    updateMessages({ type: "user", text: dateMessage });
+
+    // 챗봇 메시지에도 날짜 표시 후 다음 질문으로 진행
+    updateMessages({
+      type: "bot",
+      text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
+      buttons: [
+        { text: "가족", action: "family" },
+        { text: "연인", action: "couple" },
+        { text: "친구", action: "friends" },
+        { text: "혼자", action: "alone" },
+      ],
+    });
+
+    showCalendar = false;
+    showConfirmButton = false;
+  }
 </script>
 
-<main class="main-content">
-  <!-- 비주얼 존 -->
-  <div class={`visual-zone ${currentPage}`}>
-    <p>나에게 꼭 맞는 여행정보를 알려드려요</p>
-    <h1>여행AI</h1>
-  </div>
-
-  <!-- 여행AI 채팅 컨텐츠 영역 -->
-  <div class="content">
-    <div style="width: 1078px; height: 1465px; background-color:#eee">
-      
-      <!-- 챗봇 대화창 -->
-      <div class="container my-4">
-        <div class="card chatbot-window" id="chatwindow">
-          <div class="chat-header">
-            <h3>챗봇 떠나봄</h3>
-          </div>
-          <div class="card-body" id="chatWindow">
-            <!-- 초기 메시지 -->
-            <div class="message-bot">
-              안녕하세요!
-              여행의 시작부터 끝까지
-              떠나봄의 여행AI 봄봄입니다!
-
-              AI가 당신의 완벽한 여행을 도와드립니다!
-
-              아래에서 원하는 추천 버튼을 클릭해주세요.
+<main class="chat-container">
+  <div class="chatbot-window" id="chatWindow">
+    <div class="chat-header"><h3>챗봇 봄봄</h3></div>
+    <div class="chat-body">
+      {#each messages as message}
+        <div class="message-wrapper {message.type}">
+          {#if message.type === "bot"}
+            <div class="bot-profile-wrapper">
+              <div class="bot-profile">
+                <img src="/src/assets/img/chatbot_profile.png" alt="봄봄" class="bot-img" />
+                <span class="bot-name">여행AI 봄봄</span>
+              </div>
             </div>
-
-            <!-- 버튼 선택지 -->
-            <div class="btns d-flex flex-wrap gap-2" id="buttonoptions">
-              <button class="btn" id="datePickerButton">여행 일정 추천</button>
-              <button class="btn">여행지 추천</button>
-              <button class="btn">테마별 쇼핑몰 추천</button>
-            </div>
+          {/if}
+          <div class="{message.type === "bot" ? "message-bot" : "message-user"}">
+            {@html message.text}
           </div>
+          {#if message.buttons}
+            <div class="button-wrapper">
+              {#each message.buttons as button}
+                <button class="chat-btn" on:click={() => handleButtonClick(button.text)}>
+                  {button.text}
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
+      {/each}
 
-        <!-- 날짜 입력 -->
-        <div class="form-group mt-4" id="datePickerContainer" style="display: none;">
-          <label for="dateInput" class="form-label">날짜를 선택하세요:</label>
-          <input type="text" class="form-control" id="dateInput" placeholder="YYYY-MM-DD">
+      {#if showCalendar}
+        <div class="calendar-container">
+          <label for="start-date">🛫 여행 시작일:</label>
+          <input type="date" id="start-date" bind:value={startDate} on:change={(e) => handleDateChange(e, "start")} />
+
+          <label for="end-date">🏁 여행 종료일:</label>
+          <input type="date" id="end-date" bind:value={endDate} on:change={(e) => handleDateChange(e, "end")} />
+
+          {#if showConfirmButton}
+            <button class="confirm-btn" on:click={confirmDates}>✅ 확인</button>
+          {/if}
         </div>
-      </div>
+      {/if}
     </div>
   </div>
 </main>
@@ -73,66 +145,106 @@
     font-family: 'Paperlogy-4Regular';
   }
 
+  .chat-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+  }
+
   .chatbot-window {
     height: 80vh;
     overflow-y: auto;
-    background-color: #FFECB9;
+    background-color: #ffecb9;
+    padding: 15px;
+    border-radius: 10px;
   }
 
-  .chat-header h3 {
-    color: white;
-    font-family: 'Paperlogy-6SemiBold';
-    margin: 10px;
+  .chat-header {
     text-align: center;
+    color: white;
+    padding: 10px;
+    border-radius: 10px 10px 0 0;
   }
 
   .message-wrapper {
     display: flex;
+    flex-direction: column;
     margin-bottom: 10px;
   }
 
   .message-wrapper.bot {
-    justify-content: flex-start;
-  }
-
-  .message-bot {
-    background-color: #F8F9FA;
-    color: #000;
-    padding: 10px 15px;
-    border-radius: 10px;
-    max-width: 60%;
-    text-align: left;
+    align-items: flex-start;
   }
 
   .message-wrapper.user {
-    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .bot-profile-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    margin-left: 10px;
+  }
+
+  .bot-profile {
+    display: flex;
+    align-items: center;
+  }
+
+  .bot-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  .bot-name {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Paperlogy-6SemiBold';
+  }
+
+  .message-bot {
+    background-color: #f8f9fa;
+    color: #000;
+    padding: 12px 18px;
+    border-radius: 10px;
+    max-width: 50%;
+    margin-left: 10px;
+    font-size: 14px;
   }
 
   .message-user {
-    background-color: #D1E7DD;
+    background-color: #d1e7dd;
     color: #000;
-    padding: 10px 15px;
+    padding: 12px 18px;
     border-radius: 10px;
-    max-width: 60%;
+    max-width: 50%;
+    font-size: 14px;
     text-align: right;
   }
 
-  .btns {
-    margin-top: 20px;
+  .button-wrapper {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: left;
+    gap: 10px;
+    margin: 10px 0 20px 10px;
   }
 
-  .btn {
+  .button-wrapper button {
     font-family: 'Paperlogy-6SemiBold';
-    padding: 10px 20px;
+    font-size: 14px;
+    padding: 10px 18px;
     border-radius: 20px;
-    font-size: 1rem;
-    background-color: #FFFFFF;
-    color: #000;
-    box-shadow: gray;
+    background-color: white;
+    color: black;
+    border: none;
+    cursor: pointer;
   }
 
-  .btn:hover {
-    background-color: #FFA76A;
+  .button-wrapper button:hover {
+    background-color: #f1f1f1;
   }
 </style>
