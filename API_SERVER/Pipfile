@@ -9,6 +9,7 @@ sqlalchemy = "*"
 pymysql = "*"
 bcrypt = "*"
 mysql = "*"
+jwt = "*"
 
 [dev-packages]
 

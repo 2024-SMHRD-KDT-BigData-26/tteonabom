@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from DataBase.models import TB_USERS
 import bcrypt
 import shutil
 import os
+
 
 router = APIRouter()
 
@@ -29,6 +30,7 @@ class User(BaseModel):
         from_attributes = True
 
 
+
 # ✅ 로그인 요청 모델
 class LoginRequest(BaseModel):
     USER_ID: str
@@ -40,10 +42,10 @@ class LoginResponse(BaseModel):
     USER_ID: str
     USER_NICK: str
     USER_PROFILE_IMG: str = None
-    KAKAO_ID: int = None
-    AUTH_PROVIDER: str = None
-    CREATED_AT: datetime = None
-    UPDATED_AT: datetime = None
+    KAKAO_ID: int = 0  # ✅ 기본값 설정
+    AUTH_PROVIDER: str = "LOCAL"  # ✅ 기본값 설정
+    CREATED_AT: datetime
+    UPDATED_AT: datetime = datetime.utcnow()  # ✅ 기본값 설정
 
     class Config:
         from_attributes = True
@@ -161,7 +163,7 @@ async def delete_user(USER_ID: str, db: Session = Depends(get_db)):
     return {"detail": "User deleted successfully"}
 
 
-# ✅ 로그인 API
+# ✅ 로그인 API (JSON 응답)
 @router.post("/login", response_model=LoginResponse)
 async def login(user: LoginRequest, db: Session = Depends(get_db)):
     """ 사용자 로그인 검증 API """
@@ -169,11 +171,19 @@ async def login(user: LoginRequest, db: Session = Depends(get_db)):
     # 1️⃣ 해당 USER_ID가 존재하는지 확인
     db_user = db.query(TB_USERS).filter(TB_USERS.USER_ID == user.USER_ID).first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail={"error": "존재하지 않는 사용자입니다."})
 
     # 2️⃣ 비밀번호 검증 (입력한 비밀번호 vs 저장된 해시된 비밀번호)
     if not verify_password(user.USER_PW, db_user.USER_PW):
-        raise HTTPException(status_code=401, detail="Invalid password")
+        raise HTTPException(status_code=401, detail={"error": "비밀번호가 일치하지 않습니다."})
 
-    # 3️⃣ 로그인 성공 → 사용자 정보 반환 (비밀번호 제외)
-    return db_user
+    # 3️⃣ 로그인 성공 → JSON 응답 반환
+    return {
+        "USER_ID": db_user.USER_ID,
+        "USER_NICK": db_user.USER_NICK,
+        "USER_PROFILE_IMG": db_user.USER_PROFILE_IMG,
+        "KAKAO_ID": db_user.KAKAO_ID if db_user.KAKAO_ID is not None else 0,  # 기본값 설정
+        "AUTH_PROVIDER": db_user.AUTH_PROVIDER if db_user.AUTH_PROVIDER is not None else "LOCAL",  # 기본값 설정
+        "CREATED_AT": db_user.CREATED_AT,
+        "UPDATED_AT": db_user.UPDATED_AT if db_user.UPDATED_AT is not None else datetime.utcnow(),  # 기본값 설정
+    }
