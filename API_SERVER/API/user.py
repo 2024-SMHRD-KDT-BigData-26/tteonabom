@@ -66,11 +66,6 @@ async def create_user(user: User, db: Session = Depends(get_db)):
         USER_ID=user.USER_ID,
         USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
         USER_NICK=user.USER_NICK,
-        USER_PROFILE_IMG=user.USER_PROFILE_IMG,
-        KAKAO_ID=user.KAKAO_ID,
-        AUTH_PROVIDER=user.AUTH_PROVIDER,
-        CREATED_AT=datetime.utcnow(),
-        UPDATED_AT=datetime.utcnow()
     )
 
     db.add(db_user)
