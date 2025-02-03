@@ -1,99 +1,137 @@
-export function setupShoppingList(sortType = null) {
-    console.log("쇼핑 리스트 JS가 실행되었습니다."); // 디버깅용 로그
-
-    const likeButtons = document.querySelectorAll(".like-btn");
-    const sortAlphabeticalButton = document.querySelector(".sort-text[on\\:click*='alphabetical']");
-    const sortLikesButton = document.querySelector(".sort-text[on\\:click*='likes']");
-    const cardContainer = document.querySelector(".card");
-    const cards = Array.from(document.querySelectorAll(".card-body"));
-
-    if (!cardContainer) {
-        console.error("cardContainer를 찾을 수 없습니다.");
-        return;
-    }
-
-    // 좋아요 버튼 클릭 이벤트 처리
-    likeButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            const likeCountElement = button.previousElementSibling;
-            let likes = parseInt(likeCountElement.textContent);
-            const isLiked = button.getAttribute("data-liked") === "true";
-            const heartImage = button.querySelector("img");
-
-            if (isLiked) {
-                likes--;
-                button.setAttribute("data-liked", "false");
-                heartImage.src = "/src/assets/img/heart.png";
-            } else {
-                likes++;
-                button.setAttribute("data-liked", "true");
-                heartImage.src = "/src/assets/img/full_heart.png";
-            }
-
-            likeCountElement.textContent = likes;
-            const cardBody = button.closest(".card-body");
-            cardBody.setAttribute("data-likes", likes);
-        });
-    });
-
-    // 정렬 버튼 클릭 이벤트 처리
-    if (sortAlphabeticalButton) {
-        sortAlphabeticalButton.addEventListener("click", () => {
-            setActiveButton(sortAlphabeticalButton, sortLikesButton);
-            sortAlphabetically(cards, cardContainer);
-        });
-    }
-
-    if (sortLikesButton) {
-        sortLikesButton.addEventListener("click", () => {
-            setActiveButton(sortLikesButton, sortAlphabeticalButton);
-            sortByLikes(cards, cardContainer);
-        });
-    }
-
-    // 초기 정렬 (sortType에 따라 정렬 실행)
-    if (sortType === "alphabetical") {
-        setActiveButton(sortAlphabeticalButton, sortLikesButton);
-        sortAlphabetically(cards, cardContainer);
-    } else if (sortType === "likes") {
-        setActiveButton(sortLikesButton, sortAlphabeticalButton);
-        sortByLikes(cards, cardContainer);
-    }
-
-    // 가나다순 정렬 함수
-    function sortAlphabetically(cards, cardContainer) {
-        const sortedCards = cards.sort((a, b) => {
-            const titleA = a.querySelector(".card-title").innerText.trim();
-            const titleB = b.querySelector(".card-title").innerText.trim();
-            return titleA.localeCompare(titleB, "ko");
-        });
-
-        cardContainer.innerHTML = "";
-        sortedCards.forEach((card) => cardContainer.appendChild(card));
-    }
-
-    // 좋아요순 정렬 함수
-    function sortByLikes(cards, cardContainer) {
-        const sortedCards = cards.sort((a, b) => {
-            const likesA = parseInt(a.getAttribute("data-likes")) || 0;
-            const likesB = parseInt(b.getAttribute("data-likes")) || 0;
-            return likesB - likesA;
-        });
-
-        cardContainer.innerHTML = "";
-        sortedCards.forEach((card) => cardContainer.appendChild(card));
-    }
-
-    // 버튼 활성화/비활성화 함수 (글씨 두께 변경)
-    function setActiveButton(activeButton, inactiveButton) {
-        // 활성화된 버튼의 글씨를 두껍게 처리
-        if (activeButton) {
-            activeButton.style.fontWeight = "bold"; // 글씨 두껍게
-        }
-
-        // 비활성화된 버튼의 글씨를 원래 상태로 복원
-        if (inactiveButton) {
-            inactiveButton.style.fontWeight = "normal"; // 글씨 원래 두께로
-        }
+// 쇼핑 데이터 가져오기 (API 요청 또는 더미 데이터)
+export async function fetchShoppingData() {
+    try {
+        const response = await fetch('/api/shopping'); 
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("쇼핑 데이터를 불러오는 중 오류 발생:", error);
+        return [];
     }
 }
+
+// 정렬 함수 (Svelte에서 호출)
+export function sortShopItems(items, sortType) {
+    if (sortType === "alphabetical") {
+        return [...items].sort((a, b) => a.title.localeCompare(b.title, "ko"));
+    } else if (sortType === "likes") {
+        return [...items].sort((a, b) => b.likes - a.likes);
+    }
+    return items;
+}
+
+// 샘플 쇼핑몰 데이터
+export const shopItems = [
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크A",
+      likes: 15,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle01.png",
+      category: "#자전거",
+      title: "바이크B",
+      likes: 20,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크C",
+      likes: 10,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크D",
+      likes: 25,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크E",
+      likes: 5,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크F",
+      likes: 30,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크G",
+      likes: 18,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크H",
+      likes: 22,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+      img: "/src/assets/img/bicycle00.png",
+      category: "#자전거",
+      title: "바이크I",
+      likes: 14,
+      url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      },
+      {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크I",
+        likes: 14,
+        url: "http://shop1.jaike.cafe24.com/",
+      }
+];
