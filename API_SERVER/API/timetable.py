@@ -9,14 +9,14 @@ router = APIRouter()
 
 
 class Timetable(BaseModel):
-    tt_idx: int
-    sche_idx: str
-    tt_date: date
-    st_time: time
-    poi_idx: int
-    tt_order: int
-    created_at: datetime
-    updated_at: datetime
+    TT_IDX: int
+    SCHE_IDX: str
+    TT_DATE: date
+    ST_TIME: time
+    POI_IDX: int
+    TT_ORDER: int
+    CREATED_AT: datetime
+    UPDATED_AT: datetime
 
     class Config:
         from_attributes = True
@@ -39,25 +39,25 @@ async def get_all_timetables(db: Session = Depends(get_db)):
 
 
 # ✅ 특정 일정 세부 정보 조회
-@router.get("/timetables/{tt_idx}")
-async def get_timetable(tt_idx: int, db: Session = Depends(get_db)):
-    timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.tt_idx == tt_idx).first()
+@router.get("/timetables/{TT_IDX}")
+async def get_timetable(TT_IDX: int, db: Session = Depends(get_db)):
+    timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.TT_IDX == TT_IDX).first()
     if not timetable:
         raise HTTPException(status_code=404, detail="Timetable not found")
     return timetable
 
 
-# ✅ 특정 일정(`sche_idx`)에 속한 세부 일정 조회
-@router.get("/timetables/schedule/{sche_idx}")
-async def get_timetables_by_schedule(sche_idx: str, db: Session = Depends(get_db)):
-    timetables = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.sche_idx == sche_idx).all()
+# ✅ 특정 일정(`SCHE_IDX`)에 속한 세부 일정 조회
+@router.get("/timetables/schedule/{SCHE_IDX}")
+async def get_timetables_by_schedule(SCHE_IDX: str, db: Session = Depends(get_db)):
+    timetables = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.SCHE_IDX == SCHE_IDX).all()
     return timetables
 
 
 # ✅ 일정 세부 정보 수정
-@router.put("/timetables/{tt_idx}")
-async def update_timetable(tt_idx: int, timetable: Timetable, db: Session = Depends(get_db)):
-    db_timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.tt_idx == tt_idx).first()
+@router.put("/timetables/{TT_IDX}")
+async def update_timetable(TT_IDX: int, timetable: Timetable, db: Session = Depends(get_db)):
+    db_timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.TT_IDX == TT_IDX).first()
     if not db_timetable:
         raise HTTPException(status_code=404, detail="Timetable not found")
 
@@ -70,9 +70,9 @@ async def update_timetable(tt_idx: int, timetable: Timetable, db: Session = Depe
 
 
 # ✅ 일정 세부 정보 삭제
-@router.delete("/timetables/{tt_idx}")
-async def delete_timetable(tt_idx: int, db: Session = Depends(get_db)):
-    db_timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.tt_idx == tt_idx).first()
+@router.delete("/timetables/{TT_IDX}")
+async def delete_timetable(TT_IDX: int, db: Session = Depends(get_db)):
+    db_timetable = db.query(TB_TIMETABLE).filter(TB_TIMETABLE.TT_IDX == TT_IDX).first()
     if not db_timetable:
         raise HTTPException(status_code=404, detail="Timetable not found")
 

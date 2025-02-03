@@ -8,17 +8,16 @@ from DataBase.models import TB_CROOM
 router = APIRouter()
 
 class Croom(BaseModel):
-    croom_idx: int
-    croom_title: str
-    croom_info: str
-    user_id: str
-    croom_limit: int
-    created_at: datetime
-    croom_status: str
+    CROOM_IDX: int
+    CROOM_TITLE: str
+    CROOM_INFO: str
+    USER_ID: str
+    CROOM_LIMIT: int
+    CREATED_AT: datetime
+    CROOM_STATUS: str
 
     class Config:
         from_attributes = True
-
 
 
 # ✅ 채팅방 생성
@@ -36,23 +35,23 @@ async def get_all_crooms(db: Session = Depends(get_db)):
     return db.query(TB_CROOM).all()
 
 # ✅ 특정 채팅방 조회
-@router.get("/crooms/{croom_idx}")
-async def get_croom(croom_idx: int, db: Session = Depends(get_db)):
-    croom = db.query(TB_CROOM).filter(TB_CROOM.croom_idx == croom_idx).first()
+@router.get("/crooms/{CROOM_IDX}")
+async def get_croom(CROOM_IDX: int, db: Session = Depends(get_db)):
+    croom = db.query(TB_CROOM).filter(TB_CROOM.CROOM_IDX == CROOM_IDX).first()
     if not croom:
         raise HTTPException(status_code=404, detail="Croom not found")
     return croom
 
 # ✅ 특정 사용자가 만든 채팅방 조회
-@router.get("/crooms/user/{user_id}")
-async def get_crooms_by_user(user_id: str, db: Session = Depends(get_db)):
-    crooms = db.query(TB_CROOM).filter(TB_CROOM.user_id == user_id).all()
+@router.get("/crooms/user/{USER_ID}")
+async def get_crooms_by_user(USER_ID: str, db: Session = Depends(get_db)):
+    crooms = db.query(TB_CROOM).filter(TB_CROOM.USER_ID == USER_ID).all()
     return crooms
 
 # ✅ 채팅방 정보 수정
-@router.put("/crooms/{croom_idx}")
-async def update_croom(croom_idx: int, croom: Croom, db: Session = Depends(get_db)):
-    db_croom = db.query(TB_CROOM).filter(TB_CROOM.croom_idx == croom_idx).first()
+@router.put("/crooms/{CROOM_IDX}")
+async def update_croom(CROOM_IDX: int, croom: Croom, db: Session = Depends(get_db)):
+    db_croom = db.query(TB_CROOM).filter(TB_CROOM.CROOM_IDX == CROOM_IDX).first()
     if not db_croom:
         raise HTTPException(status_code=404, detail="Croom not found")
 
@@ -64,9 +63,9 @@ async def update_croom(croom_idx: int, croom: Croom, db: Session = Depends(get_d
     return db_croom
 
 # ✅ 채팅방 삭제
-@router.delete("/crooms/{croom_idx}")
-async def delete_croom(croom_idx: int, db: Session = Depends(get_db)):
-    db_croom = db.query(TB_CROOM).filter(TB_CROOM.croom_idx == croom_idx).first()
+@router.delete("/crooms/{CROOM_IDX}")
+async def delete_croom(CROOM_IDX: int, db: Session = Depends(get_db)):
+    db_croom = db.query(TB_CROOM).filter(TB_CROOM.CROOM_IDX == CROOM_IDX).first()
     if not db_croom:
         raise HTTPException(status_code=404, detail="Croom not found")
 

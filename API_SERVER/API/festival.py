@@ -9,18 +9,18 @@ router = APIRouter()
 
 
 class Festival(BaseModel):
-    fest_idx: int
-    fest_nm: str
-    fest_desc: str
-    fest_addr: str
-    fest_url: str
-    fest_tel: str
-    fest_period: str
-    fest_loc: str
-    lat: float
-    lon: float
-    created_at: datetime
-    updated_at: datetime
+    FEST_IDX: int
+    FEST_NM: str
+    FEST_DESC: str
+    FEST_ADDR: str
+    FEST_URL: str
+    FEST_TEL: str
+    FEST_PERIOD: str
+    FEST_LOC: str
+    LAT: float
+    LON: float
+    CREATED_AT: datetime
+    UPDATED_AT: datetime
 
     class Config:
         from_attributes = True
@@ -43,25 +43,25 @@ async def get_all_festivals(db: Session = Depends(get_db)):
 
 
 # ✅ 특정 축제 조회
-@router.get("/festival/{fest_idx}")
-async def get_festival(fest_idx: int, db: Session = Depends(get_db)):
-    festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.fest_idx == fest_idx).first()
+@router.get("/festival/{FEST_IDX}")
+async def get_festival(FEST_IDX: int, db: Session = Depends(get_db)):
+    festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.FEST_IDX == FEST_IDX).first()
     if not festival:
         raise HTTPException(status_code=404, detail="Festival not found")
     return festival
 
 
 # ✅ 특정 지역의 축제 조회
-@router.get("/festival/region/{region}")
-async def get_festivals_by_region(region: str, db: Session = Depends(get_db)):
-    festivals = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.fest_loc == region).all()
+@router.get("/festival/region/{REGION}")
+async def get_festivals_by_region(REGION: str, db: Session = Depends(get_db)):
+    festivals = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.FEST_LOC == REGION).all()
     return festivals
 
 
 # ✅ 축제 정보 수정
-@router.put("/festival/{fest_idx}")
-async def update_festival(fest_idx: int, festival: Festival, db: Session = Depends(get_db)):
-    db_festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.fest_idx == fest_idx).first()
+@router.put("/festival/{FEST_IDX}")
+async def update_festival(FEST_IDX: int, festival: Festival, db: Session = Depends(get_db)):
+    db_festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.FEST_IDX == FEST_IDX).first()
     if not db_festival:
         raise HTTPException(status_code=404, detail="Festival not found")
 
@@ -74,9 +74,9 @@ async def update_festival(fest_idx: int, festival: Festival, db: Session = Depen
 
 
 # ✅ 축제 삭제
-@router.delete("/festival/{fest_idx}")
-async def delete_festival(fest_idx: int, db: Session = Depends(get_db)):
-    db_festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.fest_idx == fest_idx).first()
+@router.delete("/festival/{FEST_IDX}")
+async def delete_festival(FEST_IDX: int, db: Session = Depends(get_db)):
+    db_festival = db.query(TB_FESTIVAL).filter(TB_FESTIVAL.FEST_IDX == FEST_IDX).first()
     if not db_festival:
         raise HTTPException(status_code=404, detail="Festival not found")
 

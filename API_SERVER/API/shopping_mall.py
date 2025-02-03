@@ -8,14 +8,14 @@ from DataBase.models import TB_SHOPPING_MALL
 router = APIRouter()
 
 class ShoppingMall(BaseModel):
-    mall_idx: int
-    category: str
-    mall_nm: str
-    mall_url: str
-    mall_img: str
-    mall_likes: int
-    created_at: datetime
-    updated_at: datetime
+    MALL_IDX: int
+    CATEGORY: str
+    MALL_NM: str
+    MALL_URL: str
+    MALL_IMG: str
+    MALL_LIKES: int
+    CREATED_AT: datetime
+    UPDATED_AT: datetime
 
     class Config:
         from_attributes = True
@@ -35,23 +35,23 @@ async def get_all_malls(db: Session = Depends(get_db)):
     return db.query(TB_SHOPPING_MALL).all()
 
 # ✅ 특정 쇼핑몰 조회
-@router.get("/shopping/{mall_idx}")
-async def get_mall(mall_idx: int, db: Session = Depends(get_db)):
-    mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.mall_idx == mall_idx).first()
+@router.get("/shopping/{MALL_IDX}")
+async def get_mall(MALL_IDX: int, db: Session = Depends(get_db)):
+    mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not mall:
         raise HTTPException(status_code=404, detail="Mall not found")
     return mall
 
 # ✅ 특정 카테고리의 쇼핑몰 조회
-@router.get("/shopping/category/{category}")
-async def get_malls_by_category(category: str, db: Session = Depends(get_db)):
-    malls = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.category == category).all()
+@router.get("/shopping/category/{CATEGORY}")
+async def get_malls_by_category(CATEGORY: str, db: Session = Depends(get_db)):
+    malls = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.CATEGORY == CATEGORY).all()
     return malls
 
 # ✅ 쇼핑몰 정보 수정
-@router.put("/shopping/{mall_idx}")
-async def update_mall(mall_idx: int, mall: ShoppingMall, db: Session = Depends(get_db)):
-    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.mall_idx == mall_idx).first()
+@router.put("/shopping/{MALL_IDX}")
+async def update_mall(MALL_IDX: int, mall: ShoppingMall, db: Session = Depends(get_db)):
+    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not db_mall:
         raise HTTPException(status_code=404, detail="Mall not found")
 
@@ -63,9 +63,9 @@ async def update_mall(mall_idx: int, mall: ShoppingMall, db: Session = Depends(g
     return db_mall
 
 # ✅ 쇼핑몰 삭제
-@router.delete("/shopping/{mall_idx}")
-async def delete_mall(mall_idx: int, db: Session = Depends(get_db)):
-    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.mall_idx == mall_idx).first()
+@router.delete("/shopping/{MALL_IDX}")
+async def delete_mall(MALL_IDX: int, db: Session = Depends(get_db)):
+    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not db_mall:
         raise HTTPException(status_code=404, detail="Mall not found")
 
@@ -74,13 +74,13 @@ async def delete_mall(mall_idx: int, db: Session = Depends(get_db)):
     return {"detail": "Mall deleted successfully"}
 
 # ✅ 쇼핑몰 좋아요 증가
-@router.put("/shopping/{mall_idx}/like")
-async def like_mall(mall_idx: int, db: Session = Depends(get_db)):
-    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.mall_idx == mall_idx).first()
+@router.put("/shopping/{MALL_IDX}/like")
+async def like_mall(MALL_IDX: int, db: Session = Depends(get_db)):
+    db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not db_mall:
         raise HTTPException(status_code=404, detail="Mall not found")
 
-    db_mall.mall_likes += 1  # 좋아요 수 증가
+    db_mall.MALL_LIKES += 1  # 좋아요 수 증가
     db.commit()
     db.refresh(db_mall)
-    return {"detail": "Mall liked successfully", "mall_likes": db_mall.mall_likes}
+    return {"detail": "Mall liked successfully", "MALL_LIKES": db_mall.MALL_LIKES}

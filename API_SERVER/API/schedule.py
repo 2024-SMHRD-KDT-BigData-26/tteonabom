@@ -8,15 +8,15 @@ from DataBase.models import TB_SCHEDULE
 router = APIRouter()
 
 class Schedule(BaseModel):
-    sche_idx: str
-    tour_nm: str
-    tour_type: str
-    tour_desc: str = None
-    st_dt: date
-    ed_dt: date
-    user_id: str
-    created_at: datetime
-    updated_at: datetime
+    SCHE_IDX: str
+    TOUR_NM: str
+    TOUR_TYPE: str
+    TOUR_DESC: str = None
+    ST_DT: date
+    ED_DT: date
+    USER_ID: str
+    CREATED_AT: datetime
+    UPDATED_AT: datetime
 
     class Config:
         from_attributes = True
@@ -36,17 +36,17 @@ async def get_all_schedules(db: Session = Depends(get_db)):
     return db.query(TB_SCHEDULE).all()
 
 # ✅ 특정 일정 조회
-@router.get("/schedules/{sche_idx}")
-async def get_schedule(sche_idx: str, db: Session = Depends(get_db)):
-    schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.sche_idx == sche_idx).first()
+@router.get("/schedules/{SCHE_IDX}")
+async def get_schedule(SCHE_IDX: str, db: Session = Depends(get_db)):
+    schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.SCHE_IDX == SCHE_IDX).first()
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     return schedule
 
 # ✅ 특정 사용자의 일정 조회
-@router.get("/schedules/user/{user_id}")
-async def get_schedules_by_user(user_id: str, db: Session = Depends(get_db)):
-    schedules = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.user_id == user_id).all()
+@router.get("/schedules/user/{USER_ID}")
+async def get_schedules_by_user(USER_ID: str, db: Session = Depends(get_db)):
+    schedules = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.USER_ID == USER_ID).all()
     return schedules
 
 # ✅ 특정 날짜 범위의 일정 조회
@@ -57,15 +57,15 @@ async def get_schedules_by_date_range(
     db: Session = Depends(get_db)
 ):
     schedules = db.query(TB_SCHEDULE).filter(
-        TB_SCHEDULE.st_dt >= start_date,
-        TB_SCHEDULE.ed_dt <= end_date
+        TB_SCHEDULE.ST_DT >= start_date,
+        TB_SCHEDULE.ED_DT <= end_date
     ).all()
     return schedules
 
 # ✅ 일정 수정
-@router.put("/schedules/{sche_idx}")
-async def update_schedule(sche_idx: str, schedule: Schedule, db: Session = Depends(get_db)):
-    db_schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.sche_idx == sche_idx).first()
+@router.put("/schedules/{SCHE_IDX}")
+async def update_schedule(SCHE_IDX: str, schedule: Schedule, db: Session = Depends(get_db)):
+    db_schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.SCHE_IDX == SCHE_IDX).first()
     if not db_schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
 
@@ -77,9 +77,9 @@ async def update_schedule(sche_idx: str, schedule: Schedule, db: Session = Depen
     return db_schedule
 
 # ✅ 일정 삭제
-@router.delete("/schedules/{sche_idx}")
-async def delete_schedule(sche_idx: str, db: Session = Depends(get_db)):
-    db_schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.sche_idx == sche_idx).first()
+@router.delete("/schedules/{SCHE_IDX}")
+async def delete_schedule(SCHE_IDX: str, db: Session = Depends(get_db)):
+    db_schedule = db.query(TB_SCHEDULE).filter(TB_SCHEDULE.SCHE_IDX == SCHE_IDX).first()
     if not db_schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
 

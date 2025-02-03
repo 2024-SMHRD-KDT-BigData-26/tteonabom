@@ -9,11 +9,11 @@ router = APIRouter()
 
 
 class LineComment(BaseModel):
-    line_idx: int
-    poi_idx: int
-    line_content: str
-    created_at: datetime
-    user_id: str
+    LINE_IDX: int
+    POI_IDX: int
+    LINE_CONTENT: str
+    CREATED_AT: datetime
+    USER_ID: str
 
     class Config:
         from_attributes = True
@@ -36,23 +36,23 @@ async def get_all_line_comments(db: Session = Depends(get_db)):
 
 
 # ✅ 특정 여행지의 한줄평 조회
-@router.get("/line_comment/{poi_idx}")
-async def get_line_comments_by_poi(poi_idx: int, db: Session = Depends(get_db)):
-    line_comments = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.poi_idx == poi_idx).all()
+@router.get("/line_comment/{POI_IDX}")
+async def get_line_comments_by_poi(POI_IDX: int, db: Session = Depends(get_db)):
+    line_comments = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.POI_IDX == POI_IDX).all()
     return line_comments
 
 
 # ✅ 특정 사용자의 한줄평 조회
-@router.get("/line_comment/user/{user_id}")
-async def get_line_comments_by_user(user_id: str, db: Session = Depends(get_db)):
-    line_comments = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.user_id == user_id).all()
+@router.get("/line_comment/user/{USER_ID}")
+async def get_line_comments_by_user(USER_ID: str, db: Session = Depends(get_db)):
+    line_comments = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.USER_ID == USER_ID).all()
     return line_comments
 
 
 # ✅ 한줄평 수정
-@router.put("/line_comment/{line_idx}")
-async def update_line_comment(line_idx: int, line_comment: LineComment, db: Session = Depends(get_db)):
-    db_line_comment = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.line_idx == line_idx).first()
+@router.put("/line_comment/{LINE_IDX}")
+async def update_line_comment(LINE_IDX: int, line_comment: LineComment, db: Session = Depends(get_db)):
+    db_line_comment = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.LINE_IDX == LINE_IDX).first()
     if not db_line_comment:
         raise HTTPException(status_code=404, detail="Line comment not found")
 
@@ -65,9 +65,9 @@ async def update_line_comment(line_idx: int, line_comment: LineComment, db: Sess
 
 
 # ✅ 한줄평 삭제
-@router.delete("/line_comment/{line_idx}")
-async def delete_line_comment(line_idx: int, db: Session = Depends(get_db)):
-    db_line_comment = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.line_idx == line_idx).first()
+@router.delete("/line_comment/{LINE_IDX}")
+async def delete_line_comment(LINE_IDX: int, db: Session = Depends(get_db)):
+    db_line_comment = db.query(TB_LINE_COMMENT).filter(TB_LINE_COMMENT.LINE_IDX == LINE_IDX).first()
     if not db_line_comment:
         raise HTTPException(status_code=404, detail="Line comment not found")
 
