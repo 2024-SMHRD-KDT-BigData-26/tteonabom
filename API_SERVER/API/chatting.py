@@ -15,8 +15,8 @@ openai.api_key = OPENAI_API_KEY
 
 class Chat(BaseModel):
     CROOM_IDX: int
-    USER_ID: str  # 사용자 ID (CHATTER → USER_ID로 변경)
-    USER_CONTENT: str  # 사용자 입력 메시지
+    USER_ID: str  # 🟢 사용자 ID (CHATTER → USER_ID로 변경)
+    USER_CONTENT: str  # 🟢 사용자 입력 메시지
     CHAT_FILE: str = None
     CHAT_EMOTION: str = None
     CREATED_AT: datetime = datetime.utcnow()
@@ -80,11 +80,19 @@ async def chat_with_gpt(chat: Chat, db: Session = Depends(get_db)):
     }
 
 
-# ✅ GPT와의 대화 내역 조회 API (특정 채팅방)
+# ✅ 특정 채팅방에서 GPT와 사용자의 대화 내역 조회
 @router.get("/chat/gpt/{CROOM_IDX}")
 async def get_gpt_chats(CROOM_IDX: int, db: Session = Depends(get_db)):
     """ 특정 채팅방에서 GPT와 사용자의 모든 대화 기록 조회 """
     chats = db.query(TB_CHATTING).filter(TB_CHATTING.CROOM_IDX == CROOM_IDX).all()
+    return chats
+
+
+# ✅ 특정 사용자의 모든 채팅 내역 조회
+@router.get("/chat/user/{USER_ID}")
+async def get_user_chats(USER_ID: str, db: Session = Depends(get_db)):
+    """ 특정 사용자가 GPT와 나눈 모든 대화 조회 """
+    chats = db.query(TB_CHATTING).filter(TB_CHATTING.USER_ID == USER_ID).all()
     return chats
 
 
