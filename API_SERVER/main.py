@@ -1,15 +1,19 @@
 from fastapi import FastAPI
 import uvicorn
-from DataBase.conn import engine
-from DataBase.models import Base
-from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment, like  # ✅ like 추가
-
+from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment, like
+from fastapi.middleware.cors import CORSMiddleware
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
 
-# DB 테이블 생성
-Base.metadata.create_all(bind=engine)
+# CORS 설정 (프론트엔드 연결용)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 특정 도메인만 허용할 수도 있음
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # API 라우팅
 app.include_router(user.router)
@@ -31,4 +35,5 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=9000)  # 9000번 포트에서 FastAPI 서버 실행
+        port=9000
+    )  # 9000번 포트에서 FastAPI 서버 실행
