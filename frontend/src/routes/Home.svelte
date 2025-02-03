@@ -321,6 +321,7 @@
         <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
         <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
         <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3" aria-label="Slide 4"></button>
       </div>
       <div class="carousel-inner">
         <div class="carousel-item active">
@@ -331,17 +332,24 @@
           </div>
         </div>
         <div class="carousel-item">
-          <img src="../src/assets/img/banner_001.png" class="d-block w-100" alt="배너2">
+          <img src="../src/assets/img/banner_002.png" class="d-block w-100" alt="배너2">
           <div class="carousel-caption d-none d-md-block">
-            <h5>Second slide label</h5>
-            <p>Some representative placeholder content for the second slide.</p>
+            <h5>여행AI 봄봄</h5>
+            <p>나에게 꼭 맞는 여행정보를 찾아볼까요?</p>
           </div>
         </div>
         <div class="carousel-item">
-          <img src="../src/assets/img/banner_001.png" class="d-block w-100" alt="배너3">
+          <img src="../src/assets/img/banner_004.png" class="d-block w-100" alt="배너3">
           <div class="carousel-caption d-none d-md-block">
-            <h5>Third slide label</h5>
-            <p>Some representative placeholder content for the third slide.</p>
+            <h5>여행지</h5>
+            <p>내가 원하는 여행 장소의 모든 것</p>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <img src="../src/assets/img/banner_003.png" class="d-block w-100" alt="배너4">
+          <div class="carousel-caption d-none d-md-block">
+            <h5>행사·축제</h5>
+            <p>지역의 행사와 축제를 찾아보세요</p>
           </div>
         </div>
       </div>

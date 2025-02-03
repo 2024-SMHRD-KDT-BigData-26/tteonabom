@@ -124,7 +124,7 @@
       margin-top: 20px; 
       justify-content: center; /* 가로 중앙 정렬 */
       align-items: center; /* 세로 중앙 정렬 */
-      width: 160%; 
+      width: 194%; 
       padding: 30px 30px 20px 30px; 
       border: 1px solid #D9D9D9; 
       border-radius: 10px; 
@@ -212,7 +212,7 @@
   .btn-group {
       justify-content: center; 
       margin: 20px auto 0 auto; /* 상단 여백 추가 및 가운데 정렬 */
-      width: 160%;
+      width: 194%;
   }
 
   /* 취소 버튼 */
