@@ -1,13 +1,18 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from DataBase.conn import get_db
 from DataBase.models import TB_USERS
 import bcrypt
+import shutil
+import os
 
 router = APIRouter()
 
+UPLOAD_DIR = "uploads"  # 이미지 저장 경로
+os.makedirs(UPLOAD_DIR, exist_ok=True)  # 폴더가 없으면 자동 생성
 
 # ✅ 회원가입 & 사용자 정보 관련 요청 모델
 class User(BaseModel):
@@ -43,6 +48,22 @@ class LoginResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# ✅ 프로필 이미지 업로드 API (이미지 경로 반환)
+@router.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+        # 파일 저장
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        print(f"📷 업로드된 이미지 경로: {file_path}")
+        return {"fileUrl": file_path}
+
+    except Exception as e:
+        print(f"❌ 이미지 업로드 오류: {e}")
+        raise HTTPException(status_code=500, detail="파일 업로드 실패")
 
 # ✅ 비밀번호 해싱 함수
 def hash_password(password: str) -> str:
@@ -56,22 +77,43 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-# ✅ 회원가입 API (비밀번호 해싱 적용)
+# ✅ 회원가입 API (JSON 요청 처리)
 @router.post("/api/join")
 async def create_user(user: User, db: Session = Depends(get_db)):
-    # 비밀번호 해싱
-    hashed_pw = hash_password(user.USER_PW)
+    try:
+        print("🔍 회원가입 요청 데이터:", user.dict())
 
-    db_user = TB_USERS(
-        USER_ID=user.USER_ID,
-        USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
-        USER_NICK=user.USER_NICK,
-    )
+        # 비밀번호 해싱
+        hashed_pw = hash_password(user.USER_PW)
 
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+        # DB 저장
+        db_user = TB_USERS(
+            USER_ID=user.USER_ID,
+            USER_PW=hashed_pw,
+            USER_NICK=user.USER_NICK,
+            USER_PROFILE_IMG=user.USER_PROFILE_IMG if user.USER_PROFILE_IMG else None,  # 빈 문자열 처리
+            KAKAO_ID=user.KAKAO_ID,
+            AUTH_PROVIDER=user.AUTH_PROVIDER,
+            CREATED_AT=user.CREATED_AT,
+            UPDATED_AT=user.UPDATED_AT
+        )
+
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        print("✅ 회원가입 성공:", db_user.USER_ID)
+        return {"message": "회원가입 성공", "USER_ID": db_user.USER_ID, "PROFILE_IMG": db_user.USER_PROFILE_IMG}
+
+    except IntegrityError:
+        db.rollback()
+        print("❌ USER_ID 중복 오류:", user.USER_ID)
+        raise HTTPException(status_code=400, detail="이미 존재하는 USER_ID입니다.")
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ 회원가입 중 오류: {e}")
+        raise HTTPException(status_code=500, detail="회원가입 처리 중 오류 발생")
 
 
 # ✅ 사용자 조회 API (단일 사용자)

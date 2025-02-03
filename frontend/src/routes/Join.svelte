@@ -17,21 +17,16 @@
     try {
         console.log("🔍 요청 데이터:", data);
 
-        const formData = new FormData();
-        formData.append("USER_ID", data.userId);
-        formData.append("USER_PW", data.password);
-        formData.append("USER_NICK", data.nickname);
-        
-        if (profileUpload && profileUpload.files.length > 0) {
-            formData.append("USER_PROFILE_IMG", profileUpload.files[0]); // 이미지 파일 추가
-        }
-
-        formData.append("KAKAO_ID", "0"); // 기본값
-        formData.append("AUTH_PROVIDER", "LOCAL"); // 일반 가입은 LOCAL 설정
+        const payload = {
+          USER_ID: data.userId,
+          USER_PW: data.password,
+          USER_NICK: data.nickname,
+        };
 
         const response = await fetch('http://localhost:9000/api/join', {
             method: 'POST',
-            body: formData  // JSON이 아니라 FormData로 전송
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
         const responseBody = await response.text();
@@ -46,7 +41,7 @@
     } catch (error) {
         console.error('❌ 회원가입 중 오류:', error);
     }
-}
+  }
 
   function onProfileUpload(event) {
     handleProfileUpload(event, (preview) => {
