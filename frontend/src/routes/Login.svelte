@@ -1,10 +1,46 @@
 <script>
-  // 로그인 CSS 임포트
-  import '../assets/css/Login.css';
-
-  // 라우터
-  import { link } from 'svelte-spa-router';
-</script>
+    import { link } from 'svelte-spa-router';
+  
+    let userId = '';
+    let password = '';
+    let errorMessage = '';
+  
+    // ✅ 로그인 요청 함수
+    async function handleLogin() {
+        try {
+            console.log("🔍 로그인 요청:", { userId, password });
+  
+            const payload = {
+                USER_ID: userId,
+                USER_PW: password
+            };
+  
+            const response = await fetch("http://localhost:9000/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+  
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "로그인 실패");
+            }
+  
+            const result = await response.json();
+            console.log("✅ 로그인 성공:", result);
+  
+            // ✅ JWT 토큰 저장 (로컬 스토리지)
+            localStorage.setItem("access_token", result.access_token);
+  
+            // ✅ 로그인 성공 후 메인 페이지로 이동
+            link("/home");
+  
+        } catch (error) {
+            console.error("❌ 로그인 오류:", error.message);
+            errorMessage = error.message;
+        }
+    }
+  </script>
 
 <style>
     /* 로고 이미지 반응형 스타일 */
