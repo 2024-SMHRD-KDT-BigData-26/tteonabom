@@ -39,6 +39,7 @@ async def get_user(USER_ID: str, db: Session = Depends(get_db)):
     return user
 
 
+
 # ✅ 사용자 전체 조회 API
 @router.get("/users")
 async def get_all_users(db: Session = Depends(get_db)):
