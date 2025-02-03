@@ -257,7 +257,7 @@
   }
   .card-img {
   flex: 1;
-  width: 100%;
+  width: 80%;
   height: 50%;
   display: flex;
   justify-content: center; /* 가로 중앙 정렬 */
