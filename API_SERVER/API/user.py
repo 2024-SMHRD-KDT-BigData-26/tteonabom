@@ -1,12 +1,17 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from DataBase.conn import get_db
 from DataBase.models import TB_USERS
 import bcrypt
+import shutil
+import os
 
 router = APIRouter()
+
+UPLOAD_DIR = "uploads"  # 업로드된 파일을 저장할 디렉토리
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # ✅ 회원가입 & 사용자 정보 관련 요청 모델
@@ -65,7 +70,7 @@ async def create_user(user: User, db: Session = Depends(get_db)):
     db_user = TB_USERS(
         USER_ID=user.USER_ID,
         USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
-        USER_NICK=user.USER_NICK,
+        USER_NICK=user.USER_NICK
     )
 
     db.add(db_user)
