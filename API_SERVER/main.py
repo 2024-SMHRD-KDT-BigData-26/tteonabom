@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment, like
+from API import user, chatting, croom, festival, file, mall_reco, poi, review, schedule, shopping_mall, timetable, poi_reco, line_comment, like, tourApi_poi, tourApi_fest
 from fastapi.middleware.cors import CORSMiddleware
 
 # FastAPI 애플리케이션 생성
@@ -30,6 +30,8 @@ app.include_router(timetable.router)
 app.include_router(poi_reco.router)
 app.include_router(line_comment.router)
 app.include_router(like.router)
+app.include_router(tourApi_poi.router)
+app.include_router(tourApi_fest.router)
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -18,6 +18,7 @@
  import MyReviewList from '../../routes/myReviewList.svelte';
  import MyReviewView from '../../routes/myReviewView.svelte';
  import MyInfoUpdate from '../../routes/myInfoUpdate.svelte';
+ import test from '../../routes/test.svelte';
 
  const routes = {
    '/': Home,
@@ -27,7 +28,7 @@
    '/AIChat/': AIChat,
    '/Shopping/': ShoppingList,
    '/Spot/': SpotList,
-   '/SpotView/': SpotView,
+   '/SpotView/:POI_IDX': SpotView,
    '/Fest/': FestList,
    '/FestView/': FestView,
    '/Review/': ReviewList,
@@ -38,7 +39,7 @@
    '/MyChatlogView/': MyChatlogView,
    '/MyReview/': MyReviewList,
    '/MyReviewView/': MyReviewView,
-   '/MyInfo/': MyInfoUpdate
+   '/MyInfo/': MyInfoUpdate,
  };
 
  export default routes;

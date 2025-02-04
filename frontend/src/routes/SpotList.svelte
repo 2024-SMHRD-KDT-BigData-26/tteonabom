@@ -8,6 +8,16 @@
   // 네비바 CSS
   import '../assets/css/VisualZone.css';
 
+  import { onMount } from 'svelte';
+
+  // DB에서 여행지 데이터 가져오기
+  let pois = [];
+  
+  onMount(async () => {
+      const res = await fetch('http://localhost:9000/pois');
+      pois = await res.json();
+    });
+
   // 지역 카테고리 선택
   let nationwideChecked = true;
   let regionsChecked = {
@@ -63,9 +73,6 @@
     }
   }
 
-  // spot-data.js에서 데이터 불러오기
-  import { spots } from "../assets/js/spot-data.js";
-
   // 페이지네이션을 위한 상태
   let currentPageNumber = 1; 
   const itemsPerPage = 6; // 한 페이지당 표시할 항목 수
@@ -74,23 +81,23 @@
   let sortOption = 'latest';
 
   // 링크
-  function goToDetail(id) {
-    window.location.href = `#/spotView/`; // 추후 수정 필요 : ${id}
-  }
+  const goToView = (POI_IDX) => {
+    link(`/SpotView/${POI_IDX}`);
+  };
 
   // 지역 필터링, 순서 정렬
-  $: filteredSpots = spots
-    .filter(spot => {
-      if (nationwideChecked) return true;
-      return Object.keys(regionsChecked).some(region => 
-        regionsChecked[region] && spot.location === regionNameMap[region]);
-    })
-    .slice() // 원본 배열을 변경하지 않도록 복사
-    .sort((a, b) => {
-      if (sortOption === "latest" && a.date && b.date) return new Date(b.date) - new Date(a.date);
-      if (sortOption === "popular") return b.likes - a.likes;
-      return 0;
-    });
+  $: filteredSpots = pois
+  .filter(spot => {
+    if (nationwideChecked) return true;
+    return Object.keys(regionsChecked).some(region => 
+      regionsChecked[region] && spot.POI_ADDR.includes(regionNameMap[region]));
+  })
+  .slice()
+  .sort((a, b) => {
+    if (sortOption === "latest" && a.CREATED_AT && b.CREATED_AT) return new Date(b.CREATED_AT) - new Date(a.CREATED_AT);
+    if (sortOption === "popular") return b.POI_LIKES - a.POI_LIKES;
+    return 0;
+  });
 
   // 페이지네이션 함수
   function paginate(array, pageNumber, itemsPerPage) {
@@ -98,7 +105,7 @@
   }
 
   $: totalPages = Math.ceil(filteredSpots.length / itemsPerPage);
-  $: visibleSpots = paginate(filteredSpots, currentPageNumber, itemsPerPage);
+  $: visiblePois = filteredSpots.length > 0 ? paginate(filteredSpots, currentPageNumber, itemsPerPage) : [];
 </script>
 
 <style>
@@ -127,7 +134,6 @@
   /* 추천 여행지 아이템 */
   .spot-item {
     flex: 0 0 calc(33.333% - 1.25rem); /* 3개씩 배치 */
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -140,6 +146,7 @@
     object-fit: cover;
     max-width: 100%; /* 화면 크기에 맞게 너비 조정 */
     border-radius: 10px;
+    cursor: pointer;
   }
 
   /* 추천 여행지 정보 전체 */
@@ -358,19 +365,21 @@
     </div>
     <!-- 여행지 목록 시작 -->
     <div class="spot-container">
-      {#each visibleSpots as spot}
-        <div class="spot-item" on:click={() => goToDetail(spot.id)}>
+      {#each visiblePois as poi}
+      <div class="spot-item">
           <!-- 이미지 -->
-          <img src={spot.image} alt="여행지 이미지" class="spot-img" />
+          <a use:link href={`/SpotView/${poi.POI_IDX}`}>
+            <img src={poi.POI_URL || "../src/assets/img/default_image_r.png"} alt="여행지 이미지" class="spot-img" />
+          </a>
           <!-- 정보 -->
           <div class="spot-info">
-            <span class="badge">{spot.location}</span>
-            <span class="spot-text">{spot.name}</span>
+            <span class="badge">{poi.POI_ADDR.slice(0, 2)}</span>
+            <span class="spot-text">{poi.POI_NM}</span>
             <span class="d-flex align-items-center ms-auto gap-1">
               <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
-              {spot.likes}
+              0
               <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
-              {spot.reviews}
+              0
             </span>
           </div>
         </div>
