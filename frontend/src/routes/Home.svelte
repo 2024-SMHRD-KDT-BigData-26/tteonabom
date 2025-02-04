@@ -189,7 +189,7 @@
   /* 화면 너비가 1300px 이상일 때만 margin-left: 330px 적용 */
   @media (min-width: 1300px) {
     .masonry-grid {
-      margin-left: 330px;
+      margin-left: 300px;
     }
   }
 
