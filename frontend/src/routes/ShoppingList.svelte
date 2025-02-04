@@ -1,11 +1,11 @@
 <script>
-  import { onMount } from "svelte";
-  import { shopItems, sortShopItems } from "../assets/js/ShoppingList.js";
+  import { shopItems, sortShopItems, filterItemsByCategory } from "../assets/js/ShoppingList.js";
 
   let currentPage = "visual_shopping";
   let sortOption = "likes"; // 기본 정렬: 좋아요순
   let currentSpotPage = 1; // 페이지네이션 상태
   const itemsPerPage = 9; // 한 페이지당 표시할 항목 수
+  let selectedCategory = "전체"; // 선택된 카테고리 (기본값: 전체)
 
   // `shopItems`를 직접 변경하지 않고, 복사본을 사용해야 함
   let sortedShopItems = [...shopItems];
@@ -25,11 +25,22 @@
     { src: "/src/assets/img/fishhook_img.avif", name: "낚시" },
   ];
 
-  function changeSort(option) {
-    sortOption = option;
-    sortedShopItems = sortShopItems([...shopItems], sortOption);
+  // 카테고리 선택 함수
+  function selectCategory(category) {
+    selectedCategory = category;
+    currentSpotPage = 1; // 카테고리 변경 시 페이지를 1로 초기화
+    applyFilters(); // 필터링 적용
   }
 
+  // 필터링 및 정렬 적용 함수
+  function applyFilters() {
+    let filteredItems = filterItemsByCategory(shopItems, selectedCategory); // 카테고리 필터링
+
+    // 정렬 적용
+    sortedShopItems = sortShopItems(filteredItems, sortOption);
+  }
+
+  // 현재 페이지에 표시할 항목 반환
   function getVisibleItems() {
     const startIndex = (currentSpotPage - 1) * itemsPerPage;
     return sortedShopItems.slice(startIndex, startIndex + itemsPerPage);
@@ -37,11 +48,15 @@
 
   const totalPages = Math.ceil(sortedShopItems.length / itemsPerPage);
 
+  // 페이지 변경 함수
   function changePage(page) {
     if (page >= 1 && page <= totalPages) {
       currentSpotPage = page;
     }
   }
+
+  // 초기 필터링 적용
+  applyFilters();
 </script>
 
 <main class="main-content">
@@ -55,7 +70,10 @@
     <!-- 이미지 바 -->
     <div class="img-bar">
       {#each categories as item}
-        <div class="shopping-img">
+        <div
+          class="shopping-img"
+          on:click={() => selectCategory(item.name)}
+        >
           <img src={item.src} alt={item.name} class="main-img" />
           <span>{item.name}</span>
         </div>
@@ -64,11 +82,14 @@
 
     <!-- 게시물 개수 + 정렬 -->
     <div class="items-header">
-      <p class="item-count">총 {shopItems.length}개</p>
+      <p class="item-count">총 {sortedShopItems.length}건</p>
       <div class="sort-container">
-        <select class="form-select">
-          <option value="1">가나다순</option>
-          <option value="2">좋아요순</option>
+        <select
+          class="form-select"
+          on:change={(e) => changeSort(e.target.value)}
+        >
+          <option value="name">가나다순</option>
+          <option value="likes">좋아요순</option>
         </select>
       </div>
     </div>
@@ -133,6 +154,8 @@
     </nav>
   </div>
 </main>
+
+
 
 <style>
   /* 기본 폰트 설정 */
@@ -379,8 +402,8 @@
   /* 게시물 개수 스타일 */
   .item-count {
     font-size: 1rem;
-    font-weight: 600;
     color: #333;
+    margin-bottom: 0;
   }
 
   /* 정렬 선택 스타일 */
