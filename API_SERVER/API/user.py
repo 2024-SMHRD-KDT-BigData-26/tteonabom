@@ -8,7 +8,7 @@ from DataBase.models import TB_USERS
 import bcrypt
 import shutil
 import os
-
+from typing import Optional
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     USER_ID: str
     USER_NICK: str
-    USER_PROFILE_IMG: str = None
+    USER_PROFILE_IMG: Optional[str] = None
     KAKAO_ID: int = 0  # ✅ 기본값 설정
     AUTH_PROVIDER: str = "LOCAL"  # ✅ 기본값 설정
     CREATED_AT: datetime
@@ -172,7 +172,7 @@ async def delete_user(USER_ID: str, db: Session = Depends(get_db)):
 
 
 # ✅ 로그인 API (JSON 응답)
-@router.post("/login", response_model=LoginResponse)
+@router.post("/api/login", response_model=LoginResponse)
 async def login(user: LoginRequest, db: Session = Depends(get_db)):
     """ 사용자 로그인 검증 API """
 
@@ -189,7 +189,7 @@ async def login(user: LoginRequest, db: Session = Depends(get_db)):
     return {
         "USER_ID": db_user.USER_ID,
         "USER_NICK": db_user.USER_NICK,
-        "USER_PROFILE_IMG": db_user.USER_PROFILE_IMG,
+        "USER_PROFILE_IMG": db_user.USER_PROFILE_IMG if db_user.USER_PROFILE_IMG is not None else None,
         "KAKAO_ID": db_user.KAKAO_ID if db_user.KAKAO_ID is not None else 0,  # 기본값 설정
         "AUTH_PROVIDER": db_user.AUTH_PROVIDER if db_user.AUTH_PROVIDER is not None else "LOCAL",  # 기본값 설정
         "CREATED_AT": db_user.CREATED_AT,
