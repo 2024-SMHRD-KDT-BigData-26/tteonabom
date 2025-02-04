@@ -42,17 +42,10 @@ class LoginResponse(BaseModel):
     USER_ID: str
     USER_NICK: str
     USER_PROFILE_IMG: str = None
-<<<<<<< HEAD
     KAKAO_ID: int = 0  # ✅ 기본값 설정
     AUTH_PROVIDER: str = "LOCAL"  # ✅ 기본값 설정
     CREATED_AT: datetime
     UPDATED_AT: datetime = datetime.utcnow()  # ✅ 기본값 설정
-=======
-    KAKAO_ID: int = None
-    AUTH_PROVIDER: str = None
-    CREATED_AT: datetime = None
-    UPDATED_AT: datetime = None
->>>>>>> c37739fc0cee9942908d6ee6d204e1fc00b05c80
 
     class Config:
         from_attributes = True
@@ -92,17 +85,16 @@ async def create_user(user: User, db: Session = Depends(get_db)):
     try:
         print("🔍 회원가입 요청 데이터:", user.dict())
 
-<<<<<<< HEAD
-        # 비밀번호 해싱
+
+         # 비밀번호 해싱
         hashed_pw = hash_password(user.USER_PW)
-=======
-    db_user = TB_USERS(
+
+        db_user = TB_USERS(
         USER_ID=user.USER_ID,
         USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
         USER_NICK=user.USER_NICK
+        )
 
-    )
->>>>>>> c37739fc0cee9942908d6ee6d204e1fc00b05c80
 
         # DB 저장
         db_user = TB_USERS(
