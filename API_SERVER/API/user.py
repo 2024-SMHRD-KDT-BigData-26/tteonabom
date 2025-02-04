@@ -19,11 +19,11 @@ class User(BaseModel):
     USER_ID: str
     USER_PW: str
     USER_NICK: str
-    USER_PROFILE_IMG: str
-    KAKAO_ID: int
-    AUTH_PROVIDER: str
-    CREATED_AT: datetime
-    UPDATED_AT: datetime
+    USER_PROFILE_IMG: str = None
+    KAKAO_ID: int = None
+    AUTH_PROVIDER: str = None
+    CREATED_AT: datetime = None
+    UPDATED_AT: datetime = None
 
     class Config:
         from_attributes = True
@@ -39,11 +39,11 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     USER_ID: str
     USER_NICK: str
-    USER_PROFILE_IMG: str
-    KAKAO_ID: int
-    AUTH_PROVIDER: str
-    CREATED_AT: datetime
-    UPDATED_AT: datetime
+    USER_PROFILE_IMG: str = None
+    KAKAO_ID: int = None
+    AUTH_PROVIDER: str = None
+    CREATED_AT: datetime = None
+    UPDATED_AT: datetime = None
 
     class Config:
         from_attributes = True
@@ -71,6 +71,7 @@ async def create_user(user: User, db: Session = Depends(get_db)):
         USER_ID=user.USER_ID,
         USER_PW=hashed_pw,  # 해싱된 비밀번호 저장
         USER_NICK=user.USER_NICK
+
     )
 
     db.add(db_user)
@@ -102,8 +103,10 @@ async def update_user(USER_ID: str, user: User, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    for key, value in user.dict().items():
+    for key, value in user.dict(exclude_unset=True).items():
         setattr(db_user, key, value)
+
+    db_user.UPDATED_AT = datetime.utcnow()  # 수정 시간 업데이트
 
     db.commit()
     db.refresh(db_user)
