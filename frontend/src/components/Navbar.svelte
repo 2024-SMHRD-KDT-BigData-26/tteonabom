@@ -11,10 +11,36 @@
 
   // 라우터
   import { link } from 'svelte-spa-router';
-  import routes from '.././assets/js/routes.js';
+  import { onMount } from 'svelte';
 
-  // App.svelte에서 전달받은 isHomePage 값
   export let isHomePage = false;
+
+  // 로그인 상태 관리 (반응형)
+  let user = '';
+
+  // 마운트 시 로컬스토리지에서 로그인 상태 확인
+  onMount(() => {
+    user = localStorage.getItem('user') || '';
+
+    // localStorage 변경 감지 이벤트 리스너 추가
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'user') {
+        user = event.newValue || '';
+      }
+    });
+  });
+
+  // 로그인 함수 (로그인 페이지로 이동)
+  function handleLogin() {
+    window.location.href = '/#/Login';
+  }
+
+  // 로그아웃 함수 (상태 즉시 반영)
+  function handleLogout() {
+    localStorage.removeItem('user'); // user 키 삭제
+    user = ''; // 상태 업데이트
+    window.dispatchEvent(new Event('storage')); // 상태 변경 이벤트 트리거
+  }
 </script>
 
 <!-- 네비게이션 바 -->
@@ -22,14 +48,15 @@
   <div class="container-fluid navbar-content">
     <!-- 로고 -->
     <div class="d-flex align-items-center">
-      <a use:link href="/" class="navbar-brand"><img src="..\src\assets\img\nav_logo.png" class="nav_logo" /></a>
+      <a use:link href="/" class="navbar-brand">
+        <img src="../src/assets/img/nav_logo.png" class="nav_logo" />
+      </a>
     </div>
 
     <!-- 메뉴 -->
     <div class="d-flex justify-content-center flex-grow-1">
       <ul class="navbar-nav d-flex flex-row gap-3">
         <li class="nav-item" id="home">
-          <!-- 홈 페이지일 때 nav-link의 클래스에 home-link를 추가 -->
           <a use:link href="/" class="nav-link {isHomePage ? 'home-link' : ''}">홈</a>
         </li>
         <li class="nav-item" id="AI">
@@ -47,24 +74,28 @@
         <li class="nav-item" id="review">
           <a use:link href="/Review" class="nav-link">여행후기</a>
         </li>
-        <!-- 비로그인 시 내여행 버튼 비노출-->
-        <div id="mypage_menu">
-          <li class="nav-item"><a use:link href="/My" class="nav-link" id="mypage">내여행</a></li>
-        </div>
+        <!-- 로그인 상태(user 키 존재)일 때 '내여행' 버튼 표시 -->
+        {#if user}
+          <div id="mypage_menu">
+            <li class="nav-item"><a use:link href="/My" class="nav-link" id="mypage">내여행</a></li>
+          </div>
+        {/if}
       </ul>
     </div>
 
-    <!-- 로그인 버튼 -->
+    <!-- 로그인/로그아웃 버튼 토글 -->
     <div class="d-flex align-items-center">
-      <a use:link href="/Login" class="btn btn-primary login-btn">
-        <img src="..\src\assets\img\login_btn_img.png" class="login_btn_img">로그인
-      </a>
-    </div>
-    <!-- 로그아웃 버튼 -->
-    <div class="d-flex align-items-center">
-      <a href="#" class="btn btn-primary logout-btn">
-        <img src="..\src\assets\img\logout_btn_img.png" class="logout_btn_img">로그아웃
-      </a>
+      {#if user}
+        <!-- 로그아웃 버튼 -->
+        <button class="btn btn-primary logout-btn" on:click={handleLogout}>
+          <img src="../src/assets/img/logout_btn_img.png" class="logout_btn_img"> 로그아웃
+        </button>
+      {:else}
+        <!-- 로그인 버튼 -->
+        <button class="btn btn-primary login-btn" on:click={handleLogin}>
+          <img src="../src/assets/img/login_btn_img.png" class="login_btn_img"> 로그인
+        </button>
+      {/if}
     </div>
   </div>
 </nav>

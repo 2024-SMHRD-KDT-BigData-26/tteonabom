@@ -1,7 +1,8 @@
 <script>
     import '../assets/css/Login.css';
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
     import { link } from 'svelte-spa-router';
+
     let userId = "";
     let password = "";
     let errorMessage = "";
@@ -36,10 +37,16 @@
                 return;
             }
 
-            // 로그인 성공 시 로컬스토리지에 사용자 정보 저장
+            // 로그인 성공 시 localStorage에 사용자 정보 저장
             localStorage.setItem("user", JSON.stringify(data));
 
-            // 메인 페이지로 이동 (예: 홈 화면)
+            // 로그인 상태 즉시 업데이트 (네비게이션 반영을 위해)
+            window.dispatchEvent(new Event('storage'));
+
+            // UI가 즉시 업데이트되도록 강제 갱신
+            await tick();
+
+            // 메인 페이지로 이동
             window.location.href = "/";
 
         } catch (error) {

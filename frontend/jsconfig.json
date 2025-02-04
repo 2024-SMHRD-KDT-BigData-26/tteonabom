@@ -22,9 +22,8 @@
      * Typecheck JS in `.svelte` and `.js` files by default.
      * Disable this if you'd like to use dynamic types.
      */
-    "checkJs": false,
-    "javascript.validate.enable": false,
-    "typescript.tsserver.useSeparateSyntaxServer": false
+    "checkJs": false
+
   },
   
   /**
