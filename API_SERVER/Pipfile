@@ -10,6 +10,8 @@ pymysql = "*"
 bcrypt = "*"
 mysql = "*"
 jwt = "*"
+openai = "*"
+requests = "*"
 
 [dev-packages]
 
