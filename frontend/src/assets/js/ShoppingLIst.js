@@ -20,118 +20,126 @@ export function sortShopItems(items, sortType) {
     return items;
 }
 
+// 카테고리 필터링 함수 (선택된 카테고리에 맞는 아이템만 필터링)
+export function filterItemsByCategory(items, selectedCategory) {
+    if (selectedCategory === "전체") {
+        return items;  // 전체 카테고리일 경우 모든 항목을 반환
+    }
+    return items.filter(item => item.category === `#${selectedCategory}`); // 카테고리에 맞는 항목만 반환
+}
+
 // 샘플 쇼핑몰 데이터
 export const shopItems = [
     {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크A",
-      likes: 15,
-      url: "http://shop1.jaike.cafe24.com/",
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크A",
+        likes: 15,
+        url: "http://shop1.jaike.cafe24.com/",
     },
     {
-      img: "/src/assets/img/bicycle01.png",
-      category: "#자전거",
-      title: "바이크B",
-      likes: 20,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크C",
-      likes: 10,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크D",
-      likes: 25,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크E",
-      likes: 5,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크F",
-      likes: 30,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크G",
-      likes: 18,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크H",
-      likes: 22,
-      url: "http://shop1.jaike.cafe24.com/",
-    },
-    {
-      img: "/src/assets/img/bicycle00.png",
-      category: "#자전거",
-      title: "바이크I",
-      likes: 14,
-      url: "http://shop1.jaike.cafe24.com/",
+        img: "/src/assets/img/bicycle01.png",
+        category: "#자전거",
+        title: "바이크B",
+        likes: 20,
+        url: "http://shop1.jaike.cafe24.com/",
     },
     {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
-        likes: 14,
+        title: "바이크C",
+        likes: 10,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
-        likes: 14,
+        title: "바이크D",
+        likes: 25,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
-        likes: 14,
+        title: "바이크E",
+        likes: 5,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
+        title: "바이크F",
+        likes: 30,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#캠핑",
+        title: "캠핑A",
+        likes: 18,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#물놀이",
+        title: "물놀이B",
         likes: 14,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
-        likes: 14,
+        title: "바이크A",
+        likes: 15,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
+        img: "/src/assets/img/bicycle01.png",
+        category: "#자전거",
+        title: "바이크B",
+        likes: 20,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
-        likes: 14,
+        title: "바이크C",
+        likes: 10,
         url: "http://shop1.jaike.cafe24.com/",
-      },
-      {
+    },
+    {
         img: "/src/assets/img/bicycle00.png",
         category: "#자전거",
-        title: "바이크I",
+        title: "바이크D",
+        likes: 25,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크E",
+        likes: 5,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#자전거",
+        title: "바이크F",
+        likes: 30,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#캠핑",
+        title: "캠핑",
+        likes: 18,
+        url: "http://shop1.jaike.cafe24.com/",
+    },
+    {
+        img: "/src/assets/img/bicycle00.png",
+        category: "#물놀이",
+        title: "물놀이",
         likes: 14,
         url: "http://shop1.jaike.cafe24.com/",
-      }
+    }
 ];
