@@ -320,7 +320,7 @@
         </div>
         <!-- 중간: 이미지와 표 형태 정보 -->
         <div class="card d-flex flex-row align-items-start card-body-div">
-          <img src={spot?.POI_URL || 'https://example.com'} alt="여행지 이미지" class="card-img-top" on:click={toggleModal} />
+          <img src={poi.POI_URL || "../src/assets/img/default_image_o.png"} alt="여행지 이미지" class="card-img-top" on:click={toggleModal} />
           <div class="card-body">
             <table class="table table-hover">
               <tbody>
