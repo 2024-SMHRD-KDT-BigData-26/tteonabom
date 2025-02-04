@@ -161,7 +161,7 @@
 
   .chat-header {
     text-align: center;
-    color: white;
+    color: #000;
     padding: 10px;
     border-radius: 10px 10px 0 0;
   }
