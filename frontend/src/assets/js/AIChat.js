@@ -67,7 +67,14 @@ export function sendMessage(messages, text, setShowCalendar) {
                 { text: "여유로운 일정", action: "relaxed" },
             ],
         };
-    } 
+    } else if (["타이트한 일정", "여유로운 일정"].includes(text)) {
+        updatedMessages = [...messages, { type: "user", text }];
+
+        botResponse = {
+            type: "bot",
+            text: "멋진 선택이에요! 여행 일정을 추천해드릴게요. 잠시만 기다려주세요...",
+        };
+    }
     // 여행지 추천
     else if (text === "여행지 추천") {
         botResponse = {
@@ -104,6 +111,26 @@ export function sendMessage(messages, text, setShowCalendar) {
             ],
         };
     }
+
+    // 쇼핑몰 추천 
+    else if (text === "쇼핑몰 추천") {
+        botResponse = {
+            type: "bot",
+            text: "원하는 테마를 선택해주세요.",
+            buttons: [
+                { text: "등산", action: "mountain" },
+                { text: "물놀이", action: "swimming" },
+                { text: "서핑", action: "surfing" },
+                { text: "수영복", action: "swimsuit" },
+                { text: "스키", action: "ski" },
+                { text: "여행용품", action: "travel" },
+                { text: "자전거", action: "bicycle" },
+                { text: "카메라", action: "camera" },
+                { text: "캠핑", action: "camping" },
+                { text: "낚시", action: "fishhook" },
+            ],
+        }
+    };
 
     if (botResponse) {
         const updatedMessages = [...messages, { type: "user", text }, botResponse];
