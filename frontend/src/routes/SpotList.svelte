@@ -14,9 +14,12 @@
   let pois = [];
   
   onMount(async () => {
-      const res = await fetch('http://localhost:9000/pois');
-      pois = await res.json();
-    });
+    const res = await fetch('http://localhost:9000/pois');
+    let data = await res.json();
+
+    // 이미지가 없는 항목 제외
+    pois = data.filter(spot => spot.POI_URL && spot.POI_URL.trim() !== "");
+  });
 
   // 지역 카테고리 선택
   let nationwideChecked = true;
@@ -106,6 +109,20 @@
 
   $: totalPages = Math.ceil(filteredSpots.length / itemsPerPage);
   $: visiblePois = filteredSpots.length > 0 ? paginate(filteredSpots, currentPageNumber, itemsPerPage) : [];
+
+  // 페이지네이션 범위 계산
+  $: paginationRange = (() => {
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPageNumber - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // 끝 부분에서 5개 유지
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  })();
 </script>
 
 <style>
@@ -387,25 +404,35 @@
     </div>
     <!-- 여행지 목록 끝 -->
   </div>
-  <!-- 페이지네이션 -->
-  <nav aria-label="Page navigation">
-    <ul class="pagination pagination-sm">
-      <!-- 처음 페이지 이동 -->
-      <li class="page-item {currentPageNumber === 1 ? 'disabled' : ''}">
-        <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = 1}>&laquo;</a>
-      </li>
+ <!-- 페이지네이션 -->
+<nav aria-label="Page navigation">
+  <ul class="pagination pagination-sm">
+    <!-- 처음 페이지 이동 -->
+    <li class="page-item {currentPageNumber === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = 1}>&laquo;</a>
+    </li>
 
-      <!-- 페이지 번호 -->
-      {#each Array.from({ length: totalPages }, (_, i) => i + 1) as page}
-        <li class="page-item {page === currentPageNumber ? 'active' : ''}">
-          <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = page}>{page}</a>
-        </li>
-      {/each}
+    <!-- 이전 페이지 -->
+    <li class="page-item {currentPageNumber === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = Math.max(1, currentPageNumber - 1)}>&lt;</a>
+    </li>
 
-      <!-- 마지막 페이지 이동 -->
-      <li class="page-item {currentPageNumber === totalPages ? 'disabled' : ''}">
-        <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = totalPages}>&raquo;</a>
+    <!-- 페이지 번호 -->
+    {#each paginationRange as page}
+      <li class="page-item {page === currentPageNumber ? 'active' : ''}">
+        <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = page}>{page}</a>
       </li>
-    </ul>
-  </nav>
+    {/each}
+
+    <!-- 다음 페이지 -->
+    <li class="page-item {currentPageNumber === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = Math.min(totalPages, currentPageNumber + 1)}>&gt;</a>
+    </li>
+
+    <!-- 마지막 페이지 이동 -->
+    <li class="page-item {currentPageNumber === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" on:click|preventDefault={() => currentPageNumber = totalPages}>&raquo;</a>
+    </li>
+  </ul>
+</nav>
 </main>
