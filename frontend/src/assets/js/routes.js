@@ -18,7 +18,6 @@
  import MyReviewList from '../../routes/myReviewList.svelte';
  import MyReviewView from '../../routes/myReviewView.svelte';
  import MyInfoUpdate from '../../routes/myInfoUpdate.svelte';
- import test from '../../routes/test.svelte';
 
  const routes = {
    '/': Home,
