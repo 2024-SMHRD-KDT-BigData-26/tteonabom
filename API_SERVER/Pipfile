@@ -10,6 +10,7 @@ bcrypt = "*"
 mysql = "*"
 jwt = "*"
 fastapi = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File,Query, Body
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from DataBase.conn import get_db
@@ -49,6 +49,14 @@ class LoginResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class User(BaseModel):
+    USER_PW: Optional[str] = Field(None, title="비밀번호")
+    USER_NICK: Optional[str] = Field(None, title="닉네임")
+    USER_PROFILE_IMG: Optional[str] = Field(None, title="프로필 이미지 URL")
+
+    class Config:
+        orm_mode = True
 
 # ✅ 프로필 이미지 업로드 API (이미지 경로 반환)
 @router.post("/api/upload")
@@ -144,19 +152,33 @@ async def get_all_users(db: Session = Depends(get_db)):
 
 # ✅ 사용자 정보 수정 API
 @router.put("/api/myinfo")
-async def update_user(USER_ID: str, user: User, db: Session = Depends(get_db)):
+async def update_user(
+        USER_ID: str = Query(..., title="수정할 사용자 ID"),  # 쿼리 파라미터
+        user: User = Body(...),  # 요청 본문(JSON)
+        db: Session = Depends(get_db)  # DB 세션
+):
     db_user = db.query(TB_USERS).filter(TB_USERS.USER_ID == USER_ID).first()
+
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    for key, value in user.dict(exclude_unset=True).items():
+    update_data = user.dict(exclude_unset=True)  # 요청 데이터 중 비어 있지 않은 값만 사용
+
+    # 비밀번호 변경이 요청되었을 경우 → 해싱 후 저장
+    if "USER_PW" in update_data and update_data["USER_PW"]:
+        hashed_pw = hash_password(update_data["USER_PW"])  # 비밀번호 해싱
+        update_data["USER_PW"] = hashed_pw  # 해싱된 비밀번호 적용
+
+    # 업데이트할 값 적용
+    for key, value in update_data.items():
         setattr(db_user, key, value)
 
     db_user.UPDATED_AT = datetime.utcnow()  # 수정 시간 업데이트
 
     db.commit()
     db.refresh(db_user)
-    return db_user
+
+    return {"message": "회원정보가 성공적으로 수정되었습니다.", "updated_data": db_user}
 
 
 # ✅ 사용자 삭제 API
