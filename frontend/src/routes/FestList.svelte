@@ -1,4 +1,7 @@
 <script>
+  // 페이지 이동을 위한 import
+  import { link } from "svelte-spa-router";
+
   // 비주얼존 배경명
   let currentPage = 'visual_fest';
 
@@ -11,16 +14,6 @@
   let currentYear = new Date().getFullYear();
   let selectedMonth = '전체';
   const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-
-  function changeYear(direction) {
-    currentYear += direction;
-    applyFilters();
-  }
-
-  function selectMonth(month) {
-    selectedMonth = month;
-    applyFilters();
-  }
 
   // 지역 카테고리 선택
   let nationwideChecked = true;
@@ -84,7 +77,18 @@
   }
 
   // 행사정보 데이터
-  import { fests } from '../assets/js/fest-data.js';
+  let festivals = [];
+
+  async function fetchFestivals() {
+    try {
+      const response = await fetch('http://localhost:9000/festival');
+      const data = await response.json();
+      festivals = Array.isArray(data) ? data : [data];
+      applyFilters();
+    } catch (error) {
+      console.error('Error fetching festival data:', error);
+    }
+  }
 
   // 필터링된 행사 목록
   let filteredFests = [];
@@ -93,29 +97,32 @@
   let currentPageNumber = 1;
   const itemsPerPage = 8;
 
-  // 정렬 기준
+  // 기본 정렬 순서
   let sortBy = 'latest';
+
+  // 링크
+  const goToView = (FEST_IDX) => {
+    link(`/FestView/${FEST_IDX}`);
+  };
 
   // 필터 적용 함수
   function applyFilters() {
-  filteredFests = fests.filter(fest => {
-    const festYear = fest.period.substring(0, 4); // 년도 추출
-    const festMonth = fest.period.split('.')[1]?.padStart(2, '0'); // 월 숫자 변환
-    const festRegion = fest.location.substring(0, 2); // 지역 앞 2글자 추출
+    filteredFests = festivals.filter(fest => {
+      const festYear = fest.FEST_PERIOD.substring(0, 4);
+      const festMonth = fest.FEST_PERIOD.split('.')[1]?.padStart(2, '0');
+      const festRegion = fest.FEST_LOC.substring(0, 2);
 
     // 년도 필터링
     if (festYear !== currentYear.toString()) return false;
 
     // 월 필터링 (전체가 아닌 경우)
     if (selectedMonth !== '전체') {
-      const selectedMonthNumber = months.indexOf(selectedMonth) + 1; // '1월' -> 1, '2월' -> 2
-      if (festMonth !== selectedMonthNumber.toString().padStart(2, '0')) return false;
-    }
+        const selectedMonthNumber = months.indexOf(selectedMonth) + 1;
+        if (festMonth !== selectedMonthNumber.toString().padStart(2, '0')) return false;
+      }
 
     // 전국이 체크된 경우 → 월 필터링만 적용하고 지역 필터링은 하지 않음
-    if (nationwideChecked) {
-      return true;
-    }
+    if (nationwideChecked) return true;
 
     // 지역 필터링 (전국이 체크 안 된 경우)
     const selectedRegions = Object.keys(regionsChecked).filter(region => regionsChecked[region]);
@@ -125,13 +132,13 @@
 
     // fest.location이 선택된 지역과 일치하는지 확인
     return selectedRegions.some(region => festRegion.includes(regionNameMap[region]));
-  });
+    });
 
   // 정렬 적용
   if (sortBy === 'latest') {
-    filteredFests.sort((a, b) => new Date(b.period.split(' ~ ')[0]) - new Date(a.period.split(' ~ ')[0]));
-  } else if (sortBy === 'ganada') {
-  filteredFests.sort((a, b) => a.title.localeCompare(b.title, 'ko-KR'));
+      filteredFests.sort((a, b) => new Date(b.FEST_PERIOD.split(' ~ ')[0]) - new Date(a.FEST_PERIOD.split(' ~ ')[0]));
+    } else if (sortBy === 'ganada') {
+      filteredFests.sort((a, b) => a.FEST_NM.localeCompare(b.FEST_NM, 'ko-KR'));
   }
 
   currentPageNumber = 1; // 필터 적용 시 첫 페이지로 이동
@@ -148,6 +155,16 @@
   }
 
   // 정렬 변경 함수
+  function changeYear(direction) {
+    currentYear += direction;
+    applyFilters();
+  }
+
+  function selectMonth(month) {
+    selectedMonth = month;
+    applyFilters();
+  }
+
   function changeSort(event) {
     sortBy = event.target.value;
     applyFilters();
@@ -155,7 +172,7 @@
 
   // 초기 필터 적용
   onMount(() => {
-  applyFilters();
+    fetchFestivals();
   });
 </script>
 
@@ -192,6 +209,9 @@
   /* 이달의 행사정보 이미지 */
   .fest-image {
     border: 1px solid #bbb;
+    width: 300px;
+    height: 172px;
+    object-fit: cover;
   }
 
   /* 이달의 행사정보 제목 */
@@ -229,6 +249,8 @@
         color: white;
         border-color: #333;
       }
+
+      
 </style>
 
 <main class="main-content">
@@ -402,14 +424,16 @@
 
     <!-- 행사 목록 시작 -->
     <div class="row fest-list content">
-      {#each paginate(filteredFests, currentPageNumber, itemsPerPage) as fest}
+      {#each paginate(filteredFests, currentPageNumber, itemsPerPage) as festival}
         <div class="col-md-3 mb-4">
-          <div class="fest-card text-truncate" on:click={() => goToDetail(fest.id)}>
-            <img src={fest.image} alt={fest.title} class="img-fluid rounded-10 fest-image">
+          <div class="fest-card text-truncate">
+            <a use:link href={`/FestView/${festival.FEST_IDX}`}>
+              <img src={festival.FEST_URL} alt={festival.FEST_NM} class="img-fluid rounded-10 fest-image">
+            </a>
             <div class="fest-details">
-              <h3>{fest.title}</h3>
-              <p>기간: {fest.period}</p>
-              <p>장소: {fest.location}</p>
+              <h3>{festival.FEST_NM}</h3>
+              <p>기간: {festival.FEST_PERIOD}</p>
+              <p>장소: {festival.FEST_ADDR}</p>
             </div>
           </div>
         </div>
