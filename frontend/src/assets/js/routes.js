@@ -29,7 +29,7 @@
    '/Spot/': SpotList,
    '/SpotView/:POI_IDX': SpotView,
    '/Fest/': FestList,
-   '/FestView/': FestView,
+   '/FestView/:FEST_IDX': FestView,
    '/Review/': ReviewList,
    '/ReviewInsert/': ReviewInsert,
    '/ReviewView/': ReviewView,
