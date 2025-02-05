@@ -11,6 +11,7 @@
   let password = '';
   let confirmPassword = '';
   let nickname = '';
+  let errorMessage = ''; // 오류 메시지 추가
   let errors = { idError: '', passwordError: '', nickError: '' };
 
   async function submitToBackend(data) {
@@ -38,8 +39,13 @@
 
         const result = JSON.parse(responseBody);
         console.log('✅ 회원가입 성공:', result);
+
+        // 회원가입 성공 시 로그인 페이지로 이동
+        window.location.href = "/#/Login";
+
     } catch (error) {
         console.error('❌ 회원가입 중 오류:', error);
+        errorMessage = "회원가입에 실패했습니다. 다시 시도해주세요.";
     }
   }
 
@@ -48,7 +54,6 @@
       profilePreview = preview;
     });
   }
-
 
   // 취소 버튼 클릭 시
   function handleCancel() {
@@ -309,6 +314,11 @@
           중복확인
         </button>
       </div>
+
+      <!-- 오류 메시지 출력 -->
+      {#if errorMessage}
+        <p style="color: red;">{errorMessage}</p>
+      {/if}
 
       <!-- 버튼 그룹 -->
       <div class="btn-group">

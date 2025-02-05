@@ -143,7 +143,7 @@ async def get_all_users(db: Session = Depends(get_db)):
 
 
 # ✅ 사용자 정보 수정 API
-@router.put("/users/{USER_ID}")
+@router.put("/api/myinfo")
 async def update_user(USER_ID: str, user: User, db: Session = Depends(get_db)):
     db_user = db.query(TB_USERS).filter(TB_USERS.USER_ID == USER_ID).first()
     if not db_user:

@@ -83,10 +83,7 @@
     background-color: #27ae60;
   }
 
-  /* 로그아웃 버튼 숨김처리 */
-  .logout-btn {
-    display: none;
-  }
+
 
   /* 내여행 메뉴 숨김처리 
   #mypage_menu {
