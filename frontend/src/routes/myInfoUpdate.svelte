@@ -122,9 +122,9 @@
     window.history.back();
   }
 
-  // 왼쪽 메뉴 페이지 이동 (임시 구현)
-  function goToDetail(page: string) {
-    console.log(`페이지 이동: ${page}`);
+  // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
+  function goToDetail(id) {
+    window.location.href = `#/${id}`;
   }
 </script>
 
