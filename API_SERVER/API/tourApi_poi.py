@@ -19,10 +19,14 @@ async def fetch_tour_data():
         "MobileApp": "TestApp",
         "arrange": "A",
         "contentTypeId": "12",  # 관광지
-        "areaCode": "1",  # 서울
-        "numOfRows": 10,
+        "areaCode": "37",  # 지역코드
+        "numOfRows": 10,  # 출력할 목록 수
         "_type": "json"
     }
+    # 지역코드
+    # 1 서울, 2 인천, 3 대전, 4 대구, 5 광주, 6 부산, 7 울산, 8 세종특별자치시
+    # 31 경기도, 32 강원특별자치도, 33 충청북도, 34 충청남도
+    # 35 경상북도, 36 경상남도, 37 전북특별자치도, 38 전남특별자치도, 39 제주특별자치도
 
     try:
         # ✅ 공동정보조회 API 호출
@@ -36,6 +40,15 @@ async def fetch_tour_data():
 
         for item in items:
             content_id = item.get("contentid")
+            addr1 = item.get("addr1", "-")
+            area_code = str(item.get("areaCode", ""))  # areaCode를 문자열로 변환
+
+            # ✅ POI_REGION: addr1에서 첫 2글자만 추출
+            poi_region = addr1[:2] if addr1 != "-" else "-"
+
+            # ✅ areaCode가 33, 34, 35, 36이면 첫 글자 + 세 번째 글자 추출
+            if area_code in {"33", "34", "35", "36"} and len(addr1) >= 3:
+                poi_region = addr1[0] + addr1[2]
 
             # ✅ 소개정보조회 API 호출 (상세정보)
             detail_params = {
@@ -43,7 +56,7 @@ async def fetch_tour_data():
                 "contentId": content_id,
                 "MobileOS": "ETC",
                 "MobileApp": "TestApp",
-                "overviewYN" : "Y",
+                "overviewYN": "Y",
                 "_type": "json"
             }
 
@@ -60,15 +73,16 @@ async def fetch_tour_data():
 
             # ✅ 결과 데이터 구성
             tour_data = {
-                "contentid": content_id,
-                "title": item.get("title", "-"),
-                "overview": detail_item.get("overview", "-"),
-                "addr1": item.get("addr1", "-"),
-                "firstimage": item.get("firstimage", ""),
-                "usetime": detail_item.get("usetime", ""),
-                "tel": item.get("tel", ""),
-                "mapy": item.get("mapy", 0.0),
-                "mapx": item.get("mapx", 0.0),
+                "POI_IDX": content_id,
+                "POI_NM": item.get("title", "-"),
+                "POI_INFO": detail_item.get("overview", "-"),
+                "POI_ADDR": addr1,
+                "POI_URL": item.get("firstimage", ""),
+                "POI_REGION": poi_region,  # 수정된 지역명
+                "POI_TEL": item.get("tel", "-"),
+                "POI_PERIOD": item.get("usetime", "-"),
+                "LAT": item.get("mapy", 0.0),
+                "LON": item.get("mapx", 0.0),
                 "CREATED_AT": datetime.utcnow(),
                 "UPDATED_AT": datetime.utcnow(),
             }
