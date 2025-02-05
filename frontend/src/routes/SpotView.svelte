@@ -152,6 +152,12 @@
     window.location.href = `/review/${reviewId}`; // 예시: /review/1
   }
   ////////////////////////////// 여행 후기 관련 끝
+
+  // 진입 시 최상단 이동
+  onMount(() => {
+    window.scrollTo(0, 0); // 맨 위로 스크롤
+  });
+  
 </script>
 
 <style>
