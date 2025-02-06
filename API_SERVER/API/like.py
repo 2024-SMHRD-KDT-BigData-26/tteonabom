@@ -68,7 +68,6 @@ async def delete_like(LIKE_IDX: int, db: Session = Depends(get_db)):
     db_like = db.query(TB_LIKE).filter(TB_LIKE.LIKE_IDX == LIKE_IDX).first()
     if not db_like:
         raise HTTPException(status_code=404, detail="Like not found")
-
     db.delete(db_like)
     db.commit()
     return {"detail": "Like removed successfully"}
