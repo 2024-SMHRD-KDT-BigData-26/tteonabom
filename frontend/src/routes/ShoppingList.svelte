@@ -10,20 +10,25 @@
   let selectedCategory = "전체"; // 선택된 카테고리 (기본값: 전체)
 
   let sortOption = "alphabetical"; // 기본 정렬: 가나다순
-
+  
   // DB에서 쇼핑 데이터 가져오기
   async function fetchShoppingData() {
-      try {
-          const res = await fetch("http://localhost:9000/shopping");
-          if (!res.ok) {
-              throw new Error("데이터를 불러오는 데 실패했습니다.");
-          }
-          items = await res.json();
-          applyFilters(); // 데이터 로딩 후 필터 및 정렬 적용
-      } catch (error) {
-          console.error("에러 발생:", error);
+    try {
+      const res = await fetch("http://localhost:9000/shopping");
+      if (!res.ok) {
+        throw new Error("데이터를 불러오는 데 실패했습니다.");
       }
+      items = await res.json();
+
+      // 각 아이템에 liked 속성을 추가 (초기 상태: false)
+      items = items.map(item => ({ ...item, liked: false }));
+
+      applyFilters(); // 데이터 로딩 후 필터 및 정렬 적용
+    } catch (error) {
+      console.error("에러 발생:", error);
+    }
   }
+
 
   onMount(fetchShoppingData);
 
@@ -88,6 +93,40 @@ function applyFilters() {
           currentSpotPage = page;
       }
   }
+   // 좋아요 토글 기능 구현: 좋아요가 false면 1증가, true면 1감소하는 API 호출
+   async function toggleLike(shop) {
+    try {
+      if (!shop.liked) {
+        // 좋아요 추가: 기존 like 엔드포인트 호출
+        const response = await fetch(`http://localhost:9000/shopping/${shop.MALL_IDX}/like`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error("좋아요 요청에 실패했습니다.");
+        }
+        const data = await response.json();
+        shop.MALL_LIKES = data.MALL_LIKES;
+        shop.liked = true;
+      } else {
+        // 좋아요 취소: unlike 엔드포인트 호출
+        const response = await fetch(`http://localhost:9000/shopping/${shop.MALL_IDX}/unlike`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error("좋아요 취소 요청에 실패했습니다.");
+        }
+        const data = await response.json();
+        shop.MALL_LIKES = data.MALL_LIKES;
+        shop.liked = false;
+      }
+      // 배열 재할당으로 UI 업데이트 강제
+      sortedItems = [...sortedItems];
+    } catch (error) {
+      console.error("좋아요 토글 실패:", error);
+    }
+  }
 
 </script>
 
@@ -123,7 +162,7 @@ function applyFilters() {
       {#each getVisibleItems() as shop}
         <div class="card-body">
           <div class="card-img">
-            <img src="src\assets\img\shopping\{shop.MALL_IMG}" alt="상품 이미지" />
+            <img src={"src/assets/img/shopping/" + shop.MALL_IMG} alt="상품 이미지" />
           </div>
           <hr class="divider" />
           <div class="card-content">
@@ -132,8 +171,10 @@ function applyFilters() {
             <div class="card-footer">
               <a href={shop.MALL_URL} class="url" target="_blank">{shop.MALL_URL}</a>
               <div class="like-section">
-                <button class="like-btn">
-                  <img src="/src/assets/img/heart.png" alt="좋아요" />
+                <button class="like-btn" on:click={() => toggleLike(shop)}>
+                  <img 
+                    src={shop.liked ? "/src/assets/img/like_on.png" : "/src/assets/img/like_off.png"} 
+                    alt="좋아요" />
                 </button>
                 <span class="like-count">{shop.MALL_LIKES}</span>
               </div>
