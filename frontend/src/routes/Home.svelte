@@ -75,7 +75,7 @@
 /* 추천 여행지 이미지 */
 .recommend-spot-img {
   width: 360px;
-  max-height: 340px;
+  height: 340px;
   object-fit: cover;
   max-width: 100%; /* 화면 크기에 맞게 너비 조정 */
   border-radius: 10px;
@@ -110,6 +110,12 @@
   font-family: 'Paperlogy-6SemiBold';
   font-size: 16px;
   margin-left: 10px;
+  white-space: nowrap;      /* 한 줄로 표시 */
+  overflow: hidden;         /* 넘치는 내용 숨김 */
+  text-overflow: ellipsis;  /* ...으로 표시 */
+  max-width: 200px;         /* 최대 너비 설정 */
+  display: inline-block;    /* 크기 제한 적용을 위해 inline-block 사용 */
+  vertical-align: middle;   /* 수직 정렬 */
 }
 
 /* 추천 여행지 좋아요, 후기 이미지 */
@@ -164,6 +170,9 @@
   /* 이달의 행사정보 이미지 */
   .fest-image {
     border: 1px solid #bbb;
+    width: 300px;
+    height: 172px;
+    object-fit: cover;
   }
 
   /* 이달의 행사정보 제목 */
@@ -245,38 +254,99 @@
 </style>
 
 <script>
-  // 추천 여행지 목록 관련 
-  import Carousel from 'svelte-carousel'
+// 페이지 이동을 위한 import
+import { link } from "svelte-spa-router";
+export let params;
 
-  import { RecommendSpotCarousel } from '../assets/js/recommend-spot.js';
-  import { spots } from '../assets/js/recommend-spot-data.js';
+// 추천 여행지 목록 관련 
+import { onMount } from 'svelte';
+import Carousel from 'svelte-carousel';
+import { RecommendSpotCarousel } from '../assets/js/recommend-spot.js';
 
-  const carousel = new RecommendSpotCarousel(spots);
-  let displayedSpots = carousel.getDisplayedSpots();
+let pois = [];
+let carousel;
+let displayedSpots = [];
 
-  // Spot 상세 페이지로 이동하는 함수
-  function goToSpotDetail(spotId) {
-    window.location.href = `/spot/${spotId}`; // 예: /spot/1
-  }
+// API에서 데이터를 가져와 설정
+onMount(async () => {
+  const res = await fetch('http://localhost:9000/pois');
+  const allSpots = await res.json();
 
-  const prevItem = () => {
+  // POI_URL이 유효한 것만 필터링 (디폴트 이미지 제외)
+  pois = allSpots
+    .filter(spot => spot?.POI_URL && spot?.POI_URL !== '../src/assets/img/default_image_r.png')
+    .sort(() => 0.5 - Math.random())  // 랜덤으로 섞기
+    .slice(0, 6); // 최대 6개만
+
+  // 데이터를 불러온 후 캐러셀 생성
+  carousel = new RecommendSpotCarousel(pois);
+  displayedSpots = carousel.getDisplayedSpots();
+});
+
+// 이전 아이템으로 이동
+const prevItem = () => {
+  if (carousel) {
     displayedSpots = carousel.prevItem();
-  };
+  }
+};
 
-  const nextItem = () => {
+// 다음 아이템으로 이동
+const nextItem = () => {
+  if (carousel) {
     displayedSpots = carousel.nextItem();
-  };
+  }
+};
+
 
   // 이달의 행사정보 관련
-  import { thisMonthFests } from '../assets/js/this-month-fest.js';
+  let thisMonthFests = [];
+  let festivals = [];
 
-  // 행사정보 클릭 시 링크로 이동
-  function goToFestLink(link) {
-    window.location.href = link;
+  let currentYear = new Date().getFullYear();
+  let currentMonth = (new Date().getMonth() + 1).toString().padStart(2, "0"); // 1월 → "01" 형식
+
+  async function fetchFestivals() {
+    try {
+      const response = await fetch("http://localhost:9000/festival");
+      const data = await response.json();
+
+      festivals = Array.isArray(data) ? data : [data];
+
+      // ✅ 현재 연도/월과 일치하는 데이터만 필터링
+      let filteredFests = festivals.filter((fest) => {
+        let period = fest.FEST_PERIOD; // 예: "2025.02.01(목) ~ 2025.02.05(월)"
+        let match = period.match(/^(\d{4})\.(\d{2})/); // 연도.월 추출 (예: "2025.02")
+
+        if (match) {
+          let festYear = match[1]; // "2025"
+          let festMonth = match[2]; // "02"
+
+          return festYear == currentYear && festMonth == currentMonth;
+        }
+        return false;
+      });
+
+      // ✅ 4개만 랜덤으로 선택
+      thisMonthFests = getRandomItems(filteredFests, 4);
+
+    } catch (error) {
+      console.error("행사 정보를 불러오는 중 오류 발생:", error);
+    }
   }
 
+  // ✅ 배열에서 랜덤하게 N개 선택하는 함수
+  function getRandomItems(array, count) {
+    let shuffled = [...array].sort(() => 0.5 - Math.random()); // 배열 랜덤 섞기
+    return shuffled.slice(0, count); // 앞에서 count개 선택
+  }
+
+  function goToFestLink(link) {
+    if (link) window.location.href = link;
+  }
+
+  onMount(fetchFestivals);
+
   // 최신 여행후기 관련
-  import { onMount } from 'svelte';
   import Masonry from 'masonry-layout';
   import { loadMoreReviews, displayedReviews, loading } from '../assets/js/recent-review.js';
 
@@ -376,41 +446,40 @@
     
      <!-- 추천 여행지 목록 -->
       <div class="d-flex gap-3">
-        {#each displayedSpots as spot, index}
+        {#each displayedSpots as spot}
           <div 
             class="d-flex flex-column align-items-center mb-3" 
-            on:click={() => goToSpotDetail(spot.id)} 
-            style="cursor: pointer;" 
           >
             <!-- 이미지 -->
+            <a use:link href={`/SpotView/${spot.POI_IDX}`}>
             <img 
-              src={spot.imgSrc} 
-              alt={spot.location} 
+              src={spot?.POI_URL || '../src/assets/img/default_image_r.png'} 
+              alt={spot.POI_REGION} 
               class="recommend-spot-img"
             >
+            </a>
             <!-- 정보 -->
             <div class="d-flex align-items-center w-100 mt-2">
-              <span class="badge bg-primary">{spot.location}</span>
-              <span class="recommend-spot-text ms-3">{spot.title}</span>
+              <span class="badge bg-primary">{spot.POI_REGION}</span>
+              <span class="recommend-spot-text">{spot.POI_NM}</span>
               <span class="d-flex align-items-center ms-auto gap-1">
                 <img 
                   src="../src/assets/img/like_count.png" 
                   alt="좋아요 수" 
                   class="recommend-count-img"
                 >
-                {spot.likeCount}
+                {spot.POI_LIKES}
                 <img 
                   src="../src/assets/img/review_count.png" 
                   alt="후기 수" 
                   class="recommend-count-img"
                 >
-                {spot.reviewCount}
+                0
               </span>
             </div>
           </div>
         {/each}
       </div>
-    
       <!-- 오른쪽 화살표 -->
       <div on:click={nextItem}>
         <img 
@@ -420,26 +489,30 @@
         >
       </div>
     </div>
-    <!-- 행사정보 영역 -->
+    <!-- 추천 여행지 끝 -->
+    
+    <!-- 이달의 행사정보 영역 -->
     <div class="fest-info">
       &nbsp;
-      <h1 class="main-title">이달의 행사정보</h1>
-      <h2 class="sub-title">2025년 2월</h2>
+      <h1 class="main-title">이달의 행사·축제</h1>
+      <h2 class="sub-title">{currentYear}년 {currentMonth}월</h2>
       <div class="row fest-list content">
         {#each thisMonthFests as fest}
           <div class="col-md-3 mb-4">
-            <div class="fest-card text-truncate" on:click={() => goToFestLink(fest.link)}>
-              <img src={fest.image} alt={fest.title} class="img-fluid rounded-10 fest-image">
+            <div class="fest-card text-truncate">
+              <a use:link href={`/FestView/${fest.FEST_IDX}`}>
+                <img src={fest.FEST_URL} alt={fest.FEST_NM} class="img-fluid rounded-10 fest-image">
+              </a>
               <div class="fest-details">
-                <h3>{fest.title}</h3>
-                <p>기간: {fest.period}</p>
-                <p>장소: {fest.location}</p>
+                <h3>{fest.FEST_NM}</h3>
+                <p>기간: {fest.FEST_PERIOD}</p>
+                <p>장소: {fest.FEST_ADDR}</p>
               </div>
             </div>
           </div>
         {/each}
       </div>
-      </div>
+    </div>
     <!-- 최신 여행후기 영역 -->
     <h1 class="main-title">최신 여행후기</h1>
     <div class="masonry-grid">

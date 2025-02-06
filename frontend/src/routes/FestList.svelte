@@ -92,6 +92,7 @@
 
   // 필터링된 행사 목록
   let filteredFests = [];
+  let searchQuery = '';
 
   // 페이지네이션 관련
   let currentPageNumber = 1;
@@ -106,11 +107,20 @@
   };
 
   // 필터 적용 함수
-  function applyFilters() {
-    filteredFests = festivals.filter(fest => {
-      const festYear = fest.FEST_PERIOD.substring(0, 4);
-      const festMonth = fest.FEST_PERIOD.split('.')[1]?.padStart(2, '0');
-      const festRegion = fest.FEST_LOC.substring(0, 2);
+function applyFilters() {
+  filteredFests = festivals.filter(fest => {
+    const festYear = fest.FEST_PERIOD.substring(0, 4);
+    const festMonth = fest.FEST_PERIOD.split('.')[1]?.padStart(2, '0');
+    const festRegion = fest.FEST_LOC.substring(0, 2);
+
+    // 검색 기능 추가
+    if (searchQuery && !(
+      fest.FEST_DESC.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fest.FEST_ADDR.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fest.FEST_NM.toLowerCase().includes(searchQuery.toLowerCase())
+    )) {
+      return false; // 검색 조건에 맞지 않으면 제외
+    }
 
     // 년도 필터링
     if (festYear !== currentYear.toString()) return false;
@@ -119,7 +129,7 @@
     if (selectedMonth !== '전체') {
         const selectedMonthNumber = months.indexOf(selectedMonth) + 1;
         if (festMonth !== selectedMonthNumber.toString().padStart(2, '0')) return false;
-      }
+    }
 
     // 전국이 체크된 경우 → 월 필터링만 적용하고 지역 필터링은 하지 않음
     if (nationwideChecked) return true;
@@ -132,17 +142,18 @@
 
     // fest.location이 선택된 지역과 일치하는지 확인
     return selectedRegions.some(region => festRegion.includes(regionNameMap[region]));
-    });
+  });
 
   // 정렬 적용
   if (sortBy === 'latest') {
       filteredFests.sort((a, b) => new Date(b.FEST_PERIOD.split(' ~ ')[0]) - new Date(a.FEST_PERIOD.split(' ~ ')[0]));
-    } else if (sortBy === 'ganada') {
+  } else if (sortBy === 'ganada') {
       filteredFests.sort((a, b) => a.FEST_NM.localeCompare(b.FEST_NM, 'ko-KR'));
   }
 
   currentPageNumber = 1; // 필터 적용 시 첫 페이지로 이동
 }
+
 
   // 페이지네이션 함수
   function paginate(array, pageNumber, itemsPerPage) {
@@ -192,6 +203,15 @@
    .form-check-input:checked {
     background-color: #FF5D17;
     border-color: #FF5D17;
+  }
+
+  /* 검색창 스타일 */
+  .form-control {
+    box-shadow: none;
+    width: 200px;
+    font-size: 14px;
+    padding: 10px;
+    margin: auto;
   }
 
   /* 순서 */
@@ -413,7 +433,12 @@
         <div>
           <span>총 {filteredFests.length}건</span>
         </div>
-        <div>
+        <div class="d-flex gap-2">
+          <!-- 검색창 -->
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="찾을 내용을 입력해주세요" bind:value={searchQuery} on:input={applyFilters}>
+          </div>
+          <!-- 정렬 -->
           <select class="form-select" style="width: 100px;" on:change={changeSort}>
             <option value="latest">최신순</option>
             <option value="ganada">가나다순</option>
