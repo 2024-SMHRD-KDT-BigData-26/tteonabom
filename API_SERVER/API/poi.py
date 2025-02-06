@@ -108,14 +108,26 @@ async def delete_poi(POI_IDX: int, db: Session = Depends(get_db)):
     return {"detail": "POI deleted successfully"}
 
 
-# ✅ 여행지 좋아요 증가
-@router.put("/pois/{POI_IDX}/like")
+# ✅ 여행지 좋아요 증가 (좋아요 누를 때 POI_LIKES 1 증가)
+@router.put("/pois/{POI_IDX}/like", response_model=POIResponse)
 async def like_poi(POI_IDX: int, db: Session = Depends(get_db)):
-    db_poi = db.query(TB_POI).filter(TB_POI.POI_IDX == POI_IDX).first()
-    if not db_poi:
+    poi = db.query(TB_POI).filter(TB_POI.POI_IDX == POI_IDX).first()
+    if not poi:
         raise HTTPException(status_code=404, detail="POI not found")
-
-    db_poi.POI_LIKES += 1  # 좋아요 증가
+    poi.POI_LIKES += 1
     db.commit()
-    db.refresh(db_poi)
-    return {"detail": "POI liked successfully", "POI_LIKES": db_poi.POI_LIKES}
+    db.refresh(poi)
+    return poi
+
+
+# ✅ 여행지 좋아요 취소 (좋아요 취소 시 POI_LIKES 1 감소)
+@router.put("/pois/{POI_IDX}/unlike", response_model=POIResponse)
+async def unlike_poi(POI_IDX: int, db: Session = Depends(get_db)):
+    poi = db.query(TB_POI).filter(TB_POI.POI_IDX == POI_IDX).first()
+    if not poi:
+        raise HTTPException(status_code=404, detail="POI not found")
+    if poi.POI_LIKES > 0:
+        poi.POI_LIKES -= 1
+    db.commit()
+    db.refresh(poi)
+    return poi

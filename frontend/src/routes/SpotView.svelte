@@ -1,107 +1,159 @@
 <script>
   // 비주얼존 배경명
-  let currentPage = 'visual_spot';
+  let currentPage = "visual_spot";
 
   // 네비바 CSS
-  import '../assets/css/VisualZone.css';
+  import "../assets/css/VisualZone.css";
 
-  // spot-data.js에서 데이터 불러오기
+  // 필요하다면 spot-data.js (현재 사용하지 않는다면 제거 가능)
   import { spots } from "../assets/js/spot-data.js";
 
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   export let params;
 
-  let spot = null; // 초기 값 null로 설정
+  // POI 상세 데이터를 저장할 변수
+  let spot = null;
 
-  onMount(async () => {    
-    // API 호출 후 spot 데이터 가져오기
-    const res = await fetch(`http://localhost:9000/pois/${params.POI_IDX}`);
-    if (res.ok) {
-      spot = await res.json();
-      initMap();  // 카카오맵 초기화 함수 호출
-    } else {
-      console.error('API 호출 실패:', res.status, res.statusText);
-    }
-  });
-
-  // 좋아요 기능 관련
+  // 좋아요 관련 상태
   let liked = false;
   let likeCount = 0;
-  let userId = 1; // 실제로는 로그인한 사용자의 ID를 사용!!
+  let likeId = null; // 사용자가 이 POI에 대해 생성한 좋아요 레코드의 id
 
-  // 컴포넌트가 마운트될 때 좋아요 상태를 불러옵니다.
-  onMount(async () => {
-    const response = await fetch(`/api/likes?userId=${userId}`);
-    const data = await response.json();
-    liked = data.liked;
-    likeCount = data.likeCount;
-  });
+  // 로그인된 사용자 ID (실제 로그인 시 localStorage에 저장된 "user" 객체에서 추출)
+  let userId = "";
 
-  // 좋아요 버튼 클릭 시 호출되는 함수
-  async function handleLike() {
-    if (liked) return;
-
-    const response = await fetch('/api/likes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId }),
-    });
-
-    if (response.ok) {
-      liked = true;
-      likeCount += 1;
-    }
-  }
-
-  // 이미지 확대
-  export let image; // 이미지 URL을 props로 받습니다.
-
+  // 모달 관련 상태 (이미지 확대)
   let isModalOpen = false;
 
-  // 모달 열기/닫기 함수
-  function toggleModal() {
-    isModalOpen = !isModalOpen;
-  }
+  // Masonry 관련 변수 (후기 레이아웃)
+  import Masonry from "masonry-layout";
+  import { loadMoreReviews, displayedReviews, loading } from "../assets/js/recent-review.js";
+  let masonryInstance;
 
-  // ESC 키를 눌렀을 때 모달 닫기
-  onMount(() => {
+  // onMount: 사용자 정보, POI 데이터, 좋아요 기록, Masonry, 모달 ESC 이벤트, 스크롤 최상단 이동
+  onMount(async () => {
+    // 1. 사용자 정보 불러오기
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.USER_ID) {
+          userId = parsedUser.USER_ID;
+        }
+      } catch (error) {
+        console.error("User parsing error:", error);
+      }
+    }
+
+    // 2. POI 데이터 불러오기
+    const poiRes = await fetch(`http://localhost:9000/pois/${params.POI_IDX}`);
+    if (poiRes.ok) {
+      spot = await poiRes.json();
+      likeCount = spot.POI_LIKES; // POI의 초기 좋아요 수
+      initMap(); // 카카오맵 초기화
+    } else {
+      console.error("POI 데이터를 불러오지 못했습니다:", poiRes.status, poiRes.statusText);
+    }
+
+    // 3. 해당 POI에 대한 좋아요 기록 불러오기
+    if (spot && userId) {
+      const resLikes = await fetch(`http://localhost:9000/like/poi/${spot.POI_IDX}`);
+      if (resLikes.ok) {
+        const likes = await resLikes.json();
+        const userLike = likes.find(like => like.USER_ID === userId);
+        if (userLike) {
+          liked = true;
+          likeId = userLike.LIKE_IDX;
+        }
+      } else {
+        console.error("좋아요 데이터를 불러오지 못했습니다.");
+      }
+    }
+
+    // 4. Masonry 레이아웃 초기화 (후기 영역)
+    const grid = document.querySelector('.masonry-grid');
+    if (grid) {
+      masonryInstance = new Masonry(grid, {
+        itemSelector: '.review-item',
+        columnWidth: '.review-item',
+        percentPosition: true
+      });
+
+      const observer = new IntersectionObserver(loadMoreReviews, {
+        rootMargin: '50px',
+        threshold: 1.0,
+      });
+      const sentinel = document.querySelector('#load-more');
+      if (sentinel) {
+        observer.observe(sentinel);
+      }
+    }
+
+    // 5. ESC 키 이벤트 등록 (모달 닫기)
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         isModalOpen = false;
       }
     };
+    window.addEventListener("keydown", handleKeyDown);
 
-    window.addEventListener('keydown', handleKeyDown);
+    // 6. 최상단 스크롤
+    window.scrollTo(0, 0);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   });
 
-  ////////////////////////////// 지도 관련 시작
+  // 좋아요 버튼 클릭 함수 (토글 기능)
+  async function handleLike() {
+    if (!liked) {
+      // 좋아요 추가: POST /like 엔드포인트 사용
+      const payload = { USER_ID: userId, POI_IDX: spot.POI_IDX };
+      const response = await fetch("http://localhost:9000/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        console.error("좋아요 추가 실패");
+        return;
+      }
+      const data = await response.json();
+      liked = true;
+      likeId = data.LIKE_IDX;
+      likeCount++; // 좋아요 수 증가
+    } else {
+      // 좋아요 취소: DELETE /like/{LIKE_IDX} 엔드포인트 사용
+      const response = await fetch(`http://localhost:9000/like/${likeId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        console.error("좋아요 취소 실패");
+        return;
+      }
+      liked = false;
+      likeId = null;
+      likeCount = Math.max(0, likeCount - 1);
+    }
+  }
+
   // 카카오맵 API 초기화 함수
   function initMap() {
     if (!spot) return;
-
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=e2f8b444bceb65205ac527cd0f7f872a&autoload=false`;
     script.onload = () => {
       kakao.maps.load(() => {
-        const container = document.getElementById('map');
-
-        const lat = spot.LAT; // 선택된 여행지의 lat
-        const lng = spot.LON; // 선택된 여행지의 lng
-
+        const container = document.getElementById("map");
+        const lat = spot.LAT;
+        const lng = spot.LON;
         const options = {
-          center: new kakao.maps.LatLng(lat, lng), // 해당 여행지의 좌표를 사용
+          center: new kakao.maps.LatLng(lat, lng),
           level: 3,
         };
-
         const map = new kakao.maps.Map(container, options);
-
-        // 마커 추가
         const position = new kakao.maps.LatLng(lat, lng);
         const marker = new kakao.maps.Marker({
           position: position,
@@ -110,36 +162,15 @@
         marker.setMap(map);
       });
     };
-
     document.head.appendChild(script);
   }
-  ////////////////////////////// 지도 관련 끝
 
-  ////////////////////////////// 여행 후기 관련 시작
-  import Masonry from 'masonry-layout';
-  import { loadMoreReviews, displayedReviews, loading } from '../assets/js/recent-review.js';
+  // 모달 토글 함수 (이미지 확대)
+  function toggleModal() {
+    isModalOpen = !isModalOpen;
+  }
 
-  let masonryInstance;
-
-  // Masonry 레이아웃 초기화
-  onMount(() => {
-    const grid = document.querySelector('.masonry-grid');
-    masonryInstance = new Masonry(grid, {
-      itemSelector: '.review-item',
-      columnWidth: '.review-item',
-      percentPosition: true
-    });
-
-    // IntersectionObserver 설정
-    const observer = new IntersectionObserver(loadMoreReviews, {
-      rootMargin: '50px',
-      threshold: 1.0,
-    });
-    const sentinel = document.querySelector('#load-more');
-    observer.observe(sentinel);
-  });
-
-  // 반응성 문법: displayedReviews가 변경될 때마다 Masonry 레이아웃 업데이트
+  // 후기 관련: Masonry 레이아웃 업데이트
   $: {
     if (masonryInstance) {
       masonryInstance.reloadItems();
@@ -147,19 +178,11 @@
     }
   }
 
-  // 이미지 클릭 시 이동할 함수
+  // 이미지 클릭 시 후기 상세 페이지 이동
   function goToEvent(reviewId) {
-    window.location.href = `/review/${reviewId}`; // 예시: /review/1
+    window.location.href = `/review/${reviewId}`;
   }
-  ////////////////////////////// 여행 후기 관련 끝
-
-  // 진입 시 최상단 이동
-  onMount(() => {
-    window.scrollTo(0, 0); // 맨 위로 스크롤
-  });
-  
 </script>
-
 <style>
   /* 상단 정보 전체 */
   .spot-top-info {
@@ -297,7 +320,6 @@
   }
 
 </style>
-
 <main class="main-content">
   <!-- 비주얼 존 -->
   <div class={`visual-zone ${currentPage}`}>
@@ -308,23 +330,30 @@
   <!-- 여행지 상세 컨텐츠 영역 -->
   <div class="content">
     <div class="container mt-4">
-      <!-- 상단: 카드로 위치, 이름, 좋아요 버튼 표시 -->
+      <!-- 상단: POI 정보 및 좋아요 버튼 -->
       <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
           <div class="spot-top-info">
-            <div class="badge bg-primary">{spot?.POI_REGION.slice(0, 2) || '-'}</div>
-
-            <div class="card-title mb-0 spot-title ">{spot?.POI_NM  || '-'}</div>
-          </div>
-          <button on:click={handleLike} class="like-button">
-            {#if liked}
-            <img src="..\src\assets\img\like_on.png" alt="꽉찬하트" class="like-button-img">
-            {:else}
-            <img src="..\src\assets\img\like_off.png" alt="빈하트" class="like-button-img">
+            <div class="badge bg-primary">
+              {spot?.POI_REGION.slice(0, 2) || '-'}
+            </div>
+            {#if spot}
+              <div class="spot-header">
+                <div class="spot-title">{spot.POI_NM}</div>
+              </div>
             {/if}
-          </button>
+          </div>
+          {#if spot}
+            <button on:click={handleLike} class="like-button">
+              {#if liked}
+                <img src="/src/assets/img/like_on.png" alt="좋아요" class="like-button-img" />
+              {:else}
+                <img src="/src/assets/img/like_off.png" alt="좋아요" class="like-button-img" />
+              {/if}
+            </button>
+          {/if}
         </div>
-        <!-- 중간: 이미지와 표 형태 정보 -->
+        <!-- 중간: POI 이미지 및 상세 정보 -->
         <div class="card d-flex flex-row align-items-start card-body-div">
           <img src={spot?.POI_URL || "../src/assets/img/default_image_o.png"} alt="여행지 이미지" class="card-img-top" on:click={toggleModal} />
           <div class="card-body">
@@ -346,27 +375,25 @@
             </table>
           </div>
         </div>
-        <!-- 하단: 좋아요 수와 후기 수 -->
+        <!-- 하단: 좋아요 수 및 후기 수 -->
         <div class="card-body d-flex gap-3 justify-content-end">
           <div>
-            <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="recommend-count-img">
-            0
-            <img src="../src/assets/img/review_count.png" alt="좋아요 수" class="recommend-count-img">
+            <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="recommend-count-img" />
+            {likeCount}
+            <img src="../src/assets/img/review_count.png" alt="후기 수" class="recommend-count-img" />
             0
           </div>
         </div>
       </div>
-      
+
       <!-- 상세 내용 -->
       <div class="card mb-4">
         <div class="card-body">
-          <p class="card-text">
-            {spot?.POI_INFO || '-'}
-          </p>
+          <p class="card-text">{spot?.POI_INFO || '-'}</p>
         </div>
       </div>
 
-      <!-- 길찾기 라벨 및 카카오맵 -->
+      <!-- 길찾기 및 카카오맵 -->
       <p class="card-title map-title">길찾기</p>
       <div class="card mb-4">
         <div class="card-body">
@@ -377,30 +404,22 @@
       <!-- 관련 후기 -->
       <p class="card-title reply-title">관련후기</p>
       <div class="masonry-grid">
-        {#each $displayedReviews as review}
-          <div class="review-item" 
-               on:click={() => goToEvent(review.REVIEW_IDX)}
-               role="link"
-               tabindex="0">
-               <img 
-               src={review.FILE_NM} 
-               alt="여행 후기 이미지" 
-               class="review-image"
-               on:load={() => {
-                 if (masonryInstance) {
-                   masonryInstance.reloadItems();
-                   masonryInstance.layout();
-                 }
-               }}
-             >
+        {#each displayedReviews as review}
+          <div class="review-item" on:click={() => goToEvent(review.REVIEW_IDX)} role="link" tabindex="0">
+            <img src={review.FILE_NM} alt="여행 후기 이미지" class="review-image" on:load={() => {
+              if (masonryInstance) {
+                masonryInstance.reloadItems();
+                masonryInstance.layout();
+              }
+            }} />
           </div>
         {/each}
       </div>
-      
+
       <!-- 스크롤 감지 요소 -->
       <div id="load-more" class="load-more-sentinel"></div>
-      
-      {#if $loading}
+
+      {#if loading}
         <div class="d-flex justify-content-center">
           <div class="spinner-border text-light" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -408,10 +427,13 @@
         </div>
       {/if}
 
-  <!-- 이미지 확대 모달 -->
-  {#if isModalOpen}
-    <div class="modal" on:click={toggleModal}>
-      <img src={spot?.POI_URL || "../src/assets/img/default_image_o.png"} alt="확대된 이미지" />
+      <!-- 이미지 확대 모달 -->
+      {#if isModalOpen}
+        <div class="modal" on:click={toggleModal}>
+          <img src={spot?.POI_URL || "../src/assets/img/default_image_o.png"} alt="확대된 이미지" />
+        </div>
+      {/if}
     </div>
-  {/if}
+  </div>
 </main>
+
