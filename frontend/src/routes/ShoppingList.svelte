@@ -8,10 +8,33 @@
   let currentSpotPage = 1; // 페이지네이션 상태
   const itemsPerPage = 9; // 한 페이지당 표시할 항목 수
   let selectedCategory = "전체"; // 선택된 카테고리 (기본값: 전체)
-
   let sortOption = "alphabetical"; // 기본 정렬: 가나다순
   
-  // DB에서 쇼핑 데이터 가져오기
+
+  // 로그인된 사용자 아이디 (localStorage에서 "user" 키의 데이터에서 USER_ID 추출)
+  let userId = "";
+  onMount(async () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.USER_ID) {
+          userId = parsedUser.USER_ID;
+        }
+      } catch (error) {
+        console.error("User parsing error:", error);
+      }
+    }
+    // 먼저 쇼핑몰 데이터를 불러오고,
+    await fetchShoppingData();
+    // 로그인된 사용자가 있다면, 좋아요 기록도 불러와서 반영
+    if (userId) {
+      await fetchUserLikes();
+    }
+  });
+
+
+  // 데이터 로딩: 쇼핑몰 목록 가져오기
   async function fetchShoppingData() {
     try {
       const res = await fetch("http://localhost:9000/shopping");
@@ -19,18 +42,41 @@
         throw new Error("데이터를 불러오는 데 실패했습니다.");
       }
       items = await res.json();
-
-      // 각 아이템에 liked 속성을 추가 (초기 상태: false)
-      items = items.map(item => ({ ...item, liked: false }));
-
-      applyFilters(); // 데이터 로딩 후 필터 및 정렬 적용
+      // 각 아이템에 liked, likeId 속성 추가 (초기값: false, null)
+      items = items.map(item => ({ ...item, liked: false, likeId: null }));
+      applyFilters();
     } catch (error) {
       console.error("에러 발생:", error);
     }
   }
 
-
   onMount(fetchShoppingData);
+
+  // 사용자 좋아요 기록 불러오기
+  async function fetchUserLikes() {
+    try {
+      const res = await fetch(`http://localhost:9000/like/user/${userId}`);
+      if (!res.ok) {
+        throw new Error("좋아요 데이터를 불러오는 데 실패했습니다.");
+      }
+      const likes = await res.json();  // 각 레코드: { LIKE_IDX, USER_ID, MALL_IDX, ... }
+      const likedMallIds = likes.map(like => like.MALL_IDX);
+      const likeIdMap = {};
+      likes.forEach(like => {
+        likeIdMap[like.MALL_IDX] = like.LIKE_IDX;
+      });
+      // items 배열에 사용자 좋아요 상태 반영
+      items = items.map(item => {
+        if (likedMallIds.includes(item.MALL_IDX)) {
+          return { ...item, liked: true, likeId: likeIdMap[item.MALL_IDX] };
+        }
+        return item;
+      });
+      applyFilters();
+    } catch (error) {
+      console.error("좋아요 데이터 불러오기 오류:", error);
+    }
+  }
 
   // 카테고리 데이터
   const categories = [
@@ -97,31 +143,35 @@ function applyFilters() {
    async function toggleLike(shop) {
     try {
       if (!shop.liked) {
-        // 좋아요 추가: 기존 like 엔드포인트 호출
-        const response = await fetch(`http://localhost:9000/shopping/${shop.MALL_IDX}/like`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" }
+        // 좋아요 추가: POST /like (USER_ID와 MALL_IDX 전송)
+        const payload = { USER_ID: userId, MALL_IDX: shop.MALL_IDX };
+        const response = await fetch("http://localhost:9000/like", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
         if (!response.ok) {
-          throw new Error("좋아요 요청에 실패했습니다.");
+          throw new Error("좋아요 추가 요청에 실패했습니다.");
         }
         const data = await response.json();
-        shop.MALL_LIKES = data.MALL_LIKES;
         shop.liked = true;
+        shop.likeId = data.LIKE_IDX;
+        // 쇼핑몰 좋아요 수 증가 (백엔드에서 /shopping/{MALL_IDX}/like를 별도로 관리하는 경우와 연동)
+        // 여기서는 간단히 shop.MALL_LIKES 값을 증가시킵니다.
+        shop.MALL_LIKES++;
       } else {
-        // 좋아요 취소: unlike 엔드포인트 호출
-        const response = await fetch(`http://localhost:9000/shopping/${shop.MALL_IDX}/unlike`, {
-          method: "PUT",
+        // 좋아요 취소: DELETE /like/{LIKE_IDX}
+        const response = await fetch(`http://localhost:9000/like/${shop.likeId}`, {
+          method: "DELETE",
           headers: { "Content-Type": "application/json" }
         });
         if (!response.ok) {
           throw new Error("좋아요 취소 요청에 실패했습니다.");
         }
-        const data = await response.json();
-        shop.MALL_LIKES = data.MALL_LIKES;
         shop.liked = false;
+        shop.likeId = null;
+        shop.MALL_LIKES = Math.max(0, shop.MALL_LIKES - 1);
       }
-      // 배열 재할당으로 UI 업데이트 강제
       sortedItems = [...sortedItems];
     } catch (error) {
       console.error("좋아요 토글 실패:", error);

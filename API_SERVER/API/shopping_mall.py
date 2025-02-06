@@ -103,12 +103,10 @@ async def like_mall(MALL_IDX: int, db: Session = Depends(get_db)):
     db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not db_mall:
         raise HTTPException(status_code=404, detail="Mall not found")
-
     db_mall.MALL_LIKES += 1  # 좋아요 수 증가
     db.commit()
     db.refresh(db_mall)
     return {"detail": "Mall liked successfully", "MALL_LIKES": db_mall.MALL_LIKES}
-
 
 # 쇼핑몰 좋아요 취소 (좋아요 수 감소) 엔드포인트 추가
 @router.put("/shopping/{MALL_IDX}/unlike")
@@ -116,7 +114,6 @@ async def unlike_mall(MALL_IDX: int, db: Session = Depends(get_db)):
     db_mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == MALL_IDX).first()
     if not db_mall:
         raise HTTPException(status_code=404, detail="Mall not found")
-    # 좋아요 수가 0보다 큰 경우에만 감소 (음수 방지)
     if db_mall.MALL_LIKES > 0:
         db_mall.MALL_LIKES -= 1
     db.commit()
