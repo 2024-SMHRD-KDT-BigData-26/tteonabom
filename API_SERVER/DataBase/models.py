@@ -3,6 +3,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.dialects.mysql import JSON
 
 Base = declarative_base()
 # 데이터베이스 연결 및 테이블 생성
@@ -131,14 +132,12 @@ class TB_FESTIVAL(Base):
 class TB_CHATTING(Base):
     __tablename__ = "TB_CHATTING"
 
-    CHAT_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="채팅 고유번호")
-    CROOM_IDX = Column(Integer, comment="방 고유번호")
-    USER_ID = Column(String(50), comment="발화자")
-    CHAT_CONTENT = Column(Text, comment="발화 내용")
-    CHAT_FILE = Column(String(1000), comment="발화 첨부파일")
-    CHAT_EMOTION = Column(String(1000), comment="발화 이모티콘")
-    CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="발화 시간")
-    USER_CONTENT = Column(Text)
+    CHAT_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="채팅 식별자")
+    CROOM_IDX = Column(Integer, nullable=False, comment="채팅방 식별자")
+    USER_ID = Column(String(50), nullable=False, comment="사용자 ID")
+    TRAVEL_DATA = Column(JSON, nullable=False, comment="여행 데이터(JSON 형식)")
+    GPT_RESPONSE = Column(JSON, nullable=True, comment="GPT 응답(JSON 형식)")
+    CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="생성 일시")
 
 
 class TB_CROOM(Base):
