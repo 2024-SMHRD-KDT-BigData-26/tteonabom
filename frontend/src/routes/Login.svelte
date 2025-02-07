@@ -140,6 +140,15 @@
 </script>
   
   <style>
+    .content{
+        height: 729px;
+        display: flex;
+        justify-content: center; /* 가로 중앙 정렬 */
+        align-items: center; /* 세로 중앙 정렬 */
+    }
+    .container {
+        margin: 0 auto; /* 가로 중앙 정렬 */ 
+    }
       /* 로고 이미지 반응형 스타일 */
     .img-fluid {
         margin-top: 70px; 
@@ -159,12 +168,11 @@
     /* 로그인 폼 컨테이너 */
     .form-container {
         text-align: center; /* 내부 텍스트 가운데 정렬 */
-        margin: 0 auto; /* 가로 중앙 정렬 */
-        margin-top: 50px; 
+        margin: 0 auto; /* 가로 중앙 정렬 */ 
         justify-content: center; /* 가로 중앙 정렬 */
         align-items: center; /* 세로 중앙 정렬 */
         width: 500px; 
-        height: 480px; 
+        min-height: 480px; 
         padding: 30px; 
         border: 1px solid #D9D9D9; 
         border-radius: 10px; 
