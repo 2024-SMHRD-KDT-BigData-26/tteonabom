@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
 from DataBase.conn import get_db
-from DataBase.models import TB_LIKE
+from DataBase.models import TB_LIKE, TB_POI, TB_SHOPPING_MALL
 
 router = APIRouter()
 
@@ -30,6 +30,19 @@ class LikeResponse(LikeCreate):
 async def create_like(like: LikeCreate, db: Session = Depends(get_db)):
     db_like = TB_LIKE(**like.dict())
     db.add(db_like)
+
+    # POI 좋아요 수 업데이트
+    if like.POI_IDX is not None:
+        poi = db.query(TB_POI).filter(TB_POI.POI_IDX == like.POI_IDX).first()
+        if poi:
+            poi.POI_LIKES += 1
+
+    # 쇼핑몰 좋아요 수 업데이트
+    if like.MALL_IDX is not None:
+        mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == like.MALL_IDX).first()
+        if mall:
+            mall.MALL_LIKES += 1
+
     db.commit()
     db.refresh(db_like)
     return db_like
@@ -68,6 +81,19 @@ async def delete_like(LIKE_IDX: int, db: Session = Depends(get_db)):
     db_like = db.query(TB_LIKE).filter(TB_LIKE.LIKE_IDX == LIKE_IDX).first()
     if not db_like:
         raise HTTPException(status_code=404, detail="Like not found")
+
+    # POI 좋아요 수 감소
+    if db_like.POI_IDX is not None:
+        poi = db.query(TB_POI).filter(TB_POI.POI_IDX == db_like.POI_IDX).first()
+        if poi and poi.POI_LIKES > 0:
+            poi.POI_LIKES -= 1
+
+    # 쇼핑몰 좋아요 수 감소
+    if db_like.MALL_IDX is not None:
+        mall = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.MALL_IDX == db_like.MALL_IDX).first()
+        if mall and mall.MALL_LIKES > 0:
+            mall.MALL_LIKES -= 1
+
     db.delete(db_like)
     db.commit()
     return {"detail": "Like removed successfully"}
