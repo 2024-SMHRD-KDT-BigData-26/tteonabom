@@ -5,11 +5,20 @@
   // 네비바 CSS
   import "../assets/css/VisualZone.css";
 
-  // 필요하다면 spot-data.js (현재 사용하지 않는다면 제거 가능)
-  import { spots } from "../assets/js/spot-data.js";
-
-  import { onMount } from "svelte";
   export let params;
+
+  // 라우터
+  import { link } from 'svelte-spa-router';
+  import routes from '.././assets/js/routes.js';
+
+  // 관련 임포트
+  import { onMount, tick } from "svelte";
+  import Masonry from 'masonry-layout';
+  import { writable } from 'svelte/store';
+  import { timeAgo } from "../assets/js/timeAgo.js";
+
+  export const displayedReviews = writable([]); // 초기 빈 배열
+  export const loading = writable(false); // 데이터 로딩 상태 추적
 
   // POI 상세 데이터를 저장할 변수
   let spot = null;
@@ -24,11 +33,6 @@
 
   // 모달 관련 상태 (이미지 확대)
   let isModalOpen = false;
-
-  // Masonry 관련 변수 (후기 레이아웃)
-  import Masonry from "masonry-layout";
-  import { loadMoreReviews, displayedReviews, loading } from "../assets/js/recent-review.js";
-  let masonryInstance;
 
   // onMount: 사용자 정보, POI 데이터, 좋아요 기록, Masonry, 모달 ESC 이벤트, 스크롤 최상단 이동
   onMount(async () => {
@@ -70,26 +74,7 @@
       }
     }
 
-    // 4. Masonry 레이아웃 초기화 (후기 영역)
-    const grid = document.querySelector('.masonry-grid');
-    if (grid) {
-      masonryInstance = new Masonry(grid, {
-        itemSelector: '.review-item',
-        columnWidth: '.review-item',
-        percentPosition: true
-      });
-
-      const observer = new IntersectionObserver(loadMoreReviews, {
-        rootMargin: '50px',
-        threshold: 1.0,
-      });
-      const sentinel = document.querySelector('#load-more');
-      if (sentinel) {
-        observer.observe(sentinel);
-      }
-    }
-
-    // 5. ESC 키 이벤트 등록 (모달 닫기)
+    // 4. ESC 키 이벤트 등록 (모달 닫기)
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         isModalOpen = false;
@@ -97,7 +82,7 @@
     };
     window.addEventListener("keydown", handleKeyDown);
 
-    // 6. 최상단 스크롤
+    // 5. 최상단 스크롤
     window.scrollTo(0, 0);
 
     return () => {
@@ -170,19 +155,112 @@
     isModalOpen = !isModalOpen;
   }
 
-  // 후기 관련: Masonry 레이아웃 업데이트
+  // 이미지 클릭 시 후기 상세 페이지 이동
+  function goToEvent(reviewId) {
+    window.location.href = `/review/${reviewId}`;
+  }
+
+  // 관련 후기
+  const fetchReviews = async () => {
+  try {
+    const response = await fetch("http://localhost:9000/reviews");
+    if (!response.ok) {
+      throw new Error("Failed to fetch reviews");
+    }
+    const data = await response.json();
+
+    // params.POI_IDX를 숫자로 강제로 변환
+    const poiIndex = Number(params.POI_IDX);
+
+    // 필터링된 리뷰 목록을 가져옴
+    const filteredReviews = data.filter(review => {
+      const reviewPoiIdx = Number(review.POI_IDX);
+      return reviewPoiIdx === poiIndex;
+    });
+
+    // 필터링된 리뷰가 없으면 처리하지 않음
+    if (filteredReviews.length === 0) {
+      console.log("No reviews found for this POI.");
+      return;
+    }
+
+    displayedReviews.set(filteredReviews.slice(0, 6));  // 처음 6개만 표시
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+  }
+};
+
+export const loadMoreReviews = (entries, observer) => {
+  if (entries[0].isIntersecting) {
+    loading.set(true); // 로딩 시작
+
+    setTimeout(async () => {
+      try {
+        const response = await fetch("http://localhost:9000/reviews");
+        if (!response.ok) {
+          throw new Error("Failed to fetch reviews");
+        }
+        const data = await response.json();
+        
+        // params.POI_IDX를 숫자로 강제로 변환
+        const poiIndex = Number(params.POI_IDX);
+
+        // 필터링 로직 추가
+        const filteredReviews = data.filter(review => {
+          const reviewPoiIdx = Number(review.POI_IDX);
+          return reviewPoiIdx === poiIndex;
+        });
+
+        // 이미 불러온 리뷰 수를 구함
+        const nextIndex = $displayedReviews.length;
+
+        // 필터링된 리뷰에서 다음 리뷰만 가져옴
+        const newReviews = filteredReviews.slice(nextIndex, nextIndex + 6);
+
+        if (newReviews.length > 0) {
+          // 새로운 리뷰 추가
+          displayedReviews.update((currentReviews) => [...currentReviews, ...newReviews]);
+        }
+      } catch (error) {
+        console.error("Error fetching more reviews:", error);
+      } finally {
+        loading.set(false);
+      }
+    }, 1000);
+  }
+};
+
+  let masonryInstance;
+
+  // Masonry 레이아웃 초기화
+  onMount(async () => {
+    await fetchReviews();
+
+    const grid = document.querySelector('.masonry-grid');
+    masonryInstance = new Masonry(grid, {
+      itemSelector: '.review-item',
+      columnWidth: '.review-item',
+      percentPosition: true
+    });
+
+    // IntersectionObserver 설정
+    const observer = new IntersectionObserver(loadMoreReviews, {
+      rootMargin: '50px',
+      threshold: 1.0,
+    });
+    const sentinel = document.querySelector('#load-more');
+    observer.observe(sentinel);
+  });
+
+  // 반응성 문법: displayedReviews가 변경될 때마다 Masonry 레이아웃 업데이트
   $: {
     if (masonryInstance) {
       masonryInstance.reloadItems();
       masonryInstance.layout();
     }
   }
-
-  // 이미지 클릭 시 후기 상세 페이지 이동
-  function goToEvent(reviewId) {
-    window.location.href = `/review/${reviewId}`;
-  }
 </script>
+
 <style>
   /* 상단 정보 전체 */
   .spot-top-info {
@@ -320,6 +398,7 @@
   }
 
 </style>
+
 <main class="main-content">
   <!-- 비주얼 존 -->
   <div class={`visual-zone ${currentPage}`}>
@@ -402,24 +481,39 @@
       </div>
 
       <!-- 관련 후기 -->
-      <p class="card-title reply-title">관련후기</p>
-      <div class="masonry-grid">
-        {#each displayedReviews as review}
-          <div class="review-item" on:click={() => goToEvent(review.REVIEW_IDX)} role="link" tabindex="0">
-            <img src={review.FILE_NM} alt="여행 후기 이미지" class="review-image" on:load={() => {
-              if (masonryInstance) {
-                masonryInstance.reloadItems();
-                masonryInstance.layout();
-              }
-            }} />
-          </div>
-        {/each}
-      </div>
+      {#if $displayedReviews.length > 0}
+        <p class="card-title reply-title">관련후기</p>
+        <div class="masonry-grid">
+          {#each $displayedReviews as review}
+            <div class="review-item" 
+                role="link"
+                tabindex="0">
+              <!-- 여행 후기 이미지 -->
+              <a use:link href={`/ReviewView/${review.REVIEW_IDX}`}>
+                <img 
+                  src={`http://localhost:9000/images/${review.FILE_URL}`} 
+                  alt="여행 후기 이미지" 
+                  class="review-image"
+                  on:load={() => {
+                    if (masonryInstance) {
+                      masonryInstance.reloadItems();
+                      masonryInstance.layout();
+                    }
+                  }}
+                  on:error={(event) => {
+                    event.target.src = '../src/assets/img/default_image_o.png';  // 디폴트 이미지 경로
+                  }}
+                />
+              </a>
+            </div>
+          {/each}
+        </div>
 
-      <!-- 스크롤 감지 요소 -->
-      <div id="load-more" class="load-more-sentinel"></div>
+        <!-- 스크롤 감지 요소 -->
+        <div id="load-more" class="load-more-sentinel"></div>
+      {/if}
 
-      {#if loading}
+      {#if $loading}
         <div class="d-flex justify-content-center">
           <div class="spinner-border text-light" role="status">
             <span class="visually-hidden">Loading...</span>
