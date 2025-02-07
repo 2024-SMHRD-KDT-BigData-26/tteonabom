@@ -259,13 +259,21 @@ import { link } from "svelte-spa-router";
 export let params;
 
 // 추천 여행지 목록 관련 
-import { onMount } from 'svelte';
+import { onMount, tick } from 'svelte';
 import Carousel from 'svelte-carousel';
 import { RecommendSpotCarousel } from '../assets/js/recommend-spot.js';
 
 let pois = [];
 let carousel;
 let displayedSpots = [];
+
+// 최신 여행후기 관련
+import Masonry from 'masonry-layout';
+import { writable } from 'svelte/store';
+import { timeAgo } from "../assets/js/timeAgo.js";
+
+export const displayedReviews = writable([]); // 초기 빈 배열
+export const loading = writable(false); // 데이터 로딩 상태 추적
 
 // API에서 데이터를 가져와 설정
 onMount(async () => {
@@ -347,13 +355,49 @@ const nextItem = () => {
   onMount(fetchFestivals);
 
   // 최신 여행후기 관련
-  import Masonry from 'masonry-layout';
-  import { loadMoreReviews, displayedReviews, loading } from '../assets/js/recent-review.js';
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch("http://localhost:9000/reviews");
+      if (!response.ok) {
+        throw new Error("Failed to fetch reviews");
+      }
+      const data = await response.json();
+      displayedReviews.set(data.slice(0, 6));
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  export const loadMoreReviews = (entries, observer) => {
+    if (entries[0].isIntersecting) {
+      loading.set(true); // 로딩 시작
+
+      setTimeout(async () => {
+        try {
+          const response = await fetch("http://localhost:9000/reviews");
+          if (!response.ok) {
+            throw new Error("Failed to fetch reviews");
+          }
+          const data = await response.json();
+          const nextIndex = $displayedReviews.length;
+          const newReviews = data.slice(nextIndex, nextIndex + 6);
+
+          displayedReviews.update((currentReviews) => [...currentReviews, ...newReviews]);
+        } catch (error) {
+          console.error("Error fetching more reviews:", error);
+        } finally {
+          loading.set(false);
+        }
+      }, 1000);
+    }
+  };
 
   let masonryInstance;
 
   // Masonry 레이아웃 초기화
-  onMount(() => {
+  onMount(async () => {
+    await fetchReviews();
+
     const grid = document.querySelector('.masonry-grid');
     masonryInstance = new Masonry(grid, {
       itemSelector: '.review-item',
@@ -376,11 +420,6 @@ const nextItem = () => {
       masonryInstance.reloadItems();
       masonryInstance.layout();
     }
-  }
-
-  // 이미지 클릭 시 이동할 함수
-  function goToEvent(reviewId) {
-    window.location.href = `/review/${reviewId}`; // 예시: /review/1
   }
 </script>
 
@@ -518,27 +557,33 @@ const nextItem = () => {
     <div class="masonry-grid">
       {#each $displayedReviews as review}
         <div class="review-item" 
-             on:click={() => goToEvent(review.REVIEW_IDX)}
              role="link"
              tabindex="0">
-             <img 
-             src={review.FILE_NM} 
-             alt="여행 후기 이미지" 
-             class="review-image"
-             on:load={() => {
-               if (masonryInstance) {
-                 masonryInstance.reloadItems();
-                 masonryInstance.layout();
-               }
-             }}
-           >
+          
+          <!-- 여행 후기 이미지 -->
+          <a use:link href={`/ReviewView/${review.REVIEW_IDX}`}>
+          <img 
+          src={`http://localhost:9000/images/${review.FILE_URL}`} 
+          alt="여행 후기 이미지" 
+          class="review-image"
+          on:load={() => {
+            if (masonryInstance) {
+              masonryInstance.reloadItems();
+              masonryInstance.layout();
+            }
+          }}
+          on:error={(event) => {
+            event.target.src = '../src/assets/img/default_image_o.png';  // 디폴트 이미지 경로
+          }}
+          />
+          </a>
         </div>
       {/each}
     </div>
-    
+
     <!-- 스크롤 감지 요소 -->
     <div id="load-more" class="load-more-sentinel"></div>
-    
+
     {#if $loading}
       <div class="d-flex justify-content-center">
         <div class="spinner-border text-light" role="status">
