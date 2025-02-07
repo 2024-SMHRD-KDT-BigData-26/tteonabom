@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    create_engine, Column, Integer, String, Text, TIMESTAMP, ForeignKey, BigInteger, Date, Time, DECIMAL
+    create_engine, Column, Integer, String, Text, TIMESTAMP, ForeignKey, BigInteger, Date, Time, DECIMAL,DateTime
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, relationship
@@ -143,13 +143,14 @@ class TB_CHATTING(Base):
 class TB_CROOM(Base):
     __tablename__ = "TB_CROOM"
 
-    CROOM_IDX = Column(Integer, primary_key=True, autoincrement=True, comment="방 고유번호")
-    CROOM_TITLE = Column(String(1000), comment="방 제목")
-    CROOM_INFO = Column(Text, comment="방 소개")
-    USER_ID = Column(String(50), comment="방 개설자")
-    CROOM_LIMIT = Column(Integer, server_default="0", comment="방 인원수")
-    CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="방 개설일자")
-    CROOM_STATUS = Column(String(10), comment="방 상태")
+    CROOM_IDX = Column(Integer, primary_key=True, autoincrement=True)
+    CROOM_TITLE = Column(String(255), nullable=False)
+    CROOM_INFO = Column(Text, nullable=True)
+    USER_ID = Column(String(50), nullable=False)
+    CROOM_LIMIT = Column(Integer, default=0)
+    CROOM_STATUS = Column(String(20), nullable=False)
+    GPT_RESPONSE = Column(Text, default="")  # ✅ GPT 추천 일정 추가
+    CREATED_AT = Column(DateTime, default=func.now())  # 자동 생성 시간
 
 
 class TB_LINE_COMMENT(Base):
