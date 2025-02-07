@@ -233,7 +233,7 @@
     justify-content: center; /* 가로 중앙 정렬 */
     align-items: center; /* 세로 중앙 정렬 */
     width: 540px;
-    height: 560px;
+    min-height: 560px;
     padding: 30px;
     border: 1px solid #d9d9d9;
     border-radius: 10px;
