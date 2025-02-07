@@ -424,7 +424,7 @@
             <span class="spot-text">{poi.POI_NM}</span>
             <span class="d-flex align-items-center ms-auto gap-1">
               <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
-              0
+              {poi.POI_LIKES}
               <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
               0
             </span>
