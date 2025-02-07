@@ -6,6 +6,7 @@
     checkUserId,
     checkNickname,
     uploadProfileImage,
+    validateForm  // 추가
   } from "../assets/js/Join.js";
   import { createEventDispatcher } from "svelte";
 
@@ -27,6 +28,45 @@
     });
   }
 
+  $: confirmPasswordError = (confirmPassword && password !== confirmPassword)
+    ? "비밀번호가 일치하지 않습니다."
+    : "";
+    
+  async function submitToBackend(data) {
+    try {
+        console.log("🔍 요청 데이터:", data);
+
+        const payload = {
+          USER_ID: data.userId,
+          USER_PW: data.password,
+          USER_NICK: data.nickname,
+        };
+
+        const response = await fetch('http://localhost:9000/api/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const responseBody = await response.text();
+        console.log("🔍 서버 응답:", responseBody);
+
+        if (!response.ok) {
+            throw new Error(`서버 오류: ${responseBody}`);
+        }
+
+        const result = JSON.parse(responseBody);
+        console.log('✅ 회원가입 성공:', result);
+
+        // 회원가입 성공 시 로그인 페이지로 이동
+        window.location.href = "/#/Login";
+
+    } catch (error) {
+        console.error('❌ 회원가입 중 오류:', error);
+        errorMessage = "회원가입에 실패했습니다. 다시 시도해주세요.";
+    }
+  }
+  
   function handleCancel() {
     window.history.back();
   }
@@ -111,10 +151,6 @@
           required
         />
       </div>
-      {#if errors.passwordError}
-        <p style="color: red;">{errors.passwordError}</p>
-      {/if}
-
       <div class="mb-3">
         <input
           type="password"
@@ -123,6 +159,9 @@
           placeholder="비밀번호 확인"
           required
         />
+        {#if confirmPasswordError}
+          <p style="color: red; margin-top: 4px;">{confirmPasswordError}</p>
+        {/if}
       </div>
 
       <!-- 닉네임 입력 -->

@@ -2,13 +2,82 @@ import { tick } from "svelte";
 
 export let isIdAvailable = null;
 export let isNickAvailable = null;
-// ✅ 폼 제출 핸들러 (회원가입 요청) 
-export function handleSubmit(event, userId, password, confirmPassword, nickname, profileImage, setErrors, submitToBackend) {
+
+// 유효성 검사 함수
+export function validateForm(userId, password, confirmPassword, nickname) {
+  let idError = "";
+  let passwordError = "";
+  let nickError = "";
+  let isValid = true;
+
+  // 아이디: 5~10자 (영문 소문자와 숫자)
+  if (!userId || userId.trim().length < 5 || userId.trim().length > 10) {
+    idError = "아이디는 5~10자 사이여야 합니다.";
+    isValid = false;
+  }
+
+  // 비밀번호: 8~16자, 영문 대문자, 소문자, 숫자 포함
+  if (!password || password.length < 8 || password.length > 16) {
+    passwordError = "비밀번호는 8~16자여야 합니다.";
+    isValid = false;
+  } else {
+    const uppercasePattern = /[A-Z]/;
+    const lowercasePattern = /[a-z]/;
+    const digitPattern = /\d/;
+    if (!uppercasePattern.test(password) || !lowercasePattern.test(password) || !digitPattern.test(password)) {
+      passwordError = "비밀번호는 대문자, 소문자, 숫자를 포함해야 합니다.";
+      isValid = false;
+    }
+  }
+
+  // 비밀번호 일치 확인
+  if (password !== confirmPassword) {
+    passwordError = "비밀번호가 일치하지 않습니다.";
+    isValid = false;
+  }
+
+  // 닉네임: 1~8자
+  if (!nickname || nickname.trim().length < 1 || nickname.trim().length > 8) {
+    nickError = "닉네임은 1~8자 사이여야 합니다.";
+    isValid = false;
+  }
+
+  return { isValid, idError, passwordError, nickError };
+}
+
+// 회원가입 폼 제출 핸들러 (단일 정의)
+export function handleSubmit(
+  event,
+  userId,
+  password,
+  confirmPassword,
+  nickname,
+  profileImage,
+  setErrors,
+  submitToBackend
+) {
   event.preventDefault();
 
-  const { isValid, idError, passwordError, nickError } = validateForm(userId, password, confirmPassword, nickname);
+  // 기본 유효성 검사 수행
+  const { isValid, idError, passwordError, nickError } = validateForm(
+    userId,
+    password,
+    confirmPassword,
+    nickname
+  );
   setErrors({ idError, passwordError, nickError });
 
+  // 중복 검사 여부 확인
+  if (isIdAvailable !== true) {
+    alert("아이디 중복 검사를 진행해주세요.");
+    return;
+  }
+  if (isNickAvailable !== true) {
+    alert("닉네임 중복 검사를 진행해주세요.");
+    return;
+  }
+
+  // 유효성 검사가 통과되면 회원가입 요청 진행
   if (isValid) {
     submitToBackend({ userId, password, nickname, profileImage });
   }
@@ -33,7 +102,7 @@ export async function checkUserId(userId, setErrors) {
     isIdAvailable = data.available;
 
     const message = isIdAvailable ? "✅ 사용 가능한 아이디입니다." : "❌ 이미 사용 중인 아이디입니다.";
-    alert(message);  // ✅ 결과를 alert 창으로 띄우기
+    alert(message);
 
     setErrors((prev) => ({
       ...prev,
@@ -66,7 +135,7 @@ export async function checkNickname(nickname, setErrors) {
     isNickAvailable = data.available;
 
     const message = isNickAvailable ? "✅ 사용 가능한 닉네임입니다." : "❌ 이미 사용 중인 닉네임입니다.";
-    alert(message);  // ✅ 결과를 alert 창으로 띄우기
+    alert(message);
 
     setErrors((prev) => ({
       ...prev,
@@ -98,7 +167,7 @@ export function handleProfileUpload(event, callback) {
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-      callback(e.target.result, file); // ✅ file도 함께 전달
+      callback(e.target.result, file);
     };
 
     reader.readAsDataURL(file);
@@ -121,8 +190,7 @@ export async function uploadProfileImage(file) {
     }
 
     const data = await response.json();
-    return `http://127.0.0.1:9000${data.fileUrl}`;  // ✅ 9000 포트 사용
-
+    return `http://127.0.0.1:9000${data.fileUrl}`;
   } catch (error) {
     console.error("❌ 프로필 이미지 업로드 오류:", error);
     return "";

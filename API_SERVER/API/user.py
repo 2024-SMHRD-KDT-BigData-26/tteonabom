@@ -17,14 +17,6 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# ✅ CORS 설정 (프론트엔드 9001과 연동)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:9001"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 # ✅ 사용자 모델
@@ -76,9 +68,10 @@ if __name__ == "__main__":
 
 # ✅ 아이디 중복 확인 API
 @router.get("/api/check-id")
-async def check_user_id(USER_ID: str = Query(...), db: Session = Depends(get_db)):
-    exists = db.query(TB_USERS).filter(TB_USERS.USER_ID == USER_ID).first()
-    return {"available": not bool(exists)}
+async def check_id(USER_ID: str = Query(...), db: Session = Depends(get_db)):
+    # 예: 사용자 테이블에서 USER_ID가 존재하는지 확인
+    user = db.query(TB_USERS).filter(TB_USERS.USER_ID == USER_ID).first()
+    return {"available": user is None}
 
 
 # ✅ 닉네임 중복 확인 API
