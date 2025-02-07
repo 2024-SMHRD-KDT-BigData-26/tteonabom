@@ -7,6 +7,89 @@
     let password = "";
     let errorMessage = "";
 
+    // onMount에서 Kakao SDK 초기화
+    onMount(() => {
+        if (window.Kakao) {
+            window.Kakao.init("587fbaebd1683e7353f73fee72da4cdc");  // 본인의 Kakao JavaScript 키로 교체
+            console.log("Kakao 초기화 성공:", window.Kakao.isInitialized());
+        } else {
+            console.error("Kakao SDK 로드 실패");
+        }
+    });
+
+    // 카카오 로그인 함수
+    async function kakaoLogin() {
+        if (!window.Kakao) {
+            console.error("Kakao SDK가 초기화되지 않았습니다.");
+            return;
+        }
+
+        // 필요한 동의 항목(scope)을 요청합니다.
+        window.Kakao.Auth.login({
+            scope: 'profile_nickname, profile_image, account_email',
+            success: function(authObj) {
+                console.log("Kakao 인증 성공:", authObj);
+
+                window.Kakao.API.request({
+                    url: '/v2/user/me',
+                    success: function(response) {
+                        console.log("Kakao 사용자 정보:", response);
+
+                        // 프로필 정보가 두 가지 위치에 있을 수 있으므로, 둘 다 확인합니다.
+                        const profile = (response.kakao_account && response.kakao_account.profile) || response.properties;
+                        
+                        if (!profile) {
+                            console.error("사용자 프로필 정보가 제공되지 않았습니다. 추가 동의가 필요할 수 있습니다.");
+                            errorMessage = "사용자 프로필 정보가 제공되지 않았습니다. 추가 동의 후 다시 시도해주세요.";
+                            return;
+                        }
+
+                        // Kakao 고유 ID를 기반으로 사용자 아이디 생성 (예: "kakao_1234567890")
+                        const kakaoUserId = `kakao_${response.id}`;
+                        const userData = {
+                            USER_ID: kakaoUserId,
+                            USER_NICK: profile.nickname,
+                            // 소셜 로그인 사용자는 별도의 비밀번호 없이 임의의 값을 사용합니다.
+                            USER_PW: "KAKAO_SOCIAL_USER",
+                            // 프로필 이미지의 필드명이 다를 수 있으므로 두 가지를 모두 확인합니다.
+                            USER_PROFILE_IMG: profile.profile_image_url || profile.profile_image,
+                        };
+
+                        // 백엔드에 사용자 데이터를 전송하여 로그인/회원가입 처리
+                        fetch("http://localhost:9000/api/kakao-login", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(userData),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log("백엔드 응답:", data);
+                            localStorage.setItem("user", JSON.stringify(data));
+                            window.dispatchEvent(new Event('storage'));
+                            tick().then(() => {
+                                window.location.href = "/";
+                            });
+                        })
+                        .catch(err => {
+                            console.error("백엔드 통신 오류:", err);
+                            errorMessage = "카카오 로그인 처리 중 오류가 발생했습니다.";
+                        });
+                    },
+                    fail: function(error) {
+                        console.error("Kakao 사용자 정보 요청 실패:", error);
+                        errorMessage = "Kakao 사용자 정보 요청에 실패했습니다.";
+                    }
+                });
+            },
+            fail: function(err) {
+                console.error("Kakao 로그인 실패:", err);
+                errorMessage = "카카오 로그인에 실패했습니다.";
+            }
+        });
+    }
+
     async function login() {
         errorMessage = ""; // 오류 메시지 초기화
 
@@ -176,8 +259,8 @@
             <button type="submit" class="login_btn">로그인</button>
 
             <div class="separator my-3">또는</div>
-
-            <a id="kakao-login-btn" href="#">
+            <!-- 카카오 로그인 버튼 -->
+            <a id="kakao-login-btn" on:click={kakaoLogin} href="#">
                 <img src="../src/assets/img/kakao_login.png" alt="카카오 로그인 버튼">
             </a>
 

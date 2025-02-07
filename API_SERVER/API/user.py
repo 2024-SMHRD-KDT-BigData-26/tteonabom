@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, UploadFile, File, Query, Body
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -141,3 +140,27 @@ async def delete_user(USER_ID: str, db: Session = Depends(get_db)):
 
 
 app.include_router(router)
+
+# ✅ 카카오 로그인 API
+@router.post("/api/kakao-login")
+async def kakao_login(user: User, db: Session = Depends(get_db)):
+    # Kakao에서 전달받은 USER_ID는 "kakao_숫자" 형식입니다.
+    db_user = db.query(TB_USERS).filter(TB_USERS.USER_ID == user.USER_ID).first()
+    if not db_user:
+        # 신규 사용자이면, 패스워드는 임의의 값 또는 랜덤 값(여기서는 "temporary_password")을 해싱하여 저장합니다.
+        user.USER_PW = hash_password("temporary_password")
+        db_user = TB_USERS(**user.dict())
+        db.add(db_user)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=400, detail="이미 존재하는 USER_ID입니다.")
+        db.refresh(db_user)
+    return {"USER_ID": db_user.USER_ID, "USER_NICK": db_user.USER_NICK, "USER_PROFILE_IMG": db_user.USER_PROFILE_IMG}
+
+app.include_router(router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=9000)
