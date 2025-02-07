@@ -61,7 +61,7 @@ async def create_review(
         POI_IDX=POI_IDX,
         USER_ID=USER_ID,
         REVIEW_CONTENT=REVIEW_CONTENT,
-        CREATED_AT=datetime.utcnow(),
+        CREATED_AT=datetime.now(),
         UPDATED_AT=None
     )
     db.add(db_review)
@@ -86,8 +86,8 @@ async def create_review(
             FILE_SIZE=len(await review_file.read()),  # 파일 크기
             FILE_EXT=file_ext,
             USER_ID=USER_ID,
-            CREATED_AT=datetime.utcnow(),
-            UPDATED_AT=datetime.utcnow()
+            CREATED_AT=datetime.now(),
+            UPDATED_AT=datetime.now()
         )
         db.add(db_file)
         db.commit()
@@ -214,7 +214,7 @@ async def update_review(
     db_review.REVIEW_CONTENT = review_content
     db_review.POI_NM = poi_nm
     db_review.POI_IDX = poi_idx
-    db_review.UPDATED_AT = datetime.utcnow()
+    db_review.UPDATED_AT = datetime.now()
 
     # 파일 처리
     if review_file:
@@ -249,8 +249,8 @@ async def update_review(
             FILE_SIZE=file_size,
             FILE_EXT=os.path.splitext(review_file.filename)[1],
             USER_ID=db_review.USER_ID,
-            CREATED_AT=datetime.utcnow(),
-            UPDATED_AT=datetime.utcnow()
+            CREATED_AT=datetime.now(),
+            UPDATED_AT=datetime.now()
         )
         db.add(db_file)
 
