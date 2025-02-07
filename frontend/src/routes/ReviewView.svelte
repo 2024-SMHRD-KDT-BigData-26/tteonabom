@@ -1,20 +1,55 @@
 <script>
+  // 페이지 이동을 위한 import
+  import { link } from "svelte-spa-router";
+
   // 비주얼존 배경명
   let currentPage = 'visual_review';
 
   // 네비바 CSS
   import '../assets/css/VisualZone.css';
 
-  // 후기 목록
-  import { recentReviews } from '../assets/js/recent-review-data.js';
-
   // 시간 변환
   import { timeAgo } from "../assets/js/timeAgo.js";
 
-  // 첫 번째 후기 불러오기(예시)
-  let review = recentReviews[0];
 
-  ////////// 이미지 확대 모달 관련
+  // 리뷰 인덱스 받아오기
+  export let params; 
+  
+  let review = {}; // 후기 데이터
+  let user = ''; // 로그인 상태
+
+  // 마운트 시 로컬스토리지에서 로그인 상태 확인
+  onMount(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        user = JSON.parse(storedUser).USER_ID || ''; // USER_ID 추출
+      } catch (error) {
+        console.error("로그인 정보 파싱 오류:", error);
+        user = '';
+      }
+    }
+
+    // params.REVIEW_IDX로 리뷰 데이터 불러오기
+    const reviewIdx = params.REVIEW_IDX; // REVIEW_IDX를 params에서 가져옴
+    fetchReview(reviewIdx); // 해당 REVIEW_IDX로 후기 데이터 불러오기
+  });
+
+  // 후기 목록을 API에서 받아오기
+  async function fetchReview(reviewIdx) {
+    try {
+      const response = await fetch(`http://localhost:9000/reviews/${reviewIdx}`);
+      if (response.ok) {
+        review = await response.json(); // API에서 받은 JSON 데이터를 review 변수에 저장
+      } else {
+        console.error("Failed to load review data.");
+      }
+    } catch (error) {
+      console.error("Error fetching review data:", error);
+    }
+  }
+
+  ///////// 이미지 확대 모달 관련
   import { onMount } from 'svelte';
   let isModalOpen = false;
 
@@ -48,10 +83,26 @@
     currentReviewIdx = reviewIdx;
   }
 
-  // 리뷰 삭제
-  function deleteReview(reviewIdx) {
-    console.log(`Review with ID ${reviewIdx} has been deleted.`);
-    showModal = false;
+  // 리뷰 삭제 (서버 API 호출)
+  async function deleteReview(reviewIdx) {
+    try {
+      const response = await fetch(`http://localhost:9000/reviews/${reviewIdx}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // 삭제 후 UI에서 해당 리뷰를 제거하는 로직
+        showModal = false;
+        alert("리뷰가 성공적으로 삭제되었습니다.");
+        // 필요한 경우 리뷰 목록을 새로 불러오거나 페이지를 리프레시할 수 있습니다.
+        window.history.back(); // 삭제 후 이전 페이지로 돌아가기
+      } else {
+        alert("리뷰 삭제 실패");
+      }
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      alert("리뷰 삭제 중 오류가 발생했습니다.");
+    }
   }
 
   // 모달 배경 제거
@@ -61,11 +112,10 @@
 </script>
 
 <style>
-
   /* 후기 영역 */
   .review-detail {
     display: flex;
-    margin-top: 20px;;
+    margin-top: 20px;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 0.375rem;
@@ -82,10 +132,13 @@
 
   .review-info {
     flex: 1;
+    margin-bottom: 25px;
   }
 
-  .review-info strong {
-    font-size: 18px;
+  /* 여행지 명 */
+  .review-title {
+    font-size: 24px;
+    margin-bottom: 5px;
   }
 
   .review-info .text-muted {
@@ -118,14 +171,14 @@
     position: relative;
   }
 
-  /* 수정, 삭제 버튼을 최하단 오른쪽에 위치시키기 */
-  .review-info .btn-container {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    gap: 20px; /* 버튼 간격 */
-  }
+/* 수정, 삭제 버튼을 후기 아래로 위치시키기 */
+.review-info .btn-container {
+  position: absolute; /* 버튼을 고정시킴 */
+  bottom: 20px; /* 하단 20px */
+  right: 20px; /* 오른쪽 20px */
+  display: flex;
+  gap: 20px; /* 버튼 간격 */
+}
 
   /* 삭제 모달 배경*/
   .modal-delete-backdrop.show {
@@ -200,9 +253,7 @@
   .content .btn-container-back {
     text-align: center;
     margin-top: 20px;
-    
   }
-
 </style>
 
 <main class="main-content">
@@ -215,21 +266,35 @@
   <!-- 여행후기 상세 컨텐츠 영역 -->
   <div class="content">
     <!-- 첫 번째 리뷰 상세 내용 -->
+    {#if review.REVIEW_IDX} <!-- 로딩되었을 때만 렌더링 -->
     <div class="review-detail d-flex">
       <div class="review-image">
-        <img src={review.FILE_NM} alt="review image" class="img-fluid" on:click={toggleModal} style="cursor: pointer;" />
+        <img src={`http://localhost:9000/images/${review.FILE_URL}`} alt="review image" class="img-fluid" on:click={toggleModal} style="cursor: pointer;" />
       </div>
 
       <!-- 이미지 확대 모달 -->
       {#if isModalOpen}
         <div class="modal" on:click={toggleModal}>
-          <img src={review.FILE_NM} alt="여행지 이미지 (원본 크기)" />
+          <img src={`http://localhost:9000/images/${review.FILE_URL}`} alt="여행지 이미지 (원본 크기)" />
         </div>
       {/if}
 
       <div class="review-info ms-3">
         <div class="d-flex align-items-center">
-          <img src={review.USER_PROFILE_IMG} alt="user profile" class="rounded-circle" width="40" height="40" />
+          <img src={`http://localhost:9000/images/${review.USER_PROFILE_IMG}`} 
+            alt="프로필 이미지" 
+            class="rounded-circle"
+            width="40" height="40"
+            on:load={() => {
+              if (masonryInstance) {
+                masonryInstance.reloadItems();
+                masonryInstance.layout();
+              }
+            }}
+            on:error={(event) => {
+              event.target.src = '../src/assets/img/default_profile_image.png';  // 디폴트 이미지 경로
+            }}
+            />
           <div class="ms-2">
             <strong>{review.USER_NICK}</strong>
             <div class="text-muted">{timeAgo(review.CREATED_AT)}</div>
@@ -237,18 +302,20 @@
         </div>
 
         <div class="mt-3">
-          <!-- 실제로는 여행지 번호와 매칭된 여행지 이름이 나와야 함-->
-          <p><strong>{review.POI_IDX}</strong></p>
-          <p>{review.REVIEW_CONTENT}</p>
+          <p class="review-title"><strong>{review.POI_NM}</strong></p>
+          <p>{@html review.REVIEW_CONTENT.replace(/\n/g, '<br />')}</p>
         </div>
 
-        <!-- 수정, 삭제 버튼 -->
-        <div class="btn-container">
-          <a href={`/#/reviewUpdate/`} class="btn update-btn">수정</a>
-          <button class="btn delete-btn" on:click={() => openDeleteModal(review.REVIEW_IDX)}>삭제</button>
-        </div>
+        <!-- 수정, 삭제 버튼을 로그인한 사용자와 비교하여 표시 -->
+        {#if user === review.USER_ID}
+          <div class="btn-container">
+            <a use:link href="/ReviewUpdate/{review.REVIEW_IDX}" class="btn update-btn">수정</a>
+            <button class="btn delete-btn" on:click={() => openDeleteModal(review.REVIEW_IDX)}>삭제</button>
+          </div>
+        {/if}
       </div>
     </div>
+    {/if}
 
     <!-- 목록 버튼 -->
     <div class="btn-container-back">
@@ -258,9 +325,7 @@
 
   <!-- 삭제 모달 -->
   {#if showModal}
-    <!-- 삭제 모달 배경 -->
     <div class="modal-delete-backdrop show" on:click={closeModal}></div>
-
     <div class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
       <div class="modal-dialog">
         <div class="modal-content">
