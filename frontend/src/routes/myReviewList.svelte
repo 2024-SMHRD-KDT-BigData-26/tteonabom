@@ -9,49 +9,128 @@
   import { link } from 'svelte-spa-router';
   import routes from '.././assets/js/routes.js';
 
-  // 목록
-  import { onMount } from 'svelte';
+  // 관련 임포트
+  import { onMount, tick } from "svelte";
   import Masonry from 'masonry-layout';
-  import { loadMoreReviews, displayedReviews, loading } from '../assets/js/recent-review.js';
+  import { writable } from 'svelte/store';
   import { timeAgo } from "../assets/js/timeAgo.js";
+
+  export const displayedReviews = writable([]); // 초기 빈 배열
+  export const loading = writable(false); // 데이터 로딩 상태 추적
+
+  let user = ''; // 로그인 상태 변수
+
+  // 마운트 시 로컬스토리지에서 로그인 상태 확인
+  onMount(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        user = JSON.parse(storedUser).USER_ID || ''; // USER_ID 추출
+      } catch (error) {
+        console.error("로그인 정보 파싱 오류:", error);
+        user = '';
+      }
+    }
+  });
+
+  const fetchReviews = async () => {
+  try {
+    const response = await fetch("http://localhost:9000/reviews");
+    if (!response.ok) {
+      throw new Error("Failed to fetch reviews");
+    }
+    const data = await response.json();
+
+    // ✅ 로그인한 사용자(user)의 USER_ID와 일치하는 리뷰만 필터링
+    const filteredReviews = data.filter(review => review.USER_ID === user);
+
+    // ✅ 필터링된 리뷰가 없을 경우 처리
+    if (filteredReviews.length === 0) {
+      displayedReviews.set([]); // 빈 배열 설정
+      return;
+    }
+
+    displayedReviews.set(filteredReviews.slice(0, 6)); // 처음 6개만 표시
+
+  } catch (error) {
+  }
+};
+
+
+export const loadMoreReviews = (entries, observer) => {
+  if (entries[0].isIntersecting) {
+    loading.set(true); // 로딩 시작
+
+    setTimeout(async () => {
+      try {
+        const response = await fetch("http://localhost:9000/reviews");
+        if (!response.ok) {
+          throw new Error("Failed to fetch reviews");
+        }
+        const data = await response.json();
+
+        displayedReviews.update((currentReviews) => {
+          const filteredReviews = data.filter(review => review.USER_ID === user);
+
+          const currentCount = currentReviews.length;
+
+          const newReviews = filteredReviews.slice(currentCount, currentCount + 6);
+
+          if (newReviews.length === 0) {
+            observer.disconnect(); // 더 이상 감지할 필요 없음
+            return currentReviews;
+          }
+
+          return [...currentReviews, ...newReviews];
+        });
+
+      } catch (error) {
+      } finally {
+        loading.set(false);
+      }
+    }, 1000);
+  }
+};
 
   let masonryInstance;
 
   // Masonry 레이아웃 초기화
-  onMount(() => {
-    const grid = document.querySelector('.masonry-grid');
-    masonryInstance = new Masonry(grid, {
-      itemSelector: '.review-item',
-      columnWidth: '.review-item',
-      percentPosition: true
-    });
+  onMount(async () => {
+  await fetchReviews();
+  await tick(); // DOM이 완전히 렌더링된 후 실행
 
-    // IntersectionObserver 설정
-    const observer = new IntersectionObserver(loadMoreReviews, {
-      rootMargin: '50px',
-      threshold: 1.0,
-    });
-    const sentinel = document.querySelector('#load-more');
-    observer.observe(sentinel);
+  const grid = document.querySelector(".masonry-grid");
+  masonryInstance = new Masonry(grid, {
+    itemSelector: ".review-item",
+    columnWidth: ".review-item",
+    percentPosition: true,
   });
+
+  // IntersectionObserver 설정
+  const sentinel = document.querySelector("#load-more");
+  if (sentinel) {
+    const observer = new IntersectionObserver(loadMoreReviews, {
+      rootMargin: "200px",
+      threshold: 0.5,
+    });
+    observer.observe(sentinel);
+  } else {
+  }
+});
+
 
   // 반응성 문법: displayedReviews가 변경될 때마다 Masonry 레이아웃 업데이트
   $: {
-    if (masonryInstance) {
-      masonryInstance.reloadItems();
-      masonryInstance.layout();
-    }
+  if (masonryInstance) {
+    masonryInstance.reloadItems();
+    masonryInstance.layout();
   }
+}
 
-  // 이미지 클릭 시 이동할 함수
-  function goToEvent(reviewId) {
-    window.location.href = `/#/reviewView/`; // ${reviewId}
-  }
-
-  // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
-  function goToDetail(id) {
-    window.location.href = `#/${id}`;
-  }
+  // 상세 페이지로 이동하는 함수
+function goToDetail(id) {
+  window.location.href = `#/${id}`;
+}
 </script>
 
 <style>
@@ -123,7 +202,7 @@
 
   /* 스크롤 감지용 작은 영역 */
   .load-more-sentinel {
-    height: 10px; 
+    height: 30px; 
   }
 
   /* 로딩 스피너 */
@@ -158,42 +237,43 @@
         
           <!-- 오른쪽 콘텐츠 -->
           <div class="my-content">
-            <!-- 여행후기 목록 -->  
-        <div class="masonry-grid">
-          {#each $displayedReviews as review}
-            <div class="review-item" 
-                 on:click={() => goToEvent(review.REVIEW_IDX)}
-                 role="link"
-                 tabindex="0">
-              
-              <!-- 여행 후기 이미지 -->
-              <img 
-                src={review.FILE_NM} 
-                alt="여행 후기 이미지" 
-                class="review-image"
-                on:load={() => {
-                  if (masonryInstance) {
-                    masonryInstance.reloadItems();
-                    masonryInstance.layout();
-                  }
-                }}
-              >
-            </div>
-          {/each}
+          <!-- 여행후기 목록 -->  
+    <div class="masonry-grid">
+      {#each $displayedReviews as review}
+        <div class="review-item" 
+             role="link"
+             tabindex="0">
+          
+          <!-- 여행 후기 이미지 -->
+          <a use:link href={`/ReviewView/${review.REVIEW_IDX}`}>
+          <img 
+          src={`http://localhost:9000/images/${review.FILE_URL}`} 
+          alt="여행 후기 이미지" 
+          class="review-image"
+          on:load={() => {
+            if (masonryInstance) {
+              masonryInstance.reloadItems();
+              masonryInstance.layout();
+            }
+          }}
+          on:error={(event) => {
+            event.target.src = '../src/assets/img/default_image_o.png';  // 디폴트 이미지 경로
+          }}
+          />
+          </a>
         </div>
-        
-        <!-- 스크롤 감지 요소 -->
-        <div id="load-more" class="load-more-sentinel"></div>
-        
-        {#if $loading}
-          <div class="d-flex justify-content-center">
-            <div class="spinner-border text-light" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        {/if}
-      </div>
-          </div>
-        </div>
+      {/each}
+    </div>
 
+    <!-- 스크롤 감지 요소 -->
+    <div id="load-more" class="load-more-sentinel"></div>
+
+    {#if $loading}
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    {/if}
+  </div>
   </main>
