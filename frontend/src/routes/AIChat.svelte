@@ -10,6 +10,8 @@
   let startDate = "";
   let endDate = "";
   let showConfirmButton = false;
+  let showCalendar = false;
+  let selectedData = {}; // ✅ 선택된 데이터를 저장할 객체 추가
 
   onMount(() => {
     initializeChat((initialMessages) => {
@@ -27,19 +29,17 @@
   }
 
   function handleUserMessage(text) {
-    const { updatedMessages } = sendMessage(messages, text, (value) => {
-      if (value) {
-        updateMessages({
-          type: "bot",
-          text: "(1/5) 언제부터 언제까지 여행하실 계획이신가요?",
-        });
-        updateMessages({
-          type: "bot",
-          text: "📅 여행 일정을 선택해주세요.",
-          showCalendar: true,
-        });
-      }
-    });
+    const { updatedMessages } = sendMessage(
+      messages,
+      text,
+      (value) => {
+        if (value) {
+          showCalendar = true;
+        }
+      },
+      updateMessages,
+      selectedData,
+    ); // ✅ selectedData 전달
     messages = updatedMessages;
   }
 
@@ -72,17 +72,26 @@
   function confirmDates() {
     if (!startDate || !endDate) return;
 
-    const dateMessage = `📅 여행 일정: ${startDate} ~ ${endDate}`;
+    const formattedStartDate = startDate.replace(/-/g, "/");
+    const formattedEndDate = endDate.replace(/-/g, "/");
+
+    const dateMessage = `📅 여행 일정: ${formattedStartDate} ~ ${formattedEndDate}`;
+    showCalendar = false;
+
+    // ✅ 사용자가 선택한 날짜를 selectedData["여행 일정"]에 저장
+    selectedData["여행 일정"] = `${formattedStartDate} ~ ${formattedEndDate}`;
 
     updateMessages({ type: "user", text: dateMessage });
+
+    // 🛠 (1) "이번 여행은 누구랑 함께 하실 예정이신가요?" 메시지를 추가
     updateMessages({
       type: "bot",
       text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
       buttons: [
-        { text: "가족", action: "family" },
-        { text: "연인", action: "couple" },
-        { text: "친구", action: "friends" },
-        { text: "혼자", action: "alone" },
+        { text: "가족", action: "schedule_family" },
+        { text: "연인", action: "schedule_couple" },
+        { text: "친구", action: "schedule_friends" },
+        { text: "혼자", action: "schedule_alone" },
       ],
     });
   }
@@ -93,29 +102,47 @@
     <div class="chatbot-window" id="chatWindow">
       <div class="chat-header"><h3>챗봇 봄봄</h3></div>
       <div class="chat-body">
-        {#each messages as message}
+        {#each messages as message, i}
           <div class="message-wrapper {message.type}">
-            {#if message.type === "bot"}
+            {#if message.type === "bot" && i === 0}
               <div class="bot-profile-wrapper">
                 <div class="bot-profile">
-                  <img src="/src/assets/img/chatbot_profile.png" alt="봄봄" class="bot-img" />
+                  <img
+                    src="/src/assets/img/chatbot_profile.png"
+                    alt="봄봄"
+                    class="bot-img"
+                  />
                   <span class="bot-name">여행AI 봄봄</span>
                 </div>
               </div>
             {/if}
-            <div class={message.type === "bot" ? "message-bot" : "message-user"}>
+            <div
+              class={message.type === "bot" ? "message-bot" : "message-user"}
+            >
               {@html message.text}
             </div>
             {#if message.showCalendar}
               <div class="message-wrapper bot">
                 <div class="message-bot">
                   <label for="start-date">🛫 여행 시작일:</label>
-                  <input type="date" id="start-date" bind:value={startDate} on:change={(e) => handleDateChange(e, "start")} />
-                  
+                  <input
+                    type="date"
+                    id="start-date"
+                    bind:value={startDate}
+                    on:change={(e) => handleDateChange(e, "start")}
+                  />
+
                   <label for="end-date">🏁 여행 종료일:</label>
-                  <input type="date" id="end-date" bind:value={endDate} on:change={(e) => handleDateChange(e, "end")} />
+                  <input
+                    type="date"
+                    id="end-date"
+                    bind:value={endDate}
+                    on:change={(e) => handleDateChange(e, "end")}
+                  />
                   {#if showConfirmButton}
-                    <button class="confirm-btn" on:click={confirmDates}>확인</button>
+                    <button class="confirm-btn" on:click={confirmDates}
+                      >확인</button
+                    >
                   {/if}
                 </div>
               </div>
@@ -123,7 +150,11 @@
             {#if message.buttons}
               <div class="button-wrapper">
                 {#each message.buttons as button}
-                  <button class="chat-btn" on:click={() => handleButtonClick(button.text)}>{button.text}</button>
+                  <button
+                    class="chat-btn"
+                    on:click={() => handleButtonClick(button.text)}
+                    >{button.text}</button
+                  >
                 {/each}
               </div>
             {/if}
@@ -133,6 +164,7 @@
     </div>
   </div>
 </main>
+
 <style>
   /* 챗봇 영역 */
   .chat-container {
@@ -196,14 +228,13 @@
   }
 
   .message-bot {
-    background-color: #f8f9fa;
+    background-color: white;
     color: #000;
     padding: 12px 18px;
     border-radius: 10px;
     max-width: 50%;
     font-size: 14px;
     margin-bottom: 10px;
-    
   }
 
   .message-user {
@@ -223,7 +254,8 @@
     gap: 10px;
   }
 
-  .button-wrapper button, .confirm-btn {
+  .button-wrapper button,
+  .confirm-btn {
     font-family: "Paperlogy-6SemiBold";
     font-size: 14px;
     padding: 10px 18px;
@@ -247,7 +279,6 @@
   .confirm-btn {
     margin-top: 10px;
     transform: translate(90px, 0%);
-    
   }
 
   .confirm-btn:hover {
