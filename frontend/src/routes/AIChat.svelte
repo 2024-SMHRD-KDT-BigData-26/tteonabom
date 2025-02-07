@@ -83,7 +83,7 @@
 
     updateMessages({ type: "user", text: dateMessage });
 
-    // 🛠 (1) "이번 여행은 누구랑 함께 하실 예정이신가요?" 메시지를 추가
+    // ✅ 여행 일정 추천 흐름과 여행지 추천이 섞이지 않도록 분리
     updateMessages({
       type: "bot",
       text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
@@ -166,8 +166,8 @@
 </main>
 
 <style>
-  /* 챗봇 영역 */
-  .chat-container {
+    /* 챗봇 영역 */
+    .chat-container {
     width: 100%;
     max-width: 800px;
     margin: 20px auto;
@@ -292,4 +292,5 @@
     border-radius: 5px;
     border: 1px solid #ccc;
   }
+
 </style>
