@@ -269,7 +269,16 @@
     {#if review.REVIEW_IDX} <!-- 로딩되었을 때만 렌더링 -->
     <div class="review-detail d-flex">
       <div class="review-image">
-        <img src={`http://localhost:9000/images/${review.FILE_URL}`} alt="review image" class="img-fluid" on:click={toggleModal} style="cursor: pointer;" />
+        <img 
+          src={`http://localhost:9000/images/${review.FILE_URL}`} 
+          alt="여행 후기 이미지" 
+          class="img-fluid"
+          on:click={toggleModal}
+          style="cursor: pointer;"
+          on:error={(event) => {
+            event.target.src = '../src/assets/img/default_image_o.png';  // 디폴트 이미지 경로
+          }}
+          />
       </div>
 
       <!-- 이미지 확대 모달 -->
