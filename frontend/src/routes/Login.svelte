@@ -1,14 +1,14 @@
 <script>
     import '../assets/css/Login.css';
-    import { onMount } from 'svelte';
-    import { link, push } from 'svelte-spa-router';
+    import { onMount, tick } from 'svelte';
+    import { link } from 'svelte-spa-router';
 
     let userId = "";
     let password = "";
     let errorMessage = "";
 
     async function login() {
-        errorMessage = "";
+        errorMessage = ""; // 오류 메시지 초기화
 
         if (!userId || !password) {
             errorMessage = "아이디와 비밀번호를 입력하세요.";
@@ -17,54 +17,46 @@
 
         try {
             const payload = {
-                USER_ID: userId,
-                USER_PW: password,
+                USER_ID: userId,  // 백엔드에서 기대하는 필드명
+                USER_PW: password,  // 백엔드에서 기대하는 필드명
             };
 
             const response = await fetch("http://localhost:9000/api/login", {
                 method: "POST",
-                mode: "cors",
+                mode: "cors", // CORS 설정
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(payload),  // 올바른 필드명으로 요청
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                errorMessage = errorData.message || "로그인에 실패했습니다.";
+                errorMessage = data.detail?.error || "로그인에 실패했습니다.";
                 return;
             }
 
-            const data = await response.json();
-            localStorage.setItem("user", JSON.stringify({ userId: data.userId, token: data.token }));
-            push('/'); // SPA 방식으로 페이지 이동
+            // 로그인 성공 시 localStorage에 사용자 정보 저장
+            localStorage.setItem("user", JSON.stringify(data));
+
+            // 로그인 상태 즉시 업데이트 (네비게이션 반영을 위해)
+            window.dispatchEvent(new Event('storage'));
+
+            // UI가 즉시 업데이트되도록 강제 갱신
+            await tick();
+
+            // 메인 페이지로 이동
+            window.location.href = "/";
 
         } catch (error) {
             errorMessage = "서버 오류가 발생했습니다.";
             console.error("로그인 오류:", error);
         }
     }
-
-    function handleKakaoLogin() {
-        // 카카오 로그인 로직 구현
-    }
 </script>
   
   <style>
-    .content {
-        height: 729px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-    }
-
       /* 로고 이미지 반응형 스타일 */
     .img-fluid {
         margin-top: 70px; 
@@ -84,6 +76,10 @@
     /* 로그인 폼 컨테이너 */
     .form-container {
         text-align: center; /* 내부 텍스트 가운데 정렬 */
+        margin: 0 auto; /* 가로 중앙 정렬 */
+        margin-top: 50px; 
+        justify-content: center; /* 가로 중앙 정렬 */
+        align-items: center; /* 세로 중앙 정렬 */
         width: 500px; 
         height: 480px; 
         padding: 30px; 
