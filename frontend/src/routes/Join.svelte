@@ -40,6 +40,7 @@
           USER_ID: data.userId,
           USER_PW: data.password,
           USER_NICK: data.nickname,
+          USER_PROFILE_IMG: uploadedProfileImage
         };
 
         const response = await fetch('http://localhost:9000/api/join', {

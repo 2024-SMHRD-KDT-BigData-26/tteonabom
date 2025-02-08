@@ -4,32 +4,43 @@
 
   // 로그인된 사용자 정보 (Login.svelte에서 "user" 키로 저장된 전체 사용자 정보에서 USER_ID 추출)
   let userId: string = '';
+  // 기존 또는 새로 업로드된 프로필 사진 URL
+  let profilePreview: string = '';
+  // 파일 input 엘리먼트 참조
+  let profileUpload: HTMLInputElement;
 
+
+
+  let currentPage = 'visual_my';
+  let newPassword = '';
+  let confirmNewPassword = '';
+  let nickname = '';
+  let currentPassword = '';
+  let errorMsg = '';
+  let successMsg = '';
+  let nicknameMsg = '';
+  
+  // onMount에서 로컬스토리지에 저장된 사용자 정보를 불러옴
   onMount(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && parsedUser.USER_ID) {
-          userId = parsedUser.USER_ID;
+        if (parsedUser) {
+          if (parsedUser.USER_ID) {
+            userId = parsedUser.USER_ID;
+          }
+          // 기존에 등록된 프로필 사진이 있다면 profilePreview에 할당
+          if (parsedUser.USER_PROFILE_IMG) {
+            profilePreview = parsedUser.USER_PROFILE_IMG;
+          }
         }
       } catch (error) {
         console.error("User parsing error:", error);
       }
     }
   });
-
-  let currentPage = 'visual_my';
-  let newPassword = '';
-  let confirmNewPassword = '';
-  let nickname = '';
-  let profilePreview = ''; // 업로드 후 반환받은 이미지 URL
-  let profileUpload: HTMLInputElement; // 파일 input 엘리먼트를 참조할 변수
-
-  let currentPassword = '';
-  let errorMsg = '';
-  let successMsg = '';
-
+  
   // 프로필 이미지 업로드 핸들러 (파일을 /api/upload로 전송)
   async function onProfileUpload(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -100,6 +111,13 @@
       const result = await response.json();
       console.log('회원정보 수정 성공:', result);
       successMsg = '회원정보가 성공적으로 수정되었습니다.';
+
+      // 성공 후, 프로필 사진을 제외한 입력 필드 초기화
+      currentPassword = "";
+      newPassword = "";
+      confirmNewPassword = "";
+      nickname = "";
+    
     } catch (error) {
       console.error('회원정보 수정 실패:', error);
       errorMsg = error.message;
@@ -112,9 +130,32 @@
     submitToBackend();
   }
 
-  // 닉네임 중복 확인 (임시)
-  function checkNickname() {
-    alert("닉네임 중복 확인 기능은 아직 구현되지 않았습니다.");
+  // 닉네임 중복 확인 
+  async function checkNickname() {
+    // 닉네임이 입력되지 않았을 경우 처리
+    if (!nickname || nickname.trim().length === 0) {
+      nicknameMsg = '닉네임을 입력해주세요.';
+      return;
+    }
+
+    try {
+      // 프론트엔드 checkNickname 함수 내의 fetch 요청 수정
+      const response = await fetch(`http://localhost:9000/api/check-nick?USER_NICK=${encodeURIComponent(nickname)}`);
+
+      if (!response.ok) {
+        throw new Error("닉네임 확인 중 오류가 발생했습니다.");
+      }
+      const data = await response.json();
+      // 백엔드가 { available: true } 또는 { available: false }를 반환한다고 가정
+      if (data.available) {
+        nicknameMsg = '사용 가능한 닉네임입니다.';
+      } else {
+        nicknameMsg = '이미 사용중인 닉네임입니다. 다른 닉네임을 선택해주세요.';
+      }
+    } catch (error) {
+      console.error("닉네임 중복 확인 실패:", error);
+      nicknameMsg = "닉네임 중복 확인 중 오류가 발생했습니다.";
+    }
   }
 
   // 취소 버튼: 이전 페이지로 이동
@@ -355,7 +396,7 @@
                   bind:value={newPassword}
                   class="form-control"
                   placeholder="새 비밀번호를 입력하세요 (8~16자의 영문 대/소문자, 숫자)"
-                  required
+                  
                 />
               </div>
               <!-- 새 비밀번호 확인 -->
@@ -365,7 +406,7 @@
                   bind:value={confirmNewPassword}
                   class="form-control"
                   placeholder="새 비밀번호를 다시 입력하세요"
-                  required
+                  
                 />
               </div>
               <!-- 닉네임 변경 -->
@@ -375,12 +416,23 @@
                   bind:value={nickname}
                   class="form-control me-2"
                   placeholder="닉네임을 입력하세요 (1~8자)"
-                  required
+                  
                 />
                 <button class="btn btn-outline-primary" type="button" on:click={checkNickname}>
                   중복확인
                 </button>
               </div>
+              <!-- 닉네임 중복 확인 결과 메시지 출력 -->
+              {#if nicknameMsg}
+                <div class="nickname-message">{nicknameMsg}</div>
+              {/if}
+               <!-- 에러 또는 성공 메시지 출력 -->
+              {#if errorMsg}
+               <div class="error-message">{errorMsg}</div>
+              {/if}
+              {#if successMsg}
+                <div class="success-message">{successMsg}</div>
+              {/if}
             </div>
             <!-- 버튼 그룹 -->
             <div class="btn-group">

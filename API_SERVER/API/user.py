@@ -16,7 +16,12 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-
+class UserUpdate(BaseModel):
+    # 현재 비밀번호는 별도로 검증이 필요하다면 여기 추가할 수 있음
+    # current_pw: str
+    USER_PW: Optional[str] = None
+    USER_NICK: Optional[str] = None
+    USER_PROFILE_IMG: Optional[str] = None
 
 # ✅ 사용자 모델
 class User(BaseModel):
@@ -113,15 +118,23 @@ async def login(user: LoginRequest, db: Session = Depends(get_db)):
 
 # ✅ 사용자 정보 수정 API
 @router.put("/api/myinfo")
-async def update_user(USER_ID: str = Query(...), user: User = Body(...), db: Session = Depends(get_db)):
+async def update_user(
+        USER_ID: str = Query(...),
+        user: UserUpdate = Body(...),
+        db: Session = Depends(get_db)
+):
     db_user = db.query(TB_USERS).filter(TB_USERS.USER_ID == USER_ID).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+
     update_data = user.dict(exclude_unset=True)
-    if "USER_PW" in update_data:
+
+    if "USER_PW" in update_data and update_data["USER_PW"]:
         update_data["USER_PW"] = hash_password(update_data["USER_PW"])
+
     for key, value in update_data.items():
         setattr(db_user, key, value)
+
     db_user.UPDATED_AT = datetime.utcnow()
     db.commit()
     db.refresh(db_user)
