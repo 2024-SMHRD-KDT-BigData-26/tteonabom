@@ -180,12 +180,18 @@
     font-family: 'Paperlogy-6SemiBold';
     font-size: 20px;
     margin-top: 16px;
+    overflow: hidden;         /* 넘치는 내용 숨김 */
+    text-overflow: ellipsis;  /* ...으로 표시 */
+    max-width: 300px;         /* 최대 너비 설정 */
   }
 
   /* 이달의 행사정보 기간, 장소 */
   p {
     font-size: 14px;
     margin: 2px;
+    overflow: hidden;         /* 넘치는 내용 숨김 */
+    text-overflow: ellipsis;  /* ...으로 표시 */
+    max-width: 300px;         /* 최대 너비 설정 */
   }
 
   /* 최신 후기 영역 */
