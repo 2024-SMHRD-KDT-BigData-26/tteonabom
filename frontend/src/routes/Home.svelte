@@ -526,7 +526,7 @@ const fetchReviews = async () => {
                   alt="후기 수" 
                   class="recommend-count-img"
                 >
-                0
+                {spot.REVIEW_COUNT}
               </span>
             </div>
           </div>
