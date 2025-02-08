@@ -128,9 +128,10 @@ function applyFilters() {
   }
 
   function changeSort(newSortOption) {
-      sortOption = newSortOption;
-      applyFilters();
-  }
+  sortOption = newSortOption;
+  currentSpotPage = 1; // 정렬 시 1페이지로 돌아가게 설정
+  applyFilters();
+}
 
   const totalPages = () => Math.ceil(sortedItems.length / itemsPerPage);
 
@@ -189,9 +190,9 @@ function applyFilters() {
   <div class="content">
     <div class="img-bar">
       {#each categories as item}
-        <div 
-          class="shopping-img {selectedCategory === item.name ? 'selected' : ''}" 
-          on:click={() => selectCategory(item.name)}>
+      <div 
+      class="shopping-img {selectedCategory === item.name ? 'selected' : ''}" 
+      on:click={() => selectCategory(item.name)}>
           <img src={item.src} alt={item.name} class="main-img" />
           <span>{item.name}</span>
         </div>
@@ -212,7 +213,9 @@ function applyFilters() {
       {#each getVisibleItems() as shop}
         <div class="card-body">
           <div class="card-img">
-            <img src={"src/assets/img/shopping/" + shop.MALL_IMG} alt="상품 이미지" />
+            <a href={shop.MALL_URL} class="url" target="_blank">
+              <img src={"src/assets/img/shopping/" + shop.MALL_IMG} alt="상품 이미지" />
+            </a>
           </div>
           <hr class="divider" />
           <div class="card-content">
@@ -258,26 +261,6 @@ function applyFilters() {
 
 
 <style>
-  /* 기본 폰트 설정 */
-  @font-face {
-    font-family: "Paperlogy-4Regular"; /* 일반 폰트 */
-    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2")
-      format("woff2");
-    font-weight: 400;
-    font-style: normal;
-  }
-
-  @font-face {
-    font-family: "Paperlogy-6SemiBold"; /* 반굵은 폰트 */
-    src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2")
-      format("woff2");
-    font-weight: 600;
-    font-style: normal;
-  }
-
-  * {
-    font-family: "Paperlogy-4Regular"; /* 기본 폰트 적용 */
-  }
 
   /* 메인 컨테이너 */
   .main-content {
@@ -298,6 +281,14 @@ function applyFilters() {
     box-sizing: border-box;
     overflow: hidden;
   }
+
+  /* 화면 너비가 1340px 이하일 때 패딩 20px 적용 */
+@media (max-width: 1340px) {
+  .content {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+}
 
   /* 이미지 바 */
   .img-bar {
@@ -426,6 +417,7 @@ function applyFilters() {
     color: #ff7043;
     font-size: 14px;
     text-align: left;
+    margin-bottom: -2px;
   }
   .card-title {
     font-size: 18px;

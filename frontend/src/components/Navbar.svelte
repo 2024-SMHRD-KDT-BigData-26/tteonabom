@@ -40,6 +40,7 @@
     localStorage.removeItem('user'); // user 키 삭제
     user = ''; // 상태 업데이트
     window.dispatchEvent(new Event('storage')); // 상태 변경 이벤트 트리거
+    window.location.href = '/'; // 홈 화면으로 리디렉션
   }
 </script>
 

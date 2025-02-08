@@ -180,12 +180,18 @@
     font-family: 'Paperlogy-6SemiBold';
     font-size: 20px;
     margin-top: 16px;
+    overflow: hidden;         /* 넘치는 내용 숨김 */
+    text-overflow: ellipsis;  /* ...으로 표시 */
+    max-width: 300px;         /* 최대 너비 설정 */
   }
 
   /* 이달의 행사정보 기간, 장소 */
   p {
     font-size: 14px;
     margin: 2px;
+    overflow: hidden;         /* 넘치는 내용 숨김 */
+    text-overflow: ellipsis;  /* ...으로 표시 */
+    max-width: 300px;         /* 최대 너비 설정 */
   }
 
   /* 최신 후기 영역 */
@@ -275,20 +281,38 @@ import { timeAgo } from "../assets/js/timeAgo.js";
 export const displayedReviews = writable([]); // 초기 빈 배열
 export const loading = writable(false); // 데이터 로딩 상태 추적
 
-// API에서 데이터를 가져와 설정
+// ✅ 실패 시 재시도하는 함수 추가
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      
+      return await response.json(); // 성공하면 데이터 반환
+    } catch (error) {
+      console.error(`[ERROR] ${url} 데이터 로드 실패 (시도 ${attempt + 1}/${retries}):`, error);
+      if (attempt < retries - 1) await new Promise(res => setTimeout(res, delay)); // 재시도 대기
+    }
+  }
+  throw new Error(`[ERROR] ${url} 데이터 불러오기 실패 (최대 재시도 초과)`);
+}
+
+// ✅ 여행 명소(POI) 데이터 가져오기
 onMount(async () => {
-  const res = await fetch('http://localhost:9000/pois');
-  const allSpots = await res.json();
+  try {
+    const allSpots = await fetchWithRetry("http://localhost:9000/pois");
 
-  // POI_URL이 유효한 것만 필터링 (디폴트 이미지 제외)
-  pois = allSpots
-    .filter(spot => spot?.POI_URL && spot?.POI_URL !== '../src/assets/img/default_image_r.png')
-    .sort(() => 0.5 - Math.random())  // 랜덤으로 섞기
-    .slice(0, 6); // 최대 6개만
+    pois = allSpots
+      .filter(spot => spot?.POI_URL && spot?.POI_URL !== "../src/assets/img/default_image_r.png")
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 6);
 
-  // 데이터를 불러온 후 캐러셀 생성
-  carousel = new RecommendSpotCarousel(pois);
-  displayedSpots = carousel.getDisplayedSpots();
+    // 데이터를 불러온 후 캐러셀 생성
+    carousel = new RecommendSpotCarousel(pois);
+    displayedSpots = carousel.getDisplayedSpots();
+  } catch (error) {
+    console.error("[ERROR] POI 데이터를 불러오는 중 오류 발생:", error);
+  }
 });
 
 // 이전 아이템으로 이동
@@ -313,34 +337,33 @@ const nextItem = () => {
   let currentYear = new Date().getFullYear();
   let currentMonth = (new Date().getMonth() + 1).toString().padStart(2, "0"); // 1월 → "01" 형식
 
-  async function fetchFestivals() {
-    try {
-      const response = await fetch("http://localhost:9000/festival");
-      const data = await response.json();
+  // ✅ 축제 데이터 가져오기
+async function fetchFestivals() {
+  try {
+    const data = await fetchWithRetry("http://localhost:9000/festival");
 
-      festivals = Array.isArray(data) ? data : [data];
+    festivals = Array.isArray(data) ? data : [data];
 
-      // ✅ 현재 연도/월과 일치하는 데이터만 필터링
-      let filteredFests = festivals.filter((fest) => {
-        let period = fest.FEST_PERIOD; // 예: "2025.02.01(목) ~ 2025.02.05(월)"
-        let match = period.match(/^(\d{4})\.(\d{2})/); // 연도.월 추출 (예: "2025.02")
+    // ✅ 현재 연도/월과 일치하는 데이터만 필터링
+    let filteredFests = festivals.filter((fest) => {
+      let period = fest.FEST_PERIOD;
+      let match = period.match(/^(\d{4})\.(\d{2})/); // 연도.월 추출
 
-        if (match) {
-          let festYear = match[1]; // "2025"
-          let festMonth = match[2]; // "02"
+      if (match) {
+        let festYear = match[1]; // "2025"
+        let festMonth = match[2]; // "02"
+        return festYear == currentYear && festMonth == currentMonth;
+      }
+      return false;
+    });
 
-          return festYear == currentYear && festMonth == currentMonth;
-        }
-        return false;
-      });
-
-      // ✅ 4개만 랜덤으로 선택
-      thisMonthFests = getRandomItems(filteredFests, 4);
-
-    } catch (error) {
-      console.error("행사 정보를 불러오는 중 오류 발생:", error);
-    }
+    // ✅ 4개만 랜덤으로 선택
+    thisMonthFests = getRandomItems(filteredFests, 4);
+  } catch (error) {
+    console.error("[ERROR] 행사 정보를 불러오는 중 오류 발생:", error);
   }
+}
+
 
   // ✅ 배열에서 랜덤하게 N개 선택하는 함수
   function getRandomItems(array, count) {
@@ -354,19 +377,15 @@ const nextItem = () => {
 
   onMount(fetchFestivals);
 
-  // 최신 여행후기 관련
-  const fetchReviews = async () => {
-    try {
-      const response = await fetch("http://localhost:9000/reviews");
-      if (!response.ok) {
-        throw new Error("Failed to fetch reviews");
-      }
-      const data = await response.json();
-      displayedReviews.set(data.slice(0, 6));
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-    }
-  };
+  // ✅ 여행 후기 데이터 가져오기
+const fetchReviews = async () => {
+  try {
+    const data = await fetchWithRetry("http://localhost:9000/reviews");
+    displayedReviews.set(data.slice(0, 6));
+  } catch (error) {
+    console.error("[ERROR] 리뷰 데이터를 불러오는 중 오류 발생:", error);
+  }
+};
 
   export const loadMoreReviews = (entries, observer) => {
     if (entries[0].isIntersecting) {
@@ -513,7 +532,7 @@ const nextItem = () => {
                   alt="후기 수" 
                   class="recommend-count-img"
                 >
-                0
+                {spot.REVIEW_COUNT}
               </span>
             </div>
           </div>

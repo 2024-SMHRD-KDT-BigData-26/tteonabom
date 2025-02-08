@@ -12,6 +12,8 @@
 
   // DB에서 여행지 데이터 가져오기
   let pois = [];
+
+  let showClearButton = false; // X 버튼 표시 여부를 제어하는 상태
   
   onMount(async () => {
     const res = await fetch('http://localhost:9000/pois');
@@ -162,7 +164,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 1.25rem; /* gap-5 */
-    width: 1300px;
     margin: 10px;
     padding-top: 15px;
   }
@@ -190,6 +191,19 @@
     border-radius: 10px;
     cursor: pointer;
   }
+
+    /* 화면 너비가 1340px 이하일 때 */
+@media (max-width: 1340px) {
+  .spot-img {
+    width: 420px;
+    height: 200px;
+    object-fit: cover;
+    max-width: 100%; /* 화면 크기에 맞게 너비 조정 */
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  }
+
 
   /* 추천 여행지 정보 전체 */
   .spot-info {
@@ -251,6 +265,49 @@
     color: white;
     border-color: #333;
   }
+
+  .input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .form-control {
+    border-radius: 8px !important;
+  }
+
+  .btn-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
+    z-index: 1050; /* Bootstrap의 기본 z-index값보다 큰 값으로 설정 */
+    border-radius: 50%;
+  }
+
+  .btn-clear:hover {
+    color: #FF5D17; /* X 버튼 hover 시 색상 변경 */
+  }
+
+  .no-list-message {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #888;
+    padding: 50px 0;
+    min-height: 200px; /* 필요에 따라 조정 */
+}
+
 </style>
   
 <main class="main-content">
@@ -400,8 +457,30 @@
         <div class="d-flex gap-2">
           <!-- 검색창 -->
           <div class="input-group">
-            <input type="text" class="form-control" placeholder="찾을 내용을 입력해주세요" bind:value={searchQuery}>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="찾을 내용을 입력해주세요"
+              value={searchQuery}
+              on:input={(e) => {
+                searchQuery = e.target.value; // 직접 searchQuery 업데이트
+                showClearButton = searchQuery.trim() !== "";
+                console.log("on:input - showClearButton:", showClearButton);
+              }}
+              on:blur={() => {
+                showClearButton = searchQuery.trim() !== "";
+                console.log("on:blur - showClearButton:", showClearButton);
+              }}
+            />
+            {#if showClearButton}
+              <button class="btn-clear" on:click={() => { 
+                searchQuery = ''; 
+                showClearButton = false; 
+                console.log("X 버튼 클릭 - searchQuery:", searchQuery);
+              }}>×</button>
+            {/if}
           </div>
+          
           <!-- 정렬 -->
           <select class="form-select" style="width: 100px;" bind:value={sortOption}>
             <option value="latest">최신순</option>
@@ -412,25 +491,27 @@
     </div>
     <!-- 여행지 목록 시작 -->
     <div class="spot-container">
-      {#each visiblePois as poi}
-      <div class="spot-item">
-          <!-- 이미지 -->
-          <a use:link href={`/SpotView/${poi.POI_IDX}`}>
-            <img src={poi.POI_URL || "../src/assets/img/default_image_r.png"} alt="여행지 이미지" class="spot-img" />
-          </a>
-          <!-- 정보 -->
-          <div class="spot-info">
-            <span class="badge">{poi.POI_ADDR.slice(0, 2)}</span>
-            <span class="spot-text">{poi.POI_NM}</span>
-            <span class="d-flex align-items-center ms-auto gap-1">
-              <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
-              {poi.POI_LIKES}
-              <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
-              0
-            </span>
+      {#if visiblePois.length > 0}
+        {#each visiblePois as poi}
+          <div class="spot-item">
+            <a use:link href={`/SpotView/${poi.POI_IDX}`}>
+              <img src={poi.POI_URL || "../src/assets/img/default_image_r.png"} alt="여행지 이미지" class="spot-img" />
+            </a>
+            <div class="spot-info">
+              <span class="badge">{poi.POI_ADDR.slice(0, 2)}</span>
+              <span class="spot-text">{poi.POI_NM}</span>
+              <span class="d-flex align-items-center ms-auto gap-1">
+                <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
+                {poi.POI_LIKES}
+                <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
+                {poi.POI_REVIEWS}
+              </span>
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      {:else}
+        <div class="no-list-message">목록이 없습니다</div>
+      {/if}
     </div>
     <!-- 여행지 목록 끝 -->
   </div>

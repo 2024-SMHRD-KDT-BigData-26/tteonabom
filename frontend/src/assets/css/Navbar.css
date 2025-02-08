@@ -68,7 +68,7 @@
     display: flex; /* 버튼 내부 요소 정렬 */
     align-items: center; /* 수직 중앙 정렬 */
     justify-content: center; /* 수평 중앙 정렬 */
-    background-color: #2ECC71;
+    background-color: #ff5d17bd;
     color: #fff;
     border: none;
     border-radius: 50px; /* 전체 라운드 */
@@ -77,22 +77,18 @@
     cursor: pointer;
     transition: background-color 0.3s;
   }
-
-  /* 로그인, 로그아웃 버튼 호버 */
+  
+  /* 로그인, 로그아웃 버튼 컬러 */
   .login-btn:hover, .logout-btn:hover {
-    background-color: #27ae60;
+    background-color: #f14b03bd;
   }
 
+  .login-btn:active, .logout-btn:active {
+    background-color: #f14b03bd !important; 
+  }
 
-
-  /* 내여행 메뉴 숨김처리 
-  #mypage_menu {
-    display: none;
-  } */
-
-  /* Home 페이지에서만 색상 변경 */
-  .navbar-nav .nav-link.isHome {
-    color: #fff; 
+  .login-btn:focus, .logout-btn:focus {
+    background-color: #f14b03bd;
   }
 
   
