@@ -426,7 +426,7 @@
               <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
               {poi.POI_LIKES}
               <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
-              0
+              {poi.REVIEW_COUNT}
             </span>
           </div>
         </div>

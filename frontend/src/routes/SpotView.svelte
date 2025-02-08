@@ -184,12 +184,20 @@
       return;
     }
 
+    // filteredReviews를 사용하여 state 업데이트
     displayedReviews.set(filteredReviews.slice(0, 6));  // 처음 6개만 표시
+    return filteredReviews.length;  // 후기 개수 리턴
   } catch (error) {
     console.error("Error fetching reviews:", error);
   }
 };
 
+// POI에 대한 후기 개수
+let reviewCount = 0;
+
+onMount(async () => {
+  reviewCount = await fetchReviews();  // 후기 개수를 가져오기
+});
 export const loadMoreReviews = (entries, observer) => {
   if (entries[0].isIntersecting) {
     loading.set(true); // 로딩 시작
@@ -460,7 +468,7 @@ export const loadMoreReviews = (entries, observer) => {
             <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="recommend-count-img" />
             {likeCount}
             <img src="../src/assets/img/review_count.png" alt="후기 수" class="recommend-count-img" />
-            0
+            {reviewCount}
           </div>
         </div>
       </div>
