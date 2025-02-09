@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 from DataBase.conn import get_db
-from DataBase.models import TB_CROOM, TB_CHATTING
+from DataBase.models import TB_CROOM, TB_CHATTING, TB_SHOPPING_MALL
 from config import OPENAI_API_KEY
 import openai
 import pandas as pd
@@ -59,18 +59,7 @@ def generate_travel_prompt(travel_data: dict) -> str:
             f"🎭 <strong>선호 여행 스타일:</strong> {style}<br>"
             f"⏳ <strong>일정 스타일:</strong> {schedule}<br><br>"
             f"🔥 <strong>각 날짜별로 상세 일정을 추천해 주세요.</strong> 날짜별로 아침, 점심, 저녁으로 나누어 주세요.<br>"
-            f"예시: <br>"
-            f"<h3>✅ {start_date} 일정:</h3><ul>"
-            f"<li>🌅 <strong>아침:</strong> (추천 장소 + 설명)</li>"
-            f"<li>🍽️ <strong>점심:</strong> (추천 식당 + 음식)</li>"
-            f"<li>🌆 <strong>오후:</strong> (관광지 + 액티비티)</li>"
-            f"<li>🌙 <strong>저녁:</strong> (야경 명소 + 맛집 추천)</li></ul><br>"
-            f"<h3>✅ {end_date} 일정:</h3><ul>"
-            f"<li>🌅 <strong>아침:</strong> (추천 장소 + 설명)</li>"
-            f"<li>🍽️ <strong>점심:</strong> (추천 식당 + 음식)</li>"
-            f"<li>🌆 <strong>오후:</strong> (관광지 + 액티비티)</li>"
-            f"<li>🌙 <strong>저녁:</strong> (야경 명소 + 맛집 추천)</li></ul><br>"
-            f"👉 <strong>사용자가 보기 좋게 HTML로 정리해 주세요.</strong>"
+            f"👉 <strong>HTML 형식으로 작성해 주세요.</strong>"
         )
 
         return prompt
@@ -148,6 +137,37 @@ async def save_chat_response(request: ChatSaveRequest, db: Session = Depends(get
     db.refresh(db_chat)
 
     return {"detail": "GPT 응답이 저장되었습니다.", "chat_id": db_chat.CHAT_IDX}
+
+
+# ✅ TB_SHOPPING_MALL 카테고리 목록 제공 API
+@router.get("/shopping_malls/categories")
+async def get_shopping_mall_categories(db: Session = Depends(get_db)):
+    """쇼핑몰 테마 카테고리 목록 조회 API"""
+    categories = db.query(TB_SHOPPING_MALL.CATEGORY).distinct().all()
+
+    if not categories:
+        raise HTTPException(status_code=404, detail="등록된 쇼핑몰 카테고리가 없습니다.")
+
+    return [category[0] for category in categories]
+
+
+# ✅ 특정 카테고리 쇼핑몰 추천 API
+@router.get("/shopping_malls/category/{category}")
+async def get_shopping_malls_by_category(category: str, db: Session = Depends(get_db)):
+    """특정 카테고리의 쇼핑몰 추천 API"""
+    malls = db.query(TB_SHOPPING_MALL).filter(TB_SHOPPING_MALL.CATEGORY == category).all()
+
+    if not malls:
+        raise HTTPException(status_code=404, detail=f"'{category}' 카테고리의 쇼핑몰이 없습니다.")
+
+    return [
+        {
+            "mall_name": mall.MALL_NM,
+            "mall_url": mall.MALL_URL,
+            "mall_img": mall.MALL_IMG,
+        }
+        for mall in malls
+    ]
 
 
 # ✅ TB_CHATTING의 특정 GPT 응답을 엑셀로 다운로드
