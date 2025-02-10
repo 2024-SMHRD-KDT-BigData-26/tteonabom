@@ -4,6 +4,7 @@
     initializeChat,
     sendMessage,
     scrollToBottom,
+    requestChat
   } from "../assets/js/AIChat.js";
 
   let messages = [];
@@ -69,7 +70,7 @@
     showConfirmButton = startDate !== "" && endDate !== "";
   }
 
-  function confirmDates() {
+  async function confirmDates() {
     if (!startDate || !endDate) return;
 
     const formattedStartDate = startDate.replace(/-/g, "/");
@@ -81,19 +82,23 @@
     // ✅ 사용자가 선택한 날짜를 selectedData["여행 일정"]에 저장
     selectedData["여행 일정"] = `${formattedStartDate} ~ ${formattedEndDate}`;
 
+    // ✅ 데이터 확인용 콘솔 로그
+    console.log("🟢 선택된 여행 데이터:", selectedData);
+
     updateMessages({ type: "user", text: dateMessage });
 
-    updateMessages({
-      type: "bot",
-      text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
-      buttons: [
-        { text: "가족", action: "schedule_family" },
-        { text: "연인", action: "schedule_couple" },
-        { text: "친구", action: "schedule_friends" },
-        { text: "혼자", action: "schedule_alone" },
-      ],
-    });
-  }
+    // ✅ GPT 응답 요청
+    try {
+        const response = await requestChat("test_user", selectedData);
+        updateMessages({
+            type: "bot",
+            text: response.gpt_response // ✅ GPT에서 받은 응답을 출력
+        });
+    } catch (error) {
+        console.error("GPT 응답을 가져오는 중 오류 발생:", error);
+    }
+}
+
 </script>
 
 <main>
@@ -157,6 +162,7 @@
     </div>
   </div>
 </main>
+
 
 <style>
     /* 챗봇 영역 */
