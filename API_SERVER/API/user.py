@@ -63,7 +63,7 @@ async def upload_file(file: UploadFile = File(...)):
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        return {"fileUrl": f"/uploads/{file.filename}"}  # ✅ 상대 경로 반환
+        return {"fileUrl": f"{file.filename}"}  # ✅ 상대 경로 반환
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"파일 업로드 실패: {str(e)}")
