@@ -24,29 +24,32 @@
   let isKakao: boolean = false;
 
    // onMount에서 로컬스토리지에 저장된 사용자 정보를 불러옴
-   onMount(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser) {
-          if (parsedUser.USER_ID) {
-            userId = parsedUser.USER_ID;
-            // Kakao 로그인 여부 확인
-            if (userId.startsWith("kakao_")) {
-              isKakao = true;
-            }
-          }
-          // 기존에 등록된 프로필 사진이 있다면 profilePreview에 할당
-          if (parsedUser.USER_PROFILE_IMG) {
-            profilePreview = parsedUser.USER_PROFILE_IMG;
+ onMount(() => {
+  const storedUser = localStorage.getItem('user');
+  if (storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      if (parsedUser) {
+        if (parsedUser.USER_ID) {
+          userId = parsedUser.USER_ID;
+          // Kakao 로그인 여부 확인
+          if (userId.startsWith("kakao_")) {
+            isKakao = true;
           }
         }
-      } catch (error) {
-        console.error("User parsing error:", error);
+        // 기존에 등록된 프로필 사진이 있다면 profilePreview에 할당
+        if (parsedUser.USER_PROFILE_IMG.startsWith('/')) {
+          profilePreview = "http://localhost:9000" + encodeURI(parsedUser.USER_PROFILE_IMG);
+        } else {
+          profilePreview = encodeURI(parsedUser.USER_PROFILE_IMG);
+        }
+        }
       }
+      catch (error) {
+      console.error("User parsing error:", error);
     }
-  });
+  }
+});
   
   // 프로필 이미지 업로드 핸들러 (파일을 /api/upload로 전송)
   async function onProfileUpload(event: Event) {
@@ -66,7 +69,7 @@
         }
         const data = await response.json();
         // 백엔드가 반환한 fileUrl을 profilePreview에 저장
-        profilePreview = data.fileUrl;
+        profilePreview = "http://localhost:9000" + encodeURI(data.fileUrl);
       } catch (error) {
         console.error("프로필 이미지 업로드 오류:", error);
         errorMsg = error.message;
@@ -302,11 +305,15 @@
     background-color: #e65c00;
   }
   /* 버튼 그룹 */
-  .btn-group {
-    justify-content: center;
-    margin: 20px auto 0 auto;
-    width: 194%;
-  }
+.btn-group {
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    text-align: center;
+    margin: 20px auto 0 auto; 
+    width: 100%; 
+}
+
   /* 취소 버튼 */
   .cancel_btn {
     height: 42px;
@@ -448,12 +455,13 @@
               {#if successMsg}
                 <div class="success-message">{successMsg}</div>
               {/if}
-            </div>
             <!-- 버튼 그룹 -->
             <div class="btn-group">
               <button type="button" class="cancel_btn" on:click={handleCancel}>취소</button>
               <button type="submit" class="update_btn">변경</button>
             </div>
+            </div>
+            
           </form>
         </div>
       </div>

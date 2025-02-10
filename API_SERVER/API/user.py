@@ -10,6 +10,7 @@ import shutil
 import os
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
@@ -66,6 +67,7 @@ async def upload_file(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"파일 업로드 실패: {str(e)}")
+
 
 
 # ✅ 아이디 중복 확인 API
