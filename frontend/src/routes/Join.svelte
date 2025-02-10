@@ -2,7 +2,6 @@
   import {
     handleSubmit,
     handleProfileUpload,
-    openFileDialog,
     checkUserId,
     checkNickname,
     uploadProfileImage,
@@ -20,6 +19,17 @@
   let nickname = "";
   let errors = { idError: "", passwordError: "", nickError: "" };
   let uploadedProfileImage = ""; // 프로필 이미지 URL 저장
+  // 회원가입 성공 여부 상태 변수
+  let registrationSuccess = false;
+  let errorMessage = "";
+  
+
+  function openFileDialog() {
+    if (profileUpload) {
+      profileUpload.click();
+    }
+  }
+
 
   async function onProfileUpload(event) {
     handleProfileUpload(event, async (preview, file) => {
@@ -60,6 +70,7 @@
         console.log('✅ 회원가입 성공:', result);
 
         // 회원가입 성공 시 로그인 페이지로 이동
+        window.alert("회원가입이 성공적으로 완료되었습니다.");
         window.location.href = "/#/Login";
 
     } catch (error) {
@@ -70,6 +81,11 @@
   
   function handleCancel() {
     window.history.back();
+  }
+
+  // "확인" 버튼 클릭 시 로그인 페이지로 이동하는 함수
+  function handleSuccessConfirm() {
+    window.location.href = "/#/Login";
   }
 </script>
 
@@ -118,6 +134,7 @@
             style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; cursor: pointer;"
             on:click={openFileDialog}
           />
+         
         {/if}
       </div>
 

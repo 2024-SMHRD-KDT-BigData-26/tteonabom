@@ -201,5 +201,6 @@ export async function uploadProfileImage(file) {
 export function openFileDialog(profileUpload) {
   if (profileUpload) {
     profileUpload.click();
-  }
+  
+}
 }
