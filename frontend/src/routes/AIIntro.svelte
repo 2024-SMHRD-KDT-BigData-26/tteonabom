@@ -1,10 +1,26 @@
 <script>
   // 비주얼존 배경명
-  let currentPage = "visual_AI";
+  import { onMount } from 'svelte';
   import { push } from "svelte-spa-router"; // 페이지 이동을 위한 push 함수
+  // 로그인 여부를 나타내는 변수
+  let user = '';
+
+  // 마운트 시 로컬스토리지에서 로그인 상태 확인
+  onMount(() => {
+    user = localStorage.getItem('user') || '';
+  });
+
+  let currentPage = "visual_AI";
 
   function navigateToChat() {
-    push("/AIChat/"); // AIChat 페이지로 이동
+    // 로그인하지 않은 경우 alert 표시
+    if (!user) {
+      alert("로그인 이후 필요한 서비스 입니다.");
+      push("/login");
+      return;
+    }
+    // 로그인 된 경우 페이지 이동
+    push("/AIChat/");
   }
 
   // CSS 파일 import
@@ -100,6 +116,7 @@
   
   <div class="yellow-section">
     <div class="button-div">
+      <!-- 버튼 클릭 시 navigateToChat 함수 실행 -->
       <button on:click={navigateToChat}>
         <span>봄봄이랑 대화하러 가기</span>
       </button>
