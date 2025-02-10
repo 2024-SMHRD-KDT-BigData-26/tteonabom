@@ -6,11 +6,18 @@
     let userId = "";
     let password = "";
     let errorMessage = "";
+    let rememberId = false;  // 체크박스 상태를 바인딩할 변수
 
     // onMount에서 Kakao SDK 초기화
     onMount(() => {
+        const savedUserId = localStorage.getItem("userId");
+        if (savedUserId) {
+            userId = savedUserId;
+            rememberId = true; // 아이디 저장이 체크된 상태
+        }
+
         if (window.Kakao) {
-            window.Kakao.init("587fbaebd1683e7353f73fee72da4cdc");  // 본인의 Kakao JavaScript 키로 교체
+            window.Kakao.init("587fbaebd1683e7353f73fee72da4cdc");  // Kakao JavaScript 키
             console.log("Kakao 초기화 성공:", window.Kakao.isInitialized());
         } else {
             console.error("Kakao SDK 로드 실패");
@@ -90,12 +97,20 @@
         });
     }
 
+    // 로그인 함수 수정: 아이디 저장 상태에 따라 로컬스토리지에 아이디 저장
     async function login() {
         errorMessage = ""; // 오류 메시지 초기화
 
         if (!userId || !password) {
             errorMessage = "아이디와 비밀번호를 입력하세요.";
             return;
+        }
+
+        // 아이디 저장 여부 체크
+        if (rememberId) {
+            localStorage.setItem("userId", userId);  // 로컬스토리지에 아이디 저장
+        } else {
+            localStorage.removeItem("userId");  // 아이디 저장 안 할 경우 로컬스토리지에서 삭제
         }
 
         try {
@@ -172,7 +187,7 @@
         justify-content: center; /* 가로 중앙 정렬 */
         align-items: center; /* 세로 중앙 정렬 */
         width: 500px; 
-        min-height: 480px; 
+        min-height: 510px; 
         padding: 30px; 
         border: 1px solid #D9D9D9; 
         border-radius: 10px; 
@@ -189,6 +204,20 @@
         margin-bottom: 20px;
         margin: auto;
         height: 44px; 
+    }
+
+    .rememberId-div {
+        padding-right: 210px;
+    }
+
+    /* 체크박스 스타일 */
+    input[type="checkbox"] {
+        margin-right: 8px;
+    }
+
+    .rememberId {
+        margin-top: -20px;
+        font-size: 14px;
     }
   
     /* 로그인 버튼 */
@@ -235,7 +264,12 @@
     .separator::after {
         right: 70px;
     }
-  
+    
+    .no-id {
+        color: #FF5D17;
+        font-size: 14px;
+        text-decoration: none;
+    }
   
   
     /* 회원가입 링크 */
@@ -260,6 +294,11 @@
                 <input type="password" bind:value={password} class="form-control" placeholder="비밀번호를 입력하세요" required>
             </div>
 
+            <div class="mb-3 rememberId-div">
+                <input type="checkbox" id="rememberId" bind:checked={rememberId}>
+                <label for="rememberId" class="rememberId">아이디 저장</label>
+            </div>
+
             {#if errorMessage}
                 <p style="color: red;">{errorMessage}</p>
             {/if}
@@ -273,7 +312,7 @@
             </a>
 
             <div class="text-center mt-3">
-                <a use:link href="/Join" class="register-link">회원가입</a>
+                <span class="no-id">아이디가 없다면?&nbsp;</span><a use:link href="/Join" class="register-link">회원가입</a>
             </div>
         </form>
     </div>
