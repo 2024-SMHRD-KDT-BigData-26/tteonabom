@@ -197,10 +197,5 @@ export async function uploadProfileImage(file) {
   }
 }
 
-// ✅ 파일 업로드 창 열기 함수
-export function openFileDialog(profileUpload) {
-  if (profileUpload) {
-    profileUpload.click();
-  
-}
-}
+
+
