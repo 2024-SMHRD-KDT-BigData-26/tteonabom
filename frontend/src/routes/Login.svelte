@@ -268,7 +268,7 @@
 
             <div class="separator my-3">또는</div>
             <!-- 카카오 로그인 버튼 -->
-            <a id="kakao-login-btn" on:click={kakaoLogin} href="#">
+            <a id="kakao-login-btn" on:click|preventDefault={kakaoLogin} href="#">
                 <img src="../src/assets/img/kakao_login.png" alt="카카오 로그인 버튼">
             </a>
 

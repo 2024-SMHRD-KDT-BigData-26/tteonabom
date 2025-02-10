@@ -20,8 +20,11 @@
   let successMsg = '';
   let nicknameMsg = '';
   
-  // onMount에서 로컬스토리지에 저장된 사용자 정보를 불러옴
-  onMount(() => {
+  // Kakao 로그인 여부 (예: USER_ID가 "kakao_"로 시작하면 Kakao 로그인)
+  let isKakao: boolean = false;
+
+   // onMount에서 로컬스토리지에 저장된 사용자 정보를 불러옴
+   onMount(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -29,6 +32,10 @@
         if (parsedUser) {
           if (parsedUser.USER_ID) {
             userId = parsedUser.USER_ID;
+            // Kakao 로그인 여부 확인
+            if (userId.startsWith("kakao_")) {
+              isKakao = true;
+            }
           }
           // 기존에 등록된 프로필 사진이 있다면 profilePreview에 할당
           if (parsedUser.USER_PROFILE_IMG) {
@@ -66,7 +73,6 @@
       }
     }
   }
-
   // 파일 업로드 창 열기
   function openFileDialog() {
     if (profileUpload) {
@@ -79,16 +85,21 @@
     errorMsg = '';
     successMsg = '';
 
-    if (newPassword && newPassword !== confirmNewPassword) {
-      errorMsg = '새 비밀번호가 일치하지 않습니다.';
-      return;
+    if (!isKakao) {
+      // 일반 로그인 사용자의 경우 새 비밀번호가 입력되었으면 일치 여부 확인
+      if (newPassword && newPassword !== confirmNewPassword) {
+        errorMsg = '새 비밀번호가 일치하지 않습니다.';
+        return;
+      }
     }
 
-    // 회원정보 수정 API에 전달할 데이터 구성
-    let updateData: any = {
+     // 회원정보 수정 API에 전달할 데이터 구성
+     let updateData: any = {
       USER_NICK: nickname,
     };
-    if (newPassword) {
+
+    // 일반 로그인 사용자인 경우에만 비밀번호 변경 필드 처리
+    if (!isKakao && newPassword) {
       updateData.USER_PW = newPassword;
     }
     if (profilePreview) {
@@ -117,7 +128,6 @@
       newPassword = "";
       confirmNewPassword = "";
       nickname = "";
-    
     } catch (error) {
       console.error('회원정보 수정 실패:', error);
       errorMsg = error.message;
@@ -157,6 +167,7 @@
       nicknameMsg = "닉네임 중복 확인 중 오류가 발생했습니다.";
     }
   }
+ 
 
   // 취소 버튼: 이전 페이지로 이동
   function handleCancel() {
@@ -356,6 +367,7 @@
               <!-- 프로필 이미지 업로드 -->
               <div class="profile_img" on:click={openFileDialog}>
                 {#if profilePreview}
+                  <!-- 기존 또는 새로 업로드된 프로필 이미지가 있을 경우 -->
                   <img 
                     id="profile-preview" 
                     src={profilePreview} 
@@ -363,6 +375,7 @@
                     style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; cursor: pointer;"
                   />
                 {:else}
+                  <!-- 프로필 이미지가 없을 경우 -->
                   <label for="profile-upload" id="profile-label" style="cursor: pointer;">
                     프로필 사진 변경
                   </label>
@@ -379,6 +392,7 @@
               </div>
               <!-- 사용자 아이디 (로그인한 사용자 아이디 표시) -->
               <div class="ID">{userId}</div>
+            {#if !isKakao}
               <!-- 기존 비밀번호 입력 -->
               <div class="mb-3">
                 <input
@@ -409,6 +423,7 @@
                   
                 />
               </div>
+            {/if}
               <!-- 닉네임 변경 -->
               <div class="mb-4 d-flex align-items-center nick-update">
                 <input

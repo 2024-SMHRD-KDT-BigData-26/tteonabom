@@ -9,8 +9,13 @@ import bcrypt
 import shutil
 import os
 from typing import Optional
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
 router = APIRouter()
 
 UPLOAD_DIR = "uploads"
@@ -62,13 +67,6 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"파일 업로드 실패: {str(e)}")
 
-
-app.include_router(router)
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="127.0.0.1", port=9000)  # ✅ 백엔드 9000번 포트에서 실행
 
 # ✅ 아이디 중복 확인 API
 @router.get("/api/check-id")
