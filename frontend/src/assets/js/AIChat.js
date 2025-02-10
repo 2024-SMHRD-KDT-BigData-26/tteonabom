@@ -1,42 +1,3 @@
-export async function requestChat(userId, travelData) {
-    console.log("🟢 백엔드로 보낼 데이터:", JSON.stringify({
-        USER_ID: userId,
-        TRAVEL_DATA: travelData
-    }));
-
-    if (!userId || typeof userId !== "string") {
-        console.error("🚨 오류: userId가 올바른 문자열이 아닙니다!", userId);
-        throw new Error("잘못된 사용자 ID입니다.");
-    }
-    if (!travelData || typeof travelData !== "object" || Object.keys(travelData).length === 0) {
-        console.error("🚨 오류: TRAVEL_DATA가 올바르지 않습니다!", travelData);
-        throw new Error("잘못된 여행 데이터입니다.");
-    }
-
-    try {
-        const response = await fetch("http://localhost:9000/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                USER_ID: userId,
-                TRAVEL_DATA: travelData
-            })
-        });
-
-        if (!response.ok) {
-            console.error("🚨 API 응답 오류:", response.status, await response.text());
-            throw new Error("API 요청 실패");
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error("🚨 requestChat 함수에서 오류 발생:", error);
-        throw error;
-    }
-}
-
 const selectedData = {};
 
 const shoppingMallLinks = {
@@ -78,6 +39,37 @@ const shoppingMallLinks = {
     ]
 };
 
+
+export async function fetchDataFromAPI(url, requestData) {
+    try {
+        console.log(`📌 API 호출 URL: ${url}`);
+        console.log(`📌 API 요청 데이터:`, requestData);  // 🛑 여기에 JSON 확인
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData),
+        });
+
+        console.log("📌 API 응답 상태 코드:", response.status);  // 응답 상태 확인
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API 호출 실패: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("📌 API 응답 데이터:", data);  // 응답 데이터 확인
+        return data;
+    } catch (error) {
+        console.error("📌 API 호출 오류:", error);
+        return null;
+    }
+}
+
+
+
+
 export function initializeChat(callback) {
     const initialMessages = [
         {
@@ -97,10 +89,37 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
     let botResponse = null;
     let updatedMessages = [...messages, { type: "user", text }];
 
+    console.log("입력된 text 값:", text); // ✅ 현재 입력된 값 디버깅
+
+    if (text === "처음으로 돌아가기") {
+        console.log("🔄 처음으로 돌아가기 실행됨!"); // 디버깅 로그
+        Object.keys(selectedData).forEach(key => delete selectedData[key]);
+        selectedData["mode"] = null;
+        updateMessages([]); // 기존 메시지 초기화
+
+        const initialMessages = [
+            {
+                type: "bot",
+                text: "안녕하세요! 여행의 시작부터 끝까지 떠나봄의 여행AI 떠나봄입니다! AI가 당신의 완벽한 여행을 도와드립니다! 아래에서 원하는 버튼을 클릭해주세요!",
+                buttons: [
+                    { text: "여행 일정 추천", action: "schedule" },
+                    { text: "여행지 추천", action: "destination" },
+                    { text: "쇼핑몰 추천", action: "shopping" }
+                ]
+            }
+        ];
+
+        updateMessages(initialMessages);
+        return { updatedMessages: initialMessages }; // 초기 메시지를 반환
+    }
+
+
+
+    /*** ✅ 1. 여행 일정 추천 ***/
     if (text === "여행 일정 추천") {
         botResponse = {
             type: "bot",
-            text: "여행 일정 추천을 선택하셨군요! 여행 날짜를 선택해주세요.",
+            text: "여행일정 추천을 선택하셨군요! 일정을 추천하기 위해 몇가지 질문에 답변해주세요.(1/5) 언제부터 언제까지 여행하실 계획이신가요?",
             showCalendar: true,
         };
         setShowCalendar(true);
@@ -108,56 +127,300 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
         selectedData["여행 일정"] = text.replace("📅 여행 일정: ", "");
         botResponse = {
             type: "bot",
-            text: "GPT 응답을 생성 중입니다... 잠시만 기다려주세요.",
+            text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
+            buttons: [
+                { text: "가족", action: "schedule_family" },
+                { text: "연인", action: "schedule_couple" },
+                { text: "친구", action: "schedule_friends" },
+                { text: "혼자", action: "schedule_alone" },
+            ],
+        };
+    } else if (["가족", "연인", "친구", "혼자"].includes(text) && selectedData["여행 일정"]) {
+        selectedData["동반자"] = text;
+        botResponse = {
+            type: "bot",
+            text: "(3/5) 여행하고 싶은 지역을 선택해주세요.",
+            buttons: [
+                { text: "수도권", action: "schedule_seoul" },
+                { text: "강원권", action: "schedule_gangwon" },
+                { text: "충청권", action: "schedule_chungcheong" },
+                { text: "호남권", action: "schedule_honam" },
+                { text: "영남권", action: "schedule_yeongnam" },
+                { text: "제주권", action: "schedule_jeju" },
+            ],
+        };
+    } else if (["수도권", "강원권", "충청권", "호남권", "영남권", "제주권"].includes(text) && selectedData["여행 일정"]) {
+        selectedData["목적지"] = text;
+        botResponse = {
+            type: "bot",
+            text: "(4/5) 선호하는 여행 스타일을 선택해주세요!",
+            buttons: [
+                { text: "엑티비티/체험", action: "schedule_activity" },
+                { text: "힐링/관광", action: "schedule_healing" },
+                { text: "핫플레이스", action: "schedule_hotplace" },
+            ],
+        };
+    } else if (["엑티비티/체험", "힐링/관광", "핫플레이스"].includes(text) && selectedData["여행 일정"]) {
+        selectedData["여행 스타일"] = text;
+        botResponse = {
+            type: "bot",
+            text: "(5/5) 어떤 일정 스타일을 원하시나요?",
+            buttons: [
+                { text: "타이트한 일정", action: "tight" },
+                { text: "여유로운 일정", action: "relaxed" },
+            ],
+        };
+    }
+    /*** ✅ 일정 스타일 선택 후 자동 요약 및 날짜별 일정 생성 ***/
+    else if (["타이트한 일정", "여유로운 일정"].includes(text) && selectedData["여행 일정"]) {
+        selectedData["일정 스타일"] = text;
+
+        // 사용자 입력 데이터 정리 메시지
+        setTimeout(() => {
+            updateMessages({
+                type: "bot",
+                text: `📌 여행 정보 정리<br>- 여행 일정: ${selectedData["여행 일정"]}<br>- 목적지: ${selectedData["목적지"]}<br>- 동반자: ${selectedData["동반자"]}<br>- 여행 스타일: ${selectedData["여행 스타일"]}<br>- 일정 스타일: ${selectedData["일정 스타일"]}`
+            });
+        }, 0);
+
+        // ✅ GPT 요청 전에 로딩 메시지 추가
+        const loadingMessage = { type: "bot", text: "⏳ 여행 일정을 추천하는 중입니다. 잠시만 기다려 주세요!" };
+        updateMessages(loadingMessage);
+
+        // ✅ 임의 사용자 ID 유지
+        const USER_ID = "test_user_123";
+
+        // ✅ 정확한 일정 추출
+        const [start_date, end_date] = selectedData["여행 일정"].split(" ~ ");
+
+        // ✅ 백엔드 요청 데이터 구성
+        const scheduleData = {
+            USER_ID: USER_ID,  // ✅ 여전히 "test_user_123" 유지
+            TRAVEL_DATA: {
+                start_date: start_date.trim(),  // ✅ 사용자가 입력한 출발 날짜
+                end_date: end_date.trim(),      // ✅ 사용자가 입력한 도착 날짜
+                companion: selectedData["동반자"],  // ✅ 사용자가 선택한 동반자
+                region: selectedData["목적지"],  // ✅ 사용자가 선택한 목적지
+                style: selectedData["여행 스타일"],  // ✅ 사용자가 선택한 여행 스타일
+                schedule: selectedData["일정 스타일"]  // ✅ 사용자가 선택한 일정 스타일
+            }
         };
 
-        requestChat("test_user", selectedData)
-            .then(response => {
-                updateMessages({ type: "bot", text: response.gpt_response });
-            })
-            .catch(error => {
-                console.error("GPT 응답을 가져오는 중 오류 발생:", error);
-            });
-    } else if (text === "쇼핑몰 추천") {
+        // ✅ GPT 요청 후, 응답이 오면 로딩 메시지 제거하고 결과 출력
+        fetchDataFromAPI("http://localhost:9000/chat", scheduleData).then((result) => {
+            // ✅ 로딩 메시지 제거
+            messages = messages.filter(msg => msg !== loadingMessage);
+
+            if (result && result.gpt_response) {
+                updateMessages({ type: "bot", text: result.gpt_response });
+                updateMessages({
+                    type: "bot",
+                    text: "추천 일정이 마음에 드셨나요?",
+                    buttons: [
+                        { text: "일정 다운로드", action: "download" },
+                        { text: "채팅 내용 저장", action: "save_chat" },
+                        { text: "처음으로 돌아가기", action: "restart" },
+                    ],
+                });
+            } else {
+                updateMessages({
+                    type: "bot",
+                    text: "일정을 생성하지 못했습니다. 다시 시도해주세요.",
+                    buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
+                });
+            }
+
+            
+        });
+    }
+
+
+    /*** ✅ 2. 여행지 추천 ***/
+    else if (text === "여행지 추천") {
+        // ✅ Q1: 동반자 질문
+        botResponse = {
+            type: "bot",
+            text: "여행지를 추천 드릴게요! 누구와 함께 여행하시나요?",
+            buttons: [
+                { text: "🚶‍♂ 혼자 여행", action: "recommend_alone" },
+                { text: "👨‍👩‍👦 가족 여행", action: "recommend_family" },
+                { text: "👥 2인 여행", action: "recommend_two" },
+                { text: "👥 3인 이상 여행", action: "recommend_group" },
+            ],
+        };
+    }
+    else if (["🚶‍♂ 혼자 여행", "👨‍👩‍👦 가족 여행", "👥 2인 여행", "👥 3인 이상 여행"].includes(text)) {
+        // ✅ 동반자 저장 및 Q2로 이동
+        selectedData["동반자"] = text.replace(/🚶‍♂|👨‍👩‍👦|👥/g, "").trim(); // 동반자 정보 저장
+        botResponse = {
+            type: "bot",
+            text: "여행의 목적을 두 가지 선택해주세요!",
+            buttons: [
+                { text: "🎭 스트레스 해소", action: "purpose_stress" },
+                { text: "💞 관계 증진", action: "purpose_relationship" },
+                { text: "📷 트렌드/핫플", action: "purpose_trend" },
+                { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
+            ],
+        };
+    } else if (["🎭 스트레스 해소", "💞 관계 증진", "📷 트렌드/핫플", "🏛 문화/역사 탐방"].includes(text)) {
+        // ✅ Q2: 목적 선택 (최대 2개)
+        if (!selectedData["목적"]) {
+            selectedData["목적"] = [];
+        }
+
+        // 동일 항목 선택 방지
+        if (selectedData["목적"].includes(text)) {
+            botResponse = {
+                type: "bot",
+                text: "이미 선택하신 항목입니다. 다른 항목을 선택해주세요!",
+                buttons: [
+                    { text: "🎭 스트레스 해소", action: "purpose_stress" },
+                    { text: "💞 관계 증진", action: "purpose_relationship" },
+                    { text: "📷 트렌드/핫플", action: "purpose_trend" },
+                    { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
+                ],
+            };
+        } else {
+            // 최대 2개까지 선택 가능
+            if (selectedData["목적"].length < 2) {
+                selectedData["목적"].push(text); // 목적 추가
+            }
+
+            if (selectedData["목적"].length < 2) {
+                // 아직 2개 미만 선택 시
+                botResponse = {
+                    type: "bot",
+                    text: "한 가지 더 선택해주세요!",
+                    buttons: [
+                        { text: "🎭 스트레스 해소", action: "purpose_stress" },
+                        { text: "💞 관계 증진", action: "purpose_relationship" },
+                        { text: "📷 트렌드/핫플", action: "purpose_trend" },
+                        { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
+                    ],
+                };
+            } else {
+                // ✅ 2개 선택 완료 후 Q3로 이동
+                botResponse = {
+                    type: "bot",
+                    text: "자연과 도시 중 무엇을 선호하시나요?",
+                    buttons: [
+                        { text: "🏞 자연 선호", action: "preference_nature" },
+                        { text: "⚖ 중립", action: "preference_neutral" },
+                        { text: "🏙 도시 선호", action: "preference_city" },
+                    ],
+                };
+            }
+        }
+    } else if (["🏞 자연 선호", "⚖ 중립", "🏙 도시 선호"].includes(text)) {
+        // ✅ Q3: 자연/도시 선호도 선택
+        selectedData["선호도"] = text.replace(/🏞|⚖|🏙/g, "").trim(); // 선호도 정보 저장
+
+        updateMessages({
+            type: "bot",
+            text: "추천 여행지를 불러오는 중입니다. 잠시만 기다려주세요... 🚀",
+        });
+
+        // ✅ 백엔드로 여행지 추천 요청
+        const recommendData = {
+            USER_ID: "test_user_123", // FastAPI에서 기대하는 대문자 키
+            COMPANION: selectedData["동반자"], // 동반자 정보
+            PURPOSE: selectedData["목적"], // 목적 리스트
+            PREFERENCE: selectedData["선호도"], // 자연/도시 선호
+        };
+
+        fetchDataFromAPI("http://localhost:9000/travel/recommend", recommendData).then((result) => {
+            if (result && result.gpt_response) {
+                // GPT 응답 표시
+                updateMessages({ type: "bot", text: result.gpt_response });
+
+                // 결과 확인 버튼 제공
+                updateMessages({
+                    type: "bot",
+                    text: "추천 여행지가 마음에 드셨나요?",
+                    buttons: [
+                        { text: "다시 추천 받기", action: "destination_retry" },
+                        { text: "처음으로 돌아가기", action: "restart" },
+                    ],
+                });
+            } else {
+                // 실패 처리
+                updateMessages({
+                    type: "bot",
+                    text: "추천 여행지를 불러오지 못했습니다. 다시 시도해주세요.",
+                    buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
+                });
+            }
+        });
+
+    }
+
+
+    // 3. 쇼핑몰 추천하기
+    /*** ✅ 쇼핑몰 추천 기능 ***/
+    if (text === "쇼핑몰 추천" || text === "다른 쇼핑몰 목록 보기") {
+        // ✅ "다른 쇼핑몰 목록 보기" 클릭 시 동일한 코드 실행
         botResponse = {
             type: "bot",
             text: "어떤 테마의 쇼핑몰을 찾고 계신가요?",
-            buttons: Object.keys(shoppingMallLinks).map(theme => ({ text: theme, action: `shopping_${theme}` }))
+            buttons: [
+                { text: "등산", action: "shopping_mountain" },
+                { text: "물놀이", action: "shopping_swimming" },
+                { text: "서핑", action: "shopping_surfing" },
+                { text: "스키", action: "shopping_ski" },
+                { text: "여행용품", action: "shopping_travel" },
+                { text: "자전거", action: "shopping_bicycle" },
+                { text: "카메라", action: "shopping_camera" },
+                { text: "캠핑", action: "shopping_camping" },
+                { text: "낚시", action: "shopping_fishhook" }
+            ],
         };
-    } else if (Object.keys(shoppingMallLinks).includes(text)) {
+    }
+    // ✅ 사용자가 특정 테마 선택 시 → 쇼핑몰 목록 출력
+    else if (["등산", "물놀이", "서핑", "스키", "여행용품", "자전거", "카메라", "캠핑", "낚시"].includes(text)) {
         selectedData["쇼핑 테마"] = text;
+
         let mallList = shoppingMallLinks[text]
             .map(mall => `<a href="${mall.url}" target="_blank">${mall.name}</a>`)
             .join("<br>");
 
         botResponse = {
             type: "bot",
-            text: `✅ "${text}"과 관련된 쇼핑몰 목록입니다!🛍️<br>${mallList}`,
+            text: `✅ "${text}"과 관련된 쇼핑몰 목록입니다!🛍️<br>필요한 물품들을 쇼핑해보세요!😀<br>${mallList}`,
             buttons: [
-                { text: "다른 쇼핑몰 목록 보기", action: "shopping" },
+                { text: "다른 쇼핑몰 목록 보기", action: "shopping" }, // ✅ 쇼핑 테마 선택 화면으로 이동
+                { text: "다시 추천 받기", action: "shopping_retry" },
                 { text: "처음으로 돌아가기", action: "restart" }
             ]
         };
-    } else if (text === "처음으로 돌아가기") {
-        Object.keys(selectedData).forEach(key => delete selectedData[key]);
+    }
+    // ✅ "다시 추천 받기" 클릭 시 → 기존에 선택한 쇼핑 테마의 목록을 다시 출력
+    else if (text === "다시 추천 받기" && selectedData["쇼핑 테마"]) {
+        let theme = selectedData["쇼핑 테마"];
+        let mallList = shoppingMallLinks[theme]
+            .map(mall => `<a href="${mall.url}" target="_blank">${mall.name}</a>`)
+            .join("<br>");
 
         botResponse = {
             type: "bot",
-            text: "안녕하세요! 여행의 시작부터 끝까지 떠나봄의 여행AI 떠나봄입니다! AI가 당신의 완벽한 여행을 도와드립니다! 아래에서 원하는 버튼을 클릭해주세요!",
+            text: `✅ "${theme}"과 관련된 다른 쇼핑몰 목록입니다!🛍️<br>필요한 물품들을 쇼핑해보세요!😀<br>${mallList}`,
             buttons: [
-                { text: "여행 일정 추천", action: "schedule" },
-                { text: "여행지 추천", action: "destination" },
-                { text: "쇼핑몰 추천", action: "shopping" }
+                { text: "다른 쇼핑몰 목록 보기", action: "shopping" }, // ✅ 쇼핑 테마 선택 화면으로 이동
+                { text: "다시 추천 받기", action: "shopping_retry" },
+                { text: "처음으로 돌아가기", action: "restart" }
             ]
         };
     }
 
+    // ✅ botResponse가 존재하는 경우만 메시지 업데이트
     if (botResponse) {
         updatedMessages.push(botResponse);
-        return { updatedMessages };
     }
+    // ✅ 항상 반환값 보장
+    return { updatedMessages };
+
 }
 
+// ✅ 챗봇 스크롤 자동 내리기
 export function scrollToBottom() {
     setTimeout(() => {
         const chatWindow = document.getElementById("chatWindow");

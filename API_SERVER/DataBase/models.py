@@ -1,5 +1,6 @@
 from sqlalchemy import (
-    create_engine, Column, Integer, String, Text, TIMESTAMP, ForeignKey, BigInteger, Date, Time, DECIMAL,DateTime
+    create_engine, Column, Integer, String, Text, TIMESTAMP, ForeignKey,
+    BigInteger, Date, Time, DECIMAL, DateTime, Float, text
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, relationship
@@ -7,6 +8,7 @@ from sqlalchemy.dialects.mysql import JSON
 
 Base = declarative_base()
 # 데이터베이스 연결 및 테이블 생성
+
 
 
 
@@ -186,3 +188,37 @@ class TB_LIKE(Base):
     MALL_IDX = Column(Integer, comment="몰 고유번호")
     POI_IDX = Column(Integer, comment="여행지 고유번호")
     CREATED_AT = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="생성 일시")
+
+class TB_LABEL_ENCODERS(Base):
+    __tablename__ = 'TB_LABEL_ENCODERS'
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, comment="라벨 인코더 식별자")
+    FEATURE_NAME = Column(String(255), nullable=False, comment="특징 이름")
+    ENCODED_CLASSES = Column(Text, nullable=False, comment="인코딩된 클래스")
+    CREATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="생성 일시")
+    UPDATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="수정 일시")
+
+
+class TB_SCALER(Base):
+    __tablename__ = 'TB_SCALER'
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, comment="스케일러 식별자")
+    FEATURE_NAME = Column(String(255), nullable=False, comment="특징 이름")
+    MEAN = Column(Text, nullable=False, comment="평균값")
+    VARIANCE = Column(Text, nullable=False, comment="분산값")
+    CREATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="생성 일시")
+    UPDATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="수정 일시")
+
+
+class TB_TRAVEL_DATA(Base):
+    __tablename__ = 'TB_TRAVEL_DATA'
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, comment="여행 데이터 식별자")
+    TRAVEL_STATUS_ACCOMPANY = Column(String(50), nullable=False, comment="동반 상태")
+    TRAVEL_MOTIVE_1 = Column(Integer, nullable=False, comment="여행 동기 1")
+    TRAVEL_MOTIVE_2 = Column(Integer, nullable=False, comment="여행 동기 2")
+    TRAVEL_STYL_8 = Column(Integer, nullable=False, comment="여행 스타일")
+    DGSTFN = Column(Float, comment="만족도")
+    SIDO_NM = Column(String(100), nullable=False, comment="시도 이름")
+    CREATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="생성 일시")
+    UPDATED_AT = Column(DateTime, nullable=False, server_default=text("(now())"), comment="수정 일시")

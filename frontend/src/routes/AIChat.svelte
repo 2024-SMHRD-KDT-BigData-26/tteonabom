@@ -4,7 +4,7 @@
     initializeChat,
     sendMessage,
     scrollToBottom,
-    requestChat
+    fetchDataFromAPI,
   } from "../assets/js/AIChat.js";
 
   let messages = [];
@@ -12,7 +12,8 @@
   let endDate = "";
   let showConfirmButton = false;
   let showCalendar = false;
-  let selectedData = {}; // ✅ 선택된 데이터를 저장할 객체 추가
+  let selectedData = {};
+  let loadingMessage = null;  // ✅ 로딩 메시지 변수 추가
 
   onMount(() => {
     initializeChat((initialMessages) => {
@@ -29,19 +30,42 @@
     messages = [...messages, newMessage];
   }
 
-  function handleUserMessage(text) {
-    const { updatedMessages } = sendMessage(
-      messages,
-      text,
-      (value) => {
-        if (value) {
-          showCalendar = true;
-        }
-      },
-      updateMessages,
-      selectedData
-    ); // ✅ selectedData 전달
-    messages = updatedMessages;
+  async function handleUserMessage(text) {
+    try {
+      // ✅ "⏳ 생성 중..." 메시지 추가
+      loadingMessage = { type: "bot", text: "⏳ 응답을 생성 중입니다..." };
+      updateMessages(loadingMessage);
+
+      const result = await sendMessage(
+        messages,
+        text,
+        (value) => {
+          if (value) {
+            showCalendar = true;
+          }
+        },
+        updateMessages,
+        selectedData
+      );
+
+      console.log("sendMessage 반환값:", result);
+
+      if (result && result.updatedMessages) {
+        // ✅ 기존 messages를 덮어쓰지 않고 하나씩 추가
+        result.updatedMessages.forEach(msg => updateMessages(msg));
+      } else {
+        console.error("sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.");
+      }
+
+    } catch (error) {
+      console.error("handleUserMessage 오류:", error);
+    } finally {
+      // ✅ GPT 응답을 받은 후 로딩 메시지 삭제
+      if (loadingMessage) {
+        messages = messages.filter(msg => msg.text !== loadingMessage.text);
+        loadingMessage = null;
+      }
+    }
   }
 
   function handleButtonClick(text) {
@@ -70,7 +94,7 @@
     showConfirmButton = startDate !== "" && endDate !== "";
   }
 
-  async function confirmDates() {
+  function confirmDates() {
     if (!startDate || !endDate) return;
 
     const formattedStartDate = startDate.replace(/-/g, "/");
@@ -82,24 +106,21 @@
     // ✅ 사용자가 선택한 날짜를 selectedData["여행 일정"]에 저장
     selectedData["여행 일정"] = `${formattedStartDate} ~ ${formattedEndDate}`;
 
-    // ✅ 데이터 확인용 콘솔 로그
-    console.log("🟢 선택된 여행 데이터:", selectedData);
-
     updateMessages({ type: "user", text: dateMessage });
 
-    // ✅ GPT 응답 요청
-    try {
-        const response = await requestChat("test_user", selectedData);
-        updateMessages({
-            type: "bot",
-            text: response.gpt_response // ✅ GPT에서 받은 응답을 출력
-        });
-    } catch (error) {
-        console.error("GPT 응답을 가져오는 중 오류 발생:", error);
-    }
-}
-
+    updateMessages({
+      type: "bot",
+      text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
+      buttons: [
+        { text: "가족", action: "schedule_family" },
+        { text: "연인", action: "schedule_couple" },
+        { text: "친구", action: "schedule_friends" },
+        { text: "혼자", action: "schedule_alone" },
+      ],
+    });
+  }
 </script>
+
 
 <main>
   <div class="chat-container">
@@ -120,7 +141,9 @@
                 </div>
               </div>
             {/if}
-            <div class={message.type === "bot" ? "message-bot" : "message-user"}>
+            <div
+              class={message.type === "bot" ? "message-bot" : "message-user"}
+            >
               {@html message.text}
             </div>
             {#if message.showCalendar}
@@ -142,7 +165,9 @@
                     on:change={(e) => handleDateChange(e, "end")}
                   />
                   {#if showConfirmButton}
-                    <button class="confirm-btn" on:click={confirmDates}>확인</button>
+                    <button class="confirm-btn" on:click={confirmDates}
+                      >확인</button
+                    >
                   {/if}
                 </div>
               </div>
@@ -150,7 +175,10 @@
             {#if message.buttons}
               <div class="button-wrapper">
                 {#each message.buttons as button}
-                  <button class="chat-btn" on:click={() => handleButtonClick(button.text)}>
+                  <button
+                    class="chat-btn"
+                    on:click={() => handleButtonClick(button.text)}
+                  >
                     {button.text}
                   </button>
                 {/each}
@@ -163,10 +191,9 @@
   </div>
 </main>
 
-
 <style>
-    /* 챗봇 영역 */
-    .chat-container {
+  /* 챗봇 영역 */
+  .chat-container {
     width: 100%;
     max-width: 800px;
     margin: 20px auto;
@@ -291,5 +318,4 @@
     border-radius: 5px;
     border: 1px solid #ccc;
   }
-
 </style>
