@@ -1,5 +1,12 @@
-# __pycache__ 폴더 무시
+# Ignore Python cache files
 __pycache__/
 *.pyc
-"API/__pycache__/" 
+
+# Ignore Excel files
+*.xlsx
+
+# Specific cache directory for the API folder
+API/__pycache__/
+
+# Environment variables file
 .env
