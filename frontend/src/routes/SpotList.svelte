@@ -198,8 +198,8 @@
   .spot-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.25rem; /* gap-5 */
-    margin: 10px;
+    gap: 25px; 
+    margin-top: 10px;
     padding-top: 15px;
   }
 
@@ -537,7 +537,7 @@
                 <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
                 {poi.POI_LIKES}
                 <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
-                {poi.POI_REVIEWS}
+                {poi.REVIEW_COUNT}
               </span>
             </div>
           </div>

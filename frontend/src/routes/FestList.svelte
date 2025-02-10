@@ -717,4 +717,8 @@
     padding: 50px 0;
     min-height: 200px; /* 필요에 따라 조정 */
   }
+
+  .form-control {
+    border-radius: 8px !important;
+  }
 </style>
