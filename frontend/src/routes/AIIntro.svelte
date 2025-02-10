@@ -15,7 +15,7 @@
   function navigateToChat() {
     // 로그인하지 않은 경우 alert 표시
     if (!user) {
-      alert("로그인 이후 필요한 서비스 입니다.");
+      alert("로그인 후 이용 가능한 서비스입니다!");
       push("/login");
       return;
     }
