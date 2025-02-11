@@ -12,8 +12,7 @@
   let endDate = "";
   let showConfirmButton = false;
   let showCalendar = false;
-  let selectedData = {};
-  let loadingMessage = null;  // ✅ 로딩 메시지 변수 추가
+  let selectedData = {}; // ✅ 선택된 데이터를 저장할 객체 추가
 
   onMount(() => {
     initializeChat((initialMessages) => {
@@ -30,43 +29,32 @@
     messages = [...messages, newMessage];
   }
 
-  async function handleUserMessage(text) {
+  function handleUserMessage(text) {
     try {
-      // ✅ "⏳ 생성 중..." 메시지 추가
-      loadingMessage = { type: "bot", text: "⏳ 응답을 생성 중입니다..." };
-      updateMessages(loadingMessage);
+        const result = sendMessage(
+            messages,
+            text,
+            (value) => {
+                if (value) {
+                    showCalendar = true;
+                }
+            },
+            updateMessages,
+            selectedData,
+        );
 
-      const result = await sendMessage(
-        messages,
-        text,
-        (value) => {
-          if (value) {
-            showCalendar = true;
-          }
-        },
-        updateMessages,
-        selectedData
-      );
-
-      console.log("sendMessage 반환값:", result);
-
-      if (result && result.updatedMessages) {
-        // ✅ 기존 messages를 덮어쓰지 않고 하나씩 추가
-        result.updatedMessages.forEach(msg => updateMessages(msg));
-      } else {
-        console.error("sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.");
-      }
-
+        if (result && result.updatedMessages) {
+            messages = result.updatedMessages; // 반환값에서 updatedMessages 추출 및 업데이트
+        } else {
+            console.error(
+                "sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.",
+            );
+        }
     } catch (error) {
-      console.error("handleUserMessage 오류:", error);
-    } finally {
-      // ✅ GPT 응답을 받은 후 로딩 메시지 삭제
-      if (loadingMessage) {
-        messages = messages.filter(msg => msg.text !== loadingMessage.text);
-        loadingMessage = null;
-      }
+        console.error("handleUserMessage 오류:", error);
     }
-  }
+}
+
 
   function handleButtonClick(text) {
     handleUserMessage(text);
@@ -120,7 +108,6 @@
     });
   }
 </script>
-
 
 <main>
   <div class="chat-container">
