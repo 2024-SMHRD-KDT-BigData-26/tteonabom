@@ -278,6 +278,10 @@
         font-size: 14px;
         text-decoration: none;
     }
+
+    input[type="checkbox"] {
+    accent-color: #FF5D17;
+  }
   </style>
   
   <!-- 로그인 컨텐츠 영역 -->
