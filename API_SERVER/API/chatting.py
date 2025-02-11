@@ -157,7 +157,7 @@ async def create_chat(chat: ChatCreate, request: Request, db: Session = Depends(
     try:
         # ✅ DB 저장
         db_croom = TB_CROOM(
-            CROOM_TITLE=f"채팅방_{chat.USER_ID}_{datetime.utcnow()}",
+            CROOM_TITLE=f"채팅방_{chat.TRAVEL_DATA['region']}_{chat.TRAVEL_DATA['companion']}",
             CROOM_INFO="사용자의 채팅 데이터",
             USER_ID=chat.USER_ID,
             CROOM_LIMIT=0,

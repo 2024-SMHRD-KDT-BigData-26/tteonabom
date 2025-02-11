@@ -1,38 +1,79 @@
 <script>
-  let currentPage = 'visual_my';
+  import { onMount } from 'svelte';
 
+  // 로그인한 사용자 혹은 현재 사용자의 USER_ID (실제 앱에서는 상태관리(store) 또는 라우트 파라미터로 처리)
+  let userId = '';
+
+  onMount(() => {
+    const userData = localStorage.getItem('user'); // 'user' 키에서 가져오기
+    if (userData) {
+        try {
+            const parsedUser = JSON.parse(userData);
+            if (parsedUser.USER_ID) {
+                userId = parsedUser.USER_ID; // USER_ID 값만 가져오기
+                fetchUserChatrooms();
+            } else {
+                console.warn("localStorage에서 USER_ID를 찾을 수 없습니다.");
+            }
+        } catch (error) {
+            console.error("localStorage 데이터 파싱 중 오류 발생:", error);
+        }
+    } else {
+        console.warn("localStorage에서 user 데이터를 찾을 수 없습니다.");
+    }
+});
+
+
+  // 백엔드에서 가져온 채팅방 목록을 저장할 변수
+  let userChatrooms = [];
+  let currentPage = 'visual_my';
   // 페이지네이션 갯수
   let currentSpotPage = 1;
   const itemsPerPage = 5;
 
-  // 예시 데이터 (목록)
-  const chatLogs = [
-    { id: 10, title: '여행지 추천', date: '2025.02.20' },
-    { id: 9, title: '여행지 추천', date: '2025.02.20' },
-    { id: 8, title: '일정 추천', date: '2025.02.20' },
-    { id: 7, title: '일정 추천', date: '2025.02.20' },
-    { id: 6, title: '여행지 추천', date: '2025.02.20' },
-    { id: 5, title: '일정 추천', date: '2025.02.20' },
-    { id: 4, title: '일정 추천', date: '2025.02.20' },
-    { id: 3, title: '여행지 추천', date: '2025.02.20' },
-    { id: 2, title: '일정 추천', date: '2025.02.20' },
-    { id: 1, title: '일정 추천', date: '2025.02.20' },
-  ];
-
+   // FastAPI의 특정 사용자가 만든 채팅방 목록 조회 API 호출 함수
+   async function fetchUserChatrooms() {
+    if (!userId) {
+        console.error("userId가 설정되지 않았습니다.");
+        return;
+    }
+    
+    try {
+        const response = await fetch(`http://localhost:9000/crooms/user/${userId}`);
+        if (response.ok) {
+            userChatrooms = await response.json();
+        } else {
+            console.error("채팅방 목록을 불러오지 못했습니다. 상태 코드:", response.status);
+        }
+    } catch (error) {
+        console.error("채팅방 목록 불러오기 중 에러 발생:", error);
+    }
+  }
+  // 컴포넌트가 마운트될 때 localStorage에서 userId를 가져와서 API 호출
+  onMount(() => {
+    userId = localStorage.getItem('userId') || '';
+    if (userId) {
+      fetchUserChatrooms();
+    } else {
+      console.error("localStorage에서 userId를 찾을 수 없습니다.");
+    }
+  });
+  
   // 현재 페이지에 해당하는 데이터만 반환
   function getCurrentPageItems() {
     const startIndex = (currentSpotPage - 1) * itemsPerPage;
     const endIndex = currentSpotPage * itemsPerPage;
-    return chatLogs.slice(startIndex, endIndex);  // 해당 범위의 데이터만 반환
+    return userChatrooms.slice(startIndex, endIndex);
   }
 
   // 페이지 변경 함수
   function changePage(page) {
-    const totalPages = Math.ceil(chatLogs.length / itemsPerPage);  // 총 페이지 수 계산
+    const totalPages = Math.ceil(userChatrooms.length / itemsPerPage);
     if (page > 0 && page <= totalPages) {
-      currentSpotPage = page;  // 페이지 번호가 유효하면 currentSpotPage를 변경
+      currentSpotPage = page;
     }
   }
+
 
   // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
   function goToDetail(id) {
@@ -164,22 +205,29 @@
       <!-- 오른쪽 콘텐츠 -->
       <div class="my-content">
         <div class="table-container">
-          <table class="table table-hover">
+          <table class="table">
             <thead>
               <tr>
-                <th class="idx-th">#</th>
-                <th class="title-th">제목</th>
-                <th class="date-th">저장일</th>
+                <th>번호</th>
+                <th>채팅방 제목</th>
+                <th>생성일</th>
               </tr>
             </thead>
             <tbody>
-              {#each getCurrentPageItems() as { id, title, date }}
-                <tr>
-                  <td class="idx">{id}</td>
-                  <td class="title" on:click={() => goToDetail('MyChatlogView')}>{title}</td>
-                  <td class="date">{date}</td>
+              {#each userChatrooms as chatroom, index}
+                <tr class="clickable" on:click={() => goToDetail(chatroom.CROOM_IDX)}>
+                  <!-- API 응답 모델의 필드에 맞게 표시 -->
+                  <td>{index + 1}</td>
+                  <td>{chatroom.CROOM_TITLE}</td>
+                  <!-- 날짜는 JavaScript Date 객체를 활용해 포맷팅할 수 있음 -->
+                  <td>{new Date(chatroom.CREATED_AT).toLocaleString()}</td>
                 </tr>
               {/each}
+              {#if userChatrooms.length === 0}
+                <tr>
+                  <td colspan="3" style="text-align: center;">채팅방이 없습니다.</td>
+                </tr>
+              {/if}
             </tbody>
           </table>
 
@@ -189,12 +237,14 @@
               <li class="page-item {currentSpotPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="javascript:void(0)" on:click={() => changePage(currentSpotPage - 1)}>&laquo;</a>
               </li>
-              {#each Array(Math.ceil(chatLogs.length / itemsPerPage)) as _, index}
+              {#each Array(Math.ceil(userChatrooms.length / itemsPerPage)) as _, index}
                 <li class="page-item {index + 1 === currentSpotPage ? 'active' : ''}">
-                  <a class="page-link" href="javascript:void(0)" on:click={() => changePage(index + 1)}>{index + 1}</a>
+                  <a class="page-link" href="javascript:void(0)" on:click={() => changePage(index + 1)}>
+                    {index + 1}
+                  </a>
                 </li>
               {/each}
-              <li class="page-item {currentSpotPage === Math.ceil(chatLogs.length / itemsPerPage) ? 'disabled' : ''}">
+              <li class="page-item {currentSpotPage === Math.ceil(userChatrooms.length / itemsPerPage) ? 'disabled' : ''}">
                 <a class="page-link" href="javascript:void(0)" on:click={() => changePage(currentSpotPage + 1)}>&raquo;</a>
               </li>
             </ul>
