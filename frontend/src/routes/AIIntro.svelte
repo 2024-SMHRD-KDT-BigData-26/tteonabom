@@ -4,23 +4,29 @@
   import { push } from "svelte-spa-router"; // 페이지 이동을 위한 push 함수
   // 로그인 여부를 나타내는 변수
   let user = '';
+  let showModal = false;
+  let currentPage = "visual_AI";
+
 
   // 마운트 시 로컬스토리지에서 로그인 상태 확인
   onMount(() => {
     user = localStorage.getItem('user') || '';
   });
-
-  let currentPage = "visual_AI";
-
+  
   function navigateToChat() {
-    // 로그인하지 않은 경우 alert 표시
+    // 로그인하지 않은 경우: 사용자 정의 모달 띄우기
     if (!user) {
-      alert("로그인 이후 필요한 서비스 입니다.");
-      push("/login");
+      showModal = true;
       return;
     }
-    // 로그인 된 경우 페이지 이동
+    // 로그인 되어있는 경우: AIChat 페이지로 이동
     push("/AIChat/");
+  }
+
+  // 모달의 확인 버튼 클릭 시 로그인 페이지로 이동
+  function confirmModal() {
+    showModal = false;
+    push("/login");
   }
 
   // CSS 파일 import
