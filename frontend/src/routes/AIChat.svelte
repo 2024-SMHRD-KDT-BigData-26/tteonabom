@@ -12,18 +12,13 @@
   let endDate = "";
   let showConfirmButton = false;
   let showCalendar = false;
-  let selectedData = {};
-  let loadingMessage = null;
+  let selectedData = {}; // ✅ 선택된 데이터를 저장할 객체 추가
 
   onMount(() => {
-    if (messages.length === 0) {  // ✅ 메시지가 없을 때만 초기화
-      initializeChat((initialMessages) => {
-        if (messages.length === 0) {  // ✅ 한 번 더 체크하여 중복 방지
-          messages = initialMessages;
-          scrollToBottom();
-        }
-      });
-    }
+    initializeChat((initialMessages) => {
+      messages = initialMessages;
+      scrollToBottom();
+    });
   });
 
   afterUpdate(() => {
@@ -31,45 +26,35 @@
   });
 
   function updateMessages(newMessage) {
-    if (!messages.find(msg => msg.text === newMessage.text)) {  // ✅ 중복 방지
-      messages = [...messages, newMessage];
-    }
+    messages = [...messages, newMessage];
   }
 
-  async function handleUserMessage(text) {
+  function handleUserMessage(text) {
     try {
-      loadingMessage = { type: "bot", text: "⏳ 응답을 생성 중입니다..." };
-      updateMessages(loadingMessage);
+        const result = sendMessage(
+            messages,
+            text,
+            (value) => {
+                if (value) {
+                    showCalendar = true;
+                }
+            },
+            updateMessages,
+            selectedData,
+        );
 
-      const result = await sendMessage(
-        messages,
-        text,
-        (value) => {
-          if (value) {
-            showCalendar = true;
-          }
-        },
-        updateMessages,
-        selectedData
-      );
-
-      console.log("sendMessage 반환값:", result);
-
-      if (result && result.updatedMessages) {
-        result.updatedMessages.forEach(msg => updateMessages(msg));
-      } else {
-        console.error("sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.");
-      }
-
+        if (result && result.updatedMessages) {
+            messages = result.updatedMessages; // 반환값에서 updatedMessages 추출 및 업데이트
+        } else {
+            console.error(
+                "sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.",
+            );
+        }
     } catch (error) {
-      console.error("handleUserMessage 오류:", error);
-    } finally {
-      if (loadingMessage) {
-        messages = messages.filter(msg => msg.text !== loadingMessage.text);
-        loadingMessage = null;
-      }
+        console.error("handleUserMessage 오류:", error);
     }
-  }
+}
+
 
   function handleButtonClick(text) {
     handleUserMessage(text);
@@ -106,6 +91,7 @@
     const dateMessage = `📅 여행 일정: ${formattedStartDate} ~ ${formattedEndDate}`;
     showCalendar = false;
 
+    // ✅ 사용자가 선택한 날짜를 selectedData["여행 일정"]에 저장
     selectedData["여행 일정"] = `${formattedStartDate} ~ ${formattedEndDate}`;
 
     updateMessages({ type: "user", text: dateMessage });
