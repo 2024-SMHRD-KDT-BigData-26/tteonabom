@@ -186,7 +186,7 @@
   }
 
   /* 이달의 행사정보 기간, 장소 */
-  p {
+  .fest-period, .fest-addr {
     font-size: 14px;
     margin: 2px;
     overflow: hidden;         /* 넘치는 내용 숨김 */
@@ -563,8 +563,8 @@ const fetchReviews = async () => {
               </a>
               <div class="fest-details">
                 <h3>{fest.FEST_NM}</h3>
-                <p>기간: {fest.FEST_PERIOD}</p>
-                <p>장소: {fest.FEST_ADDR}</p>
+                <p class="fest-period">기간: {fest.FEST_PERIOD}</p>
+                <p class="fest-arrd">장소: {fest.FEST_ADDR}</p>
               </div>
             </div>
           </div>

@@ -165,7 +165,7 @@
           type="password"
           bind:value={password}
           class="form-control"
-          placeholder="비밀번호 (8~16자의 영문 대/소문자, 숫자 포함)"
+          placeholder="비밀번호 (8~16자의 영문 대/소문자, 숫자 각 1글자 이상 필수 포함)"
           required
         />
       </div>
@@ -174,7 +174,7 @@
           type="password"
           bind:value={confirmPassword}
           class="form-control"
-          placeholder="비밀번호 확인"
+          placeholder="비밀번호 확인(8~16자의 영문 대/소문자, 숫자 각 1글자 이상 필수 포함)"
           required
         />
         {#if confirmPasswordError}

@@ -14,6 +14,34 @@
   let pois = [];
 
   let showClearButton = false; // X 버튼 표시 여부를 제어하는 상태
+
+  // ✅ 실패 시 재시도하는 함수 추가
+  async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        return await response.json(); // 성공하면 데이터 반환
+      } catch (error) {
+        console.error(`[ERROR] ${url} 데이터 로드 실패 (시도 ${attempt + 1}/${retries}):`, error);
+        if (attempt < retries - 1) await new Promise(res => setTimeout(res, delay)); // 재시도 대기
+      }
+    }
+    throw new Error(`[ERROR] ${url} 데이터 불러오기 실패 (최대 재시도 초과)`);
+  }
+
+  // ✅ 여행지 데이터를 불러올 때 재시도 기능 적용
+  onMount(async () => {
+    try {
+      let data = await fetchWithRetry('http://localhost:9000/pois');
+      
+      // 이미지가 없는 항목 제외
+      pois = data.filter(spot => spot.POI_URL && spot.POI_URL.trim() !== "");
+    } catch (error) {
+      console.error("여행지 데이터를 불러오는 데 실패했습니다.", error);
+    }
+  });
   
   onMount(async () => {
     const res = await fetch('http://localhost:9000/pois');
@@ -84,6 +112,7 @@
 
   // 기본 정렬 순서
   let sortOption = 'latest';
+  
 
   // 검색어 상태
   let searchQuery = '';
@@ -106,17 +135,18 @@
       regionsChecked[region] && spot.POI_ADDR.includes(regionNameMap[region]));
   })
   .filter(spot => {
-  if (!searchQuery) return true;
-  return (
-    spot.POI_NM?.includes(searchQuery) ||
-    spot.POI_DESC?.includes(searchQuery) ||
-    spot.POI_ADDR?.includes(searchQuery)
-  );
-})
+    if (!searchQuery) return true;
+    return (
+      spot.POI_NM?.includes(searchQuery) ||
+      spot.POI_DESC?.includes(searchQuery) ||
+      spot.POI_ADDR?.includes(searchQuery)
+    );
+  })
   .slice()
   .sort((a, b) => {
     if (sortOption === "latest" && a.CREATED_AT && b.CREATED_AT) return new Date(b.CREATED_AT) - new Date(a.CREATED_AT);
     if (sortOption === "popular") return b.POI_LIKES - a.POI_LIKES;
+    if (sortOption === "alphabetical") return a.POI_NM.localeCompare(b.POI_NM);  // 가나다순 정렬
     return 0;
   });
 
@@ -159,12 +189,17 @@
     margin: auto;
   }
 
+  /* 순서 */
+  .form-select {
+    width: 120px !important;
+  }
+
   /* 추천 여행지 컨테이너 */
   .spot-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.25rem; /* gap-5 */
-    margin: 10px;
+    gap: 25px; 
+    margin-top: 10px;
     padding-top: 15px;
   }
 
@@ -465,18 +500,15 @@
               on:input={(e) => {
                 searchQuery = e.target.value; // 직접 searchQuery 업데이트
                 showClearButton = searchQuery.trim() !== "";
-                console.log("on:input - showClearButton:", showClearButton);
               }}
               on:blur={() => {
                 showClearButton = searchQuery.trim() !== "";
-                console.log("on:blur - showClearButton:", showClearButton);
               }}
             />
             {#if showClearButton}
               <button class="btn-clear" on:click={() => { 
                 searchQuery = ''; 
                 showClearButton = false; 
-                console.log("X 버튼 클릭 - searchQuery:", searchQuery);
               }}>×</button>
             {/if}
           </div>
@@ -484,7 +516,8 @@
           <!-- 정렬 -->
           <select class="form-select" style="width: 100px;" bind:value={sortOption}>
             <option value="latest">최신순</option>
-            <option value="popular">인기순</option>
+            <option value="popular">좋아요순</option> 
+            <option value="alphabetical">가나다순</option>
           </select>
         </div>
       </div>
@@ -504,7 +537,7 @@
                 <img src="../src/assets/img/like_count.png" alt="좋아요 수" class="count-img" />
                 {poi.POI_LIKES}
                 <img src="../src/assets/img/review_count.png" alt="후기 수" class="count-img" />
-                {poi.POI_REVIEWS}
+                {poi.REVIEW_COUNT}
               </span>
             </div>
           </div>
