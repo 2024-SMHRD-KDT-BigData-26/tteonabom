@@ -27,72 +27,68 @@
   let isKakao: boolean = false;
 
    // onMount에서 로컬스토리지에 저장된 사용자 정보를 불러옴
-   onMount(() => {
-  const storedUser = localStorage.getItem('user');
-  if (storedUser) {
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      if (parsedUser) {
-        if (parsedUser.USER_ID) {
-          userId = parsedUser.USER_ID;
-          // Kakao 로그인 여부 확인
-          if (userId.startsWith("kakao_")) {
-            isKakao = true;
+// onMount에서 사용자 정보 로드 및 프로필 이미지 URL 구성
+onMount(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser) {
+          if (parsedUser.USER_ID) {
+            userId = parsedUser.USER_ID;
+            if (userId.startsWith("kakao_")) {
+              isKakao = true;
+            }
+          }
+          // 기존 프로필 이미지가 있다면
+          if (parsedUser.USER_PROFILE_IMG) {
+            // 만약 저장된 값에 "http"가 포함되지 않으면 백엔드가 저장한 파일명으로 간주하여 /uploads 경로로 구성
+            if (!parsedUser.USER_PROFILE_IMG.includes("http")) {
+              profilePreview = `http://localhost:9000/images/${encodeURIComponent(parsedUser.USER_PROFILE_IMG)}`;
+            } else {
+              profilePreview = parsedUser.USER_PROFILE_IMG;
+            }
+            console.log("프로필 이미지 URL:", profilePreview);
+          }
+          if (parsedUser.USER_NICK) {
+            nickname = parsedUser.USER_NICK;
+            originalNickname = parsedUser.USER_NICK;
           }
         }
-        // 기존에 등록된 프로필 사진이 있다면 profilePreview에 할당
-        if (parsedUser.USER_PROFILE_IMG.startsWith('/')) {
-          profilePreview = `http://localhost:9000/images/${encodeURIComponent(parsedUser.USER_PROFILE_IMG)}`;
-          console.log("프로필 이미지 URL:", profilePreview);
-        } else {
-          profilePreview = encodeURI(parsedUser.USER_PROFILE_IMG);
-          console.log("프로필 이미지 URL:", profilePreview);
-        }
-        
-        // 기존 닉네임을 자동 입력
-        if (parsedUser.USER_NICK) {
-          nickname = parsedUser.USER_NICK;
-          originalNickname = parsedUser.USER_NICK;  // 기존 닉네임 저장
-        }
+      } catch (error) {
+        console.error("User parsing error:", error);
       }
     }
-    catch (error) {
-      console.error("User parsing error:", error);
-    }
-  }
-});
+  });
   
   // 프로필 이미지 업로드 핸들러
   async function onProfileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files ? target.files[0] : null;
-  if (file) {
-    const formData = new FormData();
-    formData.append("file", file);
+    const target = event.target as HTMLInputElement;
+    const file = target.files ? target.files[0] : null;
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    try {
-      const response = await fetch("http://localhost:9000/api/upload", {
-        method: "POST",
-        body: formData
-      });
+      try {
+        const response = await fetch("http://localhost:9000/api/upload", {
+          method: "POST",
+          body: formData
+        });
 
-      if (!response.ok) {
-        throw new Error("파일 업로드에 실패했습니다.");
+        if (!response.ok) {
+          throw new Error("파일 업로드에 실패했습니다.");
+        }
+
+        const data = await response.json();
+        // 반환받은 파일 이름을 사용해 전체 URL 구성
+        profilePreview = `http://localhost:9000/images/${data.fileUrl}`;
+        await tick();
+      } catch (error) {
+        console.error("프로필 이미지 업로드 오류:", error);
+        errorMsg = error.message;
       }
-
-      const data = await response.json();
-      // 서버가 반환한 fileUrl을 프로필 미리보기 이미지로 설정
-      profilePreview = `${encodeURIComponent(data.fileUrl)}`;
-
-      // Svelte의 tick을 사용하여 DOM 업데이트를 기다림
-      await tick();
-
-    } catch (error) {
-      console.error("프로필 이미지 업로드 오류:", error);
-      errorMsg = error.message;
     }
   }
-}
 
   
   // 파일 업로드 창 열기
@@ -107,68 +103,62 @@
     errorMsg = '';
     successMsg = '';
 
-    // 닉네임을 변경하지 않았으면 기존 닉네임을 그대로 사용
     const finalNickname = nickname.trim() === '' ? originalNickname : nickname;
 
     if (!isKakao) {
-        // 일반 로그인 사용자의 경우 새 비밀번호가 입력되었으면 일치 여부 확인
-        if (newPassword && newPassword !== confirmNewPassword) {
-            errorMsg = '새 비밀번호가 일치하지 않습니다.';
-            return;
-        }
+      if (newPassword && newPassword !== confirmNewPassword) {
+        errorMsg = '새 비밀번호가 일치하지 않습니다.';
+        return;
+      }
     }
 
-    // 회원정보 수정 API에 전달할 데이터 구성
     let updateData: any = {
-        USER_NICK: finalNickname, // 변경된 닉네임 또는 기존 닉네임
+      USER_NICK: finalNickname,
     };
 
-    // 일반 로그인 사용자인 경우에만 비밀번호 변경 필드 처리
     if (!isKakao && newPassword) {
-        updateData.USER_PW = newPassword;
+      updateData.USER_PW = newPassword;
     }
     if (profilePreview) {
-        updateData.USER_PROFILE_IMG = profilePreview;
+      // 저장할 때 profilePreview에서 파일명만 저장하거나, 전체 URL을 저장할 수 있습니다.
+      // 만약 전체 URL을 저장하지 않으려면, 백엔드에서 URL에서 파일명만 추출하는 로직이 필요합니다.
+      // 여기서는 파일명만 저장한다고 가정하고, URL에서 파일명을 분리할 수 있습니다.
+      const parts = profilePreview.split('/images/');
+      updateData.USER_PROFILE_IMG = parts.length > 1 ? parts[1] : profilePreview;
     }
 
     try {
-        const encodedUserId = encodeURIComponent(userId);
-        const response = await fetch(`http://localhost:9000/api/myinfo?USER_ID=${encodedUserId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateData)
-        });
+      const encodedUserId = encodeURIComponent(userId);
+      const response = await fetch(`http://localhost:9000/api/myinfo?USER_ID=${encodedUserId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
 
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.detail || '정보 수정에 실패했습니다.');
-        }
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || '정보 수정에 실패했습니다.');
+      }
 
-        const result = await response.json();
-        console.log('회원정보 수정 성공:', result);
-        successMsg = '회원정보가 성공적으로 수정되었습니다.';
+      const result = await response.json();
+      console.log('회원정보 수정 성공:', result);
+      successMsg = '회원정보가 성공적으로 수정되었습니다.';
 
-        // 서버에서 반환한 새 닉네임 값으로 `nickname`을 업데이트
-        nickname = result.USER_NICK || finalNickname;  // 새로운 닉네임을 화면에 반영
-
-        // 성공 후, 프로필 사진을 제외한 입력 필드 초기화
-        currentPassword = "";
-        newPassword = "";
-        confirmNewPassword = "";
-        
-        // 로컬스토리지에 새로운 닉네임 저장
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        storedUser.USER_NICK = nickname;
-        localStorage.setItem('user', JSON.stringify(storedUser)); // 새 닉네임을 로컬스토리지에 저장
-
-        // originalNickname을 새 닉네임으로 업데이트
-        originalNickname = nickname;
-        
+      nickname = result.USER_NICK || finalNickname;
+      currentPassword = "";
+      newPassword = "";
+      confirmNewPassword = "";
+      
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      storedUser.USER_NICK = nickname;
+      localStorage.setItem('user', JSON.stringify(storedUser));
+      originalNickname = nickname;
+      
     } catch (error) {
-        console.error('회원정보 수정 실패:', error);
-        errorMsg = error.message;
+      console.error('회원정보 수정 실패:', error);
+      errorMsg = error.message;
     }
-}
+  }
 
 
   // 폼 제출 이벤트 핸들러
@@ -427,27 +417,25 @@
               <!-- 프로필 이미지 업로드 -->
               <div class="profile_img" on:click={openFileDialog}>
                 {#if profilePreview}
-                  <!-- 기존 또는 새로 업로드된 프로필 이미지가 있을 경우 -->
                   <img 
                     id="profile-preview" 
-                    src={`http://localhost:9000/images/${profilePreview}`}
+                    src={profilePreview}
                     alt="미리보기" 
                     style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; cursor: pointer;"
                   />
                 {:else}
-                  <!-- 프로필 이미지가 없을 경우 -->
                   <label for="profile-upload" id="profile-label" style="cursor: pointer;">
                     프로필 사진 변경
                   </label>
                 {/if}
                 <input
-                  bind:this={profileUpload}
-                  id="profile-upload"
-                  name="profileImg"
-                  type="file"
-                  accept="image/*"
-                  style="display: none;"
-                  on:change={onProfileUpload}
+                bind:this={profileUpload}
+                id="profile-upload"
+                name="profileImg"
+                type="file"
+                accept="image/*"
+                style="display: none;"
+                on:change={onProfileUpload}
                 />
               </div>
               <!-- 사용자 아이디 (로그인한 사용자 아이디 표시) -->
