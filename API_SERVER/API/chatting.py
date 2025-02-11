@@ -301,3 +301,24 @@ async def download_gpt_response(CHAT_IDX: int, db: Session = Depends(get_db)):
 
     return FileResponse(file_path, filename=f"GPT_Response_{CHAT_IDX}.xlsx",
                         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+# ✅ 특정 채팅방의 대화 내용 조회
+@router.get("/chat/croom/{CROOM_IDX}")
+async def get_chat_messages(CROOM_IDX: int, db: Session = Depends(get_db)):
+    """ 특정 채팅방의 대화 내용을 조회하는 API """
+    chat_messages = db.query(TB_CHATTING).filter(TB_CHATTING.CROOM_IDX == CROOM_IDX).all()
+
+    if not chat_messages:
+        raise HTTPException(status_code=404, detail="해당 채팅방의 대화 기록이 없습니다.")
+
+    return [
+        {
+            "message_id": chat.CHAT_IDX,
+            "user_id": chat.USER_ID,
+            "croom_idx": chat.CROOM_IDX,
+            "message": chat.GPT_RESPONSE,  # GPT 응답이 채팅 메시지로 저장됨
+            "created_at": chat.CREATED_AT
+        }
+        for chat in chat_messages
+    ]

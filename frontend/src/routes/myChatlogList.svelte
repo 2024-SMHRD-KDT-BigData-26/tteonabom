@@ -73,6 +73,11 @@
       currentSpotPage = page;
     }
   }
+  
+  // ✅ 채팅방 상세 페이지로 이동하는 함수
+  function goToChatDetail(croomIdx) {
+    window.location.href = `/chatlogView?id=${croomIdx}`; // ✅ 상세 페이지로 이동
+  }
 
 
   // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
