@@ -98,12 +98,14 @@
       currentSpotPage = page;
     }
   }
-  
-
-
 
   // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
   function goToDetail(id) {
+    window.location.href = `/#/${id}`;
+  }
+
+  // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
+  function goToDetailChat(id) {
     window.location.href = `/#/MyChatlogView/${id}`;
   }
 </script>
@@ -242,7 +244,7 @@
             </thead>
             <tbody>
               {#each userChatrooms as chatroom, index}
-                <tr class="clickable" on:click={() => goToDetail(chatroom.CROOM_IDX)}>
+                <tr class="clickable" on:click={() => goToDetailChat(chatroom.CROOM_IDX)}>
                   <!-- API 응답 모델의 필드에 맞게 표시 -->
                   <td class="idx">{index + 1}</td>
                   <td class="title">{chatroom.CROOM_TITLE}</td>
