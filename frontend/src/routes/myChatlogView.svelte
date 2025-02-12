@@ -123,6 +123,11 @@ function goToDetail(id) {
   font-size: 20px !important;
 }
 
+  /* 내용 제목 스타일 강제 적용 */
+  :global(.message-user h3) {
+  font-size: 20px !important;
+}
+
   .container {
     display: flex;
   }

@@ -238,24 +238,24 @@
             <thead>
               <tr>
                 <th class="idx-th">번호</th>
-                <th class="title-th">채팅방 제목</th>
+                <th class="title-th">채팅방 이름</th>
                 <th class="date-th">생성일</th>
               </tr>
             </thead>
             <tbody>
               {#each userChatrooms as chatroom, index}
-                <tr class="clickable" on:click={() => goToDetailChat(chatroom.CROOM_IDX)}>
-                  <!-- API 응답 모델의 필드에 맞게 표시 -->
-                  <td class="idx">{index + 1}</td>
-                  <td class="title">{chatroom.CROOM_TITLE}</td>
-                  <!-- 날짜는 JavaScript Date 객체를 활용해 포맷팅할 수 있음 -->
-                  <td class="date">{new Date(chatroom.CREATED_AT).toISOString().split('T')[0]}</td>
-
-                </tr>
-              {/each}
+              <tr class="clickable" on:click={() => goToDetailChat(chatroom.CROOM_IDX)}>
+                <!-- 번호를 역순으로 출력 -->
+                <td class="idx">{userChatrooms.length - index}</td>
+                <td class="title">{chatroom.CROOM_TITLE}</td>
+                <!-- 날짜 포맷 수정 -->
+                <td class="date">{new Date(chatroom.CREATED_AT).toISOString().split('T')[0]}</td>
+              </tr>
+            {/each}
+            
               {#if userChatrooms.length === 0}
                 <tr>
-                  <td colspan="3" style="text-align: center;">채팅방이 없습니다.</td>
+                  <td colspan="3" style="text-align: center;">채팅로그가 없습니다.</td>
                 </tr>
               {/if}
             </tbody>

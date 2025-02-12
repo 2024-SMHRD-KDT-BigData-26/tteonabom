@@ -147,7 +147,6 @@
                     bind:value={startDate}
                     on:change={(e) => handleDateChange(e, "start")}
                   />
-
                   <label for="end-date">🏁 여행 종료일:</label>
                   <input
                     type="date"
@@ -177,8 +176,8 @@
                           const chatId = 91; // 임의 값 (또는 실제 chatId 사용)
                           downloadExcelFile(chatId); // 엑셀 다운로드 함수 호출
                         } else if (button.text === "채팅 내용 저장") {
-                          const userId = "euna1"; // 로그인된 사용자 ID로 변경
-                          const croomId = 192; // 임의 croomId 설정 (또는 실제 croomId 사용)
+                          const userId = "kakao_3910835997"; // 로그인된 사용자 ID로 변경
+                          const croomId = 313; // 임의 croomId 설정 (또는 실제 croomId 사용)
                           saveChatContent(croomId, userId); // 저장 함수 호출
                         }
                       }
@@ -198,6 +197,21 @@
 </main>
 
 <style>
+    /* 내용 제목 스타일 강제 적용 */
+    :global(.message-user h1) {
+  font-size: 22px !important;
+}
+
+  /* 내용 제목 스타일 강제 적용 */
+  :global(.message-user h2) {
+  font-size: 20px !important;
+}
+
+  /* 내용 제목 스타일 강제 적용 */
+  :global(.message-user h3) {
+  font-size: 20px !important;
+}
+
   /* 챗봇 영역 */
   .chat-container {
     width: 100%;
@@ -316,10 +330,12 @@
   .confirm-btn {
     margin-top: 10px;
     transform: translate(90px, 0%);
+    color: #333;
+    background-color: #ffdaab;
   }
 
   .confirm-btn:hover {
-    background-color: #f1f1f1;
+    background-color: #ffd59f;
   }
 
   .message-bot input[type="date"] {

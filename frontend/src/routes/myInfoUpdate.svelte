@@ -151,8 +151,13 @@ onMount(() => {
       
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       storedUser.USER_NICK = nickname;
+      if (updateData.USER_PROFILE_IMG) {
+        storedUser.USER_PROFILE_IMG = updateData.USER_PROFILE_IMG; // 새 프로필 이미지 저장
+      }
       localStorage.setItem('user', JSON.stringify(storedUser));
       originalNickname = nickname;
+      profilePreview = `http://localhost:9000/images/${storedUser.USER_PROFILE_IMG}`; // 화면에 반영
+
       
     } catch (error) {
       console.error('회원정보 수정 실패:', error);

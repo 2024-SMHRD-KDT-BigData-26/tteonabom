@@ -277,7 +277,7 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
         const loadingMessage = { type: "bot", text: "⏳ 여행 일정을 추천하는 중입니다. 잠시만 기다려 주세요!" };
         updateMessages(loadingMessage);
 
-        const USER_ID = "test_user_123";
+        const USER_ID = "kakao_3910835997";
         const [start_date, end_date] = selectedData["여행 일정"].split(" ~ ");
         const scheduleData = {
             USER_ID: USER_ID,
@@ -375,7 +375,7 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
     
         // ✅ FastAPI 요청 데이터
         const recommendData = {
-            USER_ID: "test_user_123",
+            USER_ID: "kakao_3910835997",
             COMPANION: selectedData["동반자"],
             THEME: selectedData["여행 테마"],
             REGION: selectedData["목적지"]
@@ -406,7 +406,7 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
         updateMessages({ type: "bot", text: "새로운 여행지를 추천하는 중입니다. 잠시만 기다려주세요... 🚀" });
     
         const recommendData = {
-            USER_ID: "test_user_123",
+            USER_ID: "kakao_3910835997",
             COMPANION: selectedData["동반자"],
             THEME: selectedData["여행 테마"],
             REGION: selectedData["목적지"]

@@ -76,12 +76,12 @@ def generate_travel_prompt(travel_data: dict) -> str:
 
         prompt = (
             f"다음은 사용자가 요청한 여행 정보입니다.<br>"
-            f"<h3>📅 여행 일정 추천</h3>"
-            f"<h3>📍 여행 지역: {region}</h3>"
-            f"<h3>👥 동반자: {companion}</h3>"
-            f"<h3>🎭 여행 스타일: {style} | ⏳ 일정 스타일: {schedule}</h3><br>"
-            f"<strong>🔥 날짜별로 상세 일정을 제공해 주세요.</strong><br>"
-            f"<strong>👉 HTML 형식으로 작성해 주세요.</strong> "
+            f"<h3 style='font-size: 20px;>📅 여행 일정 추천</h3>"
+            f"<h3 style='font-size: 20px;>📍 여행 지역: {region}</h3>"
+            f"<h3 style='font-size: 20px;>👥 동반자: {companion}</h3>"
+            f"<h3 style='font-size: 20px;>🎭 여행 스타일: {style} | ⏳ 일정 스타일: {schedule}</h3><br>"
+            f"<strong style='font-size: 18px;>🔥 날짜별로 상세 일정을 제공해 주세요.</strong><br>"
+            f"<strong style='font-size: 18px;>👉 HTML 형식으로 작성해 주세요.</strong> "
             f"각 일정은 다음과 같은 형식으로 제공해 주세요:<br>"
             f"<div style='background-color: #FEF7E5; padding: 15px; border-radius: 10px; max-width: 600px;'>"
             f"<h3 style='font-size: 20px;'>📅 2025년 MM월 DD일 - 첫째 날 <br></h3>"
@@ -103,10 +103,18 @@ def generate_travel_place_prompt(recommend_data: dict) -> str:
 
         prompt = (
             f"다음은 사용자가 요청한 여행지 추천 조건입니다.<br>"
-            f"👥 <strong>동반자:</strong> {companion}<br>"
-            f"🎭 <strong>여행 테마:</strong> {theme}<br>"
-            f"📍 <strong>여행 지역:</strong> {region}<br><br>"
-            f"🔥 <strong>위 조건에 맞는 대한민국 여행지를 추천해 주세요.</strong><br>"
+            f"👥 <strong style='font-size: 18px;>동반자:</strong> {companion}<br>"
+            f"🎭 <strong style='font-size: 18px;>여행 테마:</strong> {theme}<br>"
+            f"📍 <strong style='font-size: 18px;>여행 지역:</strong> {region}<br><br>"
+            f"🔥 <strong style='font-size: 18px;>위 조건에 맞는 대한민국 여행지 3개를 추천해 주세요.</strong><br>"
+            f"각 여행지는 다음과 같은 형식으로 제공해 주세요:<br>"
+            f"<h1 style='font-size: 20px;>🏞️️ {region} {companion} {theme} 여행지 추천</h1>"
+            f"<br><h3 style='font-size: 18px;>1. 추천 여행지명</h3>"
+            f"- 여행지 추천 이유<br>"
+            f"<p>여행지 추천 이유는 한줄에 30자 이내 개조식으로 처음에 -를 넣어주세요 문장 마지막에 ,를 빼고 <br>로 줄바꿈해주세요.</p>"
+            f"<p>문장 마지막에 쉼표(,)는 넣지말고 <br>로 줄바꿈해주세요.</p>"
+            f"각 여행지 별로 마지막 추천 이유에는 <br>을 두개 넣어주세요.</p>"
+            f"<strong>이미지는 포함하지 말아주세요</strong>"
             f"👉 <strong>HTML 형식으로 작성해 주세요.</strong>"
         )
         return prompt
