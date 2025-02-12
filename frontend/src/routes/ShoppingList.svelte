@@ -435,6 +435,15 @@ function applyFilters() {
   margin-top: -20px;
 }
 
+/* 쇼핑몰 이미지 중앙 정렬 */
+.card-img a {
+  display: flex;  /* a 태그 내부 요소 중앙 정렬 */
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
 /* URL 링크 (왼쪽 정렬) */
 .url {
   color: #999999;
