@@ -5,6 +5,8 @@
     sendMessage,
     scrollToBottom,
     fetchDataFromAPI,
+    downloadExcelFile, // 추가
+    saveChatContent, // 추가
   } from "../assets/js/AIChat.js";
 
   let messages = [];
@@ -13,6 +15,7 @@
   let showConfirmButton = false;
   let showCalendar = false;
   let selectedData = {}; // ✅ 선택된 데이터를 저장할 객체 추가
+  let currentCroomId = 192; // 기본값을 192로 설정 (임시 값으로 시작)
 
   onMount(() => {
     initializeChat((initialMessages) => {
@@ -31,30 +34,32 @@
 
   function handleUserMessage(text) {
     try {
-        const result = sendMessage(
-            messages,
-            text,
-            (value) => {
-                if (value) {
-                    showCalendar = true;
-                }
-            },
-            updateMessages,
-            selectedData,
+      const result = sendMessage(
+        messages,
+        text,
+        (value) => {
+          if (value) {
+            showCalendar = true;
+          }
+        },
+        updateMessages,
+        selectedData,
+      );
+
+      if (result && Array.isArray(result.updatedMessages)) {
+        messages = result.updatedMessages;
+
+        currentCroomId = 192; // 항상 192로 설정
+        
+      } else {
+        console.error(
+          "sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.",
         );
-
-        if (result && result.updatedMessages) {
-            messages = result.updatedMessages; // 반환값에서 updatedMessages 추출 및 업데이트
-        } else {
-            console.error(
-                "sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.",
-            );
-        }
+      }
     } catch (error) {
-        console.error("handleUserMessage 오류:", error);
+      console.error("handleUserMessage 오류:", error);
     }
-}
-
+  }
 
   function handleButtonClick(text) {
     handleUserMessage(text);
@@ -161,10 +166,24 @@
             {/if}
             {#if message.buttons}
               <div class="button-wrapper">
-                {#each message.buttons as button}
+                {#each message.buttons as button, index}
                   <button
                     class="chat-btn"
-                    on:click={() => handleButtonClick(button.text)}
+                    on:click={() => {
+                      if (!button.disabled) {
+                        handleButtonClick(button.text);
+                        message.buttons[index].disabled = true; // 클릭 후 버튼 비활성화
+
+                        if (button.text === "일정 다운로드") {
+                          const chatId = 91; // 임의 값 (또는 실제 chatId 사용)
+                          downloadExcelFile(chatId); // 엑셀 다운로드 함수 호출
+                        } else if (button.text === "채팅 내용 저장") {
+                          const userId = "euna1"; // 로그인된 사용자 ID로 변경
+                          const croomId = 192; // 임의 croomId 설정 (또는 실제 croomId 사용)
+                          saveChatContent(croomId, userId); // 저장 함수 호출
+                        }
+                      }
+                    }}
                   >
                     {button.text}
                   </button>
