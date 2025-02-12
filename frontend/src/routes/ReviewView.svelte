@@ -284,7 +284,11 @@
       <!-- 이미지 확대 모달 -->
       {#if isModalOpen}
         <div class="modal" on:click={toggleModal}>
-          <img src={`http://localhost:9000/images/${review.FILE_URL}`} alt="여행지 이미지 (원본 크기)" />
+          <img 
+            src={review?.FILE_URL ? `http://localhost:9000/images/${review.FILE_URL}` : "../src/assets/img/default_image_o.png"} 
+            alt="여행지 이미지 (원본 크기)" 
+            on:error={(e) => e.target.src = "../src/assets/img/default_image_o.png"}
+          />
         </div>
       {/if}
 
