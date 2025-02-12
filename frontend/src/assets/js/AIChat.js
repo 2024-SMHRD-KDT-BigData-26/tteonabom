@@ -1,43 +1,83 @@
 const selectedData = {};
 
 const shoppingMallLinks = {
-    "등산": [
+    등산: [
         { name: "디스커버리", url: "https://www.discovery-expedition.com/" },
-        { name: "K2", url: "https://www.k2.co.kr/" }
+        { name: "K2", url: "https://www.k2.co.kr/" },
+        { name: "가야미", url: "https://www.gayamy.co.kr/index.html" },
+        { name: "고캠프", url: "https://www.gocamp.co.kr/shop/main/index.php" },
+        { name: "락8848", url: "https://www.rock8848.com/main/index.php" },
+        { name: "액트", url: "https://actc.co.kr/index.html" },
+        { name: "예스마운틴", url: "https://www.yesmountain.com/" }
     ],
-    "물놀이": [
+    물놀이: [
         { name: "아레나", url: "https://www.arena.co.kr/" },
-        { name: "배럴", url: "https://summer.barrel.co.kr/" }
+        { name: "배럴", url: "https://summer.barrel.co.kr/" },
+        { name: "레스틴온오션", url: "https://restincocean.com/shop" },
+        { name: "스윔어바웃", url: "https://brand.naver.com/swimabout" },
+        { name: "가나수원", url: "https://swim.co.kr/index.html" },
+        { name: "200bar", url: "https://200bar.shop/main/index" },
+        { name: "단비몰", url: "https://smartstore.naver.com/haechy" },
+        { name: "미노서프", url: "https://minossurf.com/" }
     ],
-    "서핑": [
+    서핑: [
         { name: "허니서프", url: "https://www.honeysurf.co.kr/" },
-        { name: "서프코드", url: "https://surfcode.co.kr/" }
+        { name: "서프코드", url: "https://surfcode.co.kr/" },
+        { name: "서퍼스", url: "https://www.surfers.co.kr/" },
+        { name: "오썸머", url: "https://osummer.co.kr/index.html" },
+        { name: "서프존", url: "https://surfzone.co.kr/" },
+        { name: "얼라이브스킴", url: "https://aliveskim.com/" },
+        { name: "플라이비치", url: "https://www.flybeach.co.kr/" }
     ],
-    "스키": [
+    스키: [
         { name: "피닉스 스키", url: "https://www.phoenixhnr.co.kr/" },
-        { name: "휘닉스파크", url: "https://www.wellihillipark.com/" }
+        { name: "휘닉스파크", url: "https://www.wellihillipark.com/" },
+        { name: "봄레포츠", url: "https://bomnasports.com/" },
+        { name: "에스엠스키", url: "https://m.sportscore.co.kr/" },
+        { name: "피닉스스포츠", url: "https://phoenixsports.co.kr/index.html" },
+        { name: "스노우뱅크", url: "https://snowbank.net/index.html" }
     ],
-    "여행용품": [
+    여행용품: [
         { name: "트래블메이트", url: "https://www.travelmate.co.kr/" },
-        { name: "샘소나이트", url: "https://www.samsonite.co.kr/" }
+        { name: "샘소나이트", url: "https://www.samsonite.co.kr/" },
+        { name: "몬타나스포츠", url: "https://montanak.co.kr/" },
+        { name: "트래블로드", url: "https://travelload.co.kr/" },
+        { name: "고고캠핑", url: "https://m.gogcamp.co.kr/#enp_mbris" },
+        { name: "인블루", url: "https://www.in-travel.co.kr/index.html" },
+        { name: "신비로드", url: "https://smartstore.naver.com/sinbiroad" }
     ],
-    "자전거": [
+    자전거: [
         { name: "스페셜라이즈드", url: "https://www.specialized.com/" },
-        { name: "자이언트", url: "https://www.giant-bicycles.com/" }
+        { name: "자이언트", url: "https://www.giant-bicycles.com/" },
+        { name: "자이크", url: "https://shop1.jaike.cafe24.com/" },
+        { name: "고르고타고", url: "https://www.gorogotago.com/" },
+        { name: "바이오인", url: "https://www.tradeinn.com/bikeinn/ko" },
+        { name: "오딜로", url: "https://www.odvelo.com/" },
+        { name: "자출사닷컴", url: "https://www.jachulsa.com/index.html" }
     ],
-    "카메라": [
-        { name: "캐논", url: "https://www.canon-ci.co.kr/" },
-        { name: "니콘", url: "https://www.nikon-image.co.kr/" }
+    카메라: [
+        { name: "준카메라", url: "https://juncamera.co.kr/index.html" },
+        { name: "반도카메라", url: "https://bandocamera.co.kr/index.html" },
+        { name: "거성카메라", url: "https://geosungcamera.com/index.html" },
+        { name: "줌인", url: "https://www.zoomin.co.kr/" },
+        { name: "부성카메라", url: "https://boosungcamera.co.kr/" }
     ],
-    "캠핑": [
-        { name: "코베아", url: "https://www.kovea.co.kr/" },
-        { name: "스노우라인", url: "https://www.snowline.co.kr/" }
+    캠핑: [
+        { name: "인디에어", url: "https://smartstore.naver.com/inthea" },
+        { name: "이아웃도어", url: "https://www.eoutdoors.co.kr/index.html" },
+        { name: "오캠몰", url: "https://www.ocamall.com/" },
+        { name: "맥킨리", url: "http://www.e-mckinley.co.kr/index.html" },
+        { name: "캠핑파파", url: "https://www.campingpapa.co.kr/shop/main/index.php" }
     ],
-    "낚시": [
-        { name: "바낙스", url: "https://www.banax.co.kr/" },
-        { name: "시마노", url: "https://fish.shimano.com/" }
+    낚시: [
+        { name: "낚시밸리", url: "https://fishvalley.com/main/index.php" },
+        { name: "야멧피싱", url: "https://imfishing.kr/" },
+        { name: "싸파몰", url: "https://sapa.co.kr/" },
+        { name: "텔낚시", url: "https://www.ytfishing.co.kr/" },
+        { name: "가자낚시", url: "https://ok1717.com/" }
     ]
 };
+
 
 // 엑셀 다운로드 처리 함수
 export async function downloadExcelFile(chatId = 91) {  // 기본값을 91로 설정
@@ -448,34 +488,41 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             ],
         };
     }
-    // ✅ 사용자가 특정 테마 선택 시 → 쇼핑몰 목록 출력
+    // ✅ 사용자가 특정 테마 선택 시 → 랜덤한 3개 쇼핑몰 목록 출력
     else if (["등산", "물놀이", "서핑", "스키", "여행용품", "자전거", "카메라", "캠핑", "낚시"].includes(text)) {
         selectedData["쇼핑 테마"] = text;
 
-        let mallList = shoppingMallLinks[text]
-            .map(mall => `<a href="${mall.url}" target="_blank">${mall.name}</a>`)
-            .join("<br>");
+        let malls = shoppingMallLinks[text];
+        let randomMalls = malls.sort(() => 0.5 - Math.random()).slice(0, 3); // 배열을 무작위로 섞고 3개 선택
+
+        let mallList = randomMalls
+            .map(mall => `${mall.name}<br><a href="${mall.url}" target="_blank">${mall.url}</a>`)
+            .join("<br><br>");
 
         botResponse = {
             type: "bot",
-            text: `✅ "${text}"과 관련된 쇼핑몰 목록입니다!🛍️<br>필요한 물품들을 쇼핑해보세요!😀<br>${mallList}`,
+            text: ` "${text}"과 관련된 쇼핑몰 목록입니다!<br>필요한 물품들을 쇼핑해보세요!😀<br><br>${mallList}`,
             buttons: [
-                { text: "다른 쇼핑몰 목록 보기", action: "shopping" }, // ✅ 쇼핑 테마 선택 화면으로 이동
+                { text: "다른 쇼핑몰 목록 보기", action: "shopping" },
                 { text: "다시 추천 받기", action: "shopping_retry" },
                 { text: "처음으로 돌아가기", action: "restart" }
             ]
         };
     }
-    // ✅ "다시 추천 받기" 클릭 시 → 기존에 선택한 쇼핑 테마의 목록을 다시 출력
+    // ✅ "다시 추천 받기" 클릭 시 → 기존에 선택한 쇼핑 테마의 목록을 랜덤으로 다시 출력
     else if (text === "다시 추천 받기" && selectedData["쇼핑 테마"]) {
         let theme = selectedData["쇼핑 테마"];
-        let mallList = shoppingMallLinks[theme]
-            .map(mall => `<a href="${mall.url}" target="_blank">${mall.name}</a>`)
-            .join("<br>");
+        let malls = shoppingMallLinks[theme];
+        let randomMalls = malls.sort(() => 0.5 - Math.random()).slice(0, 3); // 랜덤 3개 선택
+
+        let mallList = randomMalls
+            .map(mall => `${mall.name}<br><a href="${mall.url}" target="_blank">${mall.url}</a>`)
+            .join("<br><br>");
+
 
         botResponse = {
             type: "bot",
-            text: `✅ "${theme}"과 관련된 다른 쇼핑몰 목록입니다!🛍️<br>필요한 물품들을 쇼핑해보세요!😀<br>${mallList}`,
+            text: `"${theme}"과 관련된 다른 쇼핑몰 목록입니다!<br>필요한 물품들을 쇼핑해보세요!😀<br><br>${mallList}`,
             buttons: [
                 { text: "다른 쇼핑몰 목록 보기", action: "shopping" }, // ✅ 쇼핑 테마 선택 화면으로 이동
                 { text: "다시 추천 받기", action: "shopping_retry" },
