@@ -1,22 +1,25 @@
 <script>
-  // 비주얼존 배경명
-  let currentPage = "visual_my";
-
-  // 비주얼존 CSS
-  import "../assets/css/VisualZone.css";
-
   import { onMount } from "svelte";
-  import { getChatMessages } from "../assets/js/myChatlogView.js"; // myChatlogView.js에서 대화 내용 가져오기
+  import { getChatMessageById } from "../assets/js/myChatlogView.js"; // 채팅 데이터 가져오기
 
-  let messages = []; // 대화 메시지를 저장할 배열
+  let messages = [];
+  let chatId = "";
 
-  // 페이지가 로드될 때 대화 내용을 불러옵니다
   onMount(() => {
-    messages = getChatMessages(); // myChatlogView.js에서 대화 내용 가져오기
+    // 현재 URL에서 id 값 추출 (ex: #/chatlog/123)
+    const hash = window.location.hash; 
+    const match = hash.match(/#\/chatlog\/(.+)/);
+    
+    if (match) {
+      chatId = match[1];
+      getChatMessageById(chatId).then(data => {
+        messages = data;
+      });
+    }
   });
-  // 상세 페이지로 이동하는 함수(예시, 라우터로 바꿔야함)
+
   function goToDetail(id) {
-    window.location.href = `#/${id}`;
+    window.location.href = `#/chatlog/${id}`;
   }
 </script>
 
@@ -41,37 +44,39 @@
         <div class="chatbot-window" id="chatWindow">
           <div class="chat-header"><h3>챗봇 봄봄</h3></div>
           <div class="chat-body">
-            {#each messages as message}
-              <div class="message-wrapper {message.type}">
-                {#if message.type === "bot"}
-                  <div class="bot-profile-wrapper">
-                    <div class="bot-profile">
-                      <img
-                        src="/src/assets/img/chatbot_profile.png"
-                        alt="봄봄"
-                        class="bot-img"
-                      />
-                      <span class="bot-name">여행AI 봄봄</span>
+            {#if messages.length > 0}
+              {#each messages as message}
+                <div class="message-wrapper {message.type}">
+                  {#if message.type === "bot"}
+                    <div class="bot-profile-wrapper">
+                      <div class="bot-profile">
+                        <img
+                          src="/src/assets/img/chatbot_profile.png"
+                          alt="봄봄"
+                          class="bot-img"
+                        />
+                        <span class="bot-name">여행AI 봄봄</span>
+                      </div>
                     </div>
+                  {/if}
+                  <div
+                    class={message.type === "bot"
+                      ? "message-bot"
+                      : "message-user"}
+                  >
+                    {@html message.text}
                   </div>
-                {/if}
-                <div
-                  class={message.type === "bot"
-                    ? "message-bot"
-                    : "message-user"}
-                >
-                  {@html message.text}
                 </div>
-              </div>
-            {/each}
+              {/each}
+            {:else}
+              <p class="no-messages">저장된 채팅이 없습니다.</p>
+            {/if}
           </div>
         </div>
+
         <!-- 목록 버튼 -->
         <div class="btn-container-back">
-          <button
-            class="btn btn-secondary"
-            on:click={() => window.history.back()}>목록</button
-          >
+          <button class="btn btn-secondary" on:click={() => window.history.back()}>목록</button>
         </div>
       </div>
     </div>
