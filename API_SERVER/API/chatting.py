@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from DataBase.conn import get_db
 from DataBase.models import TB_CROOM, TB_CHATTING, TB_SHOPPING_MALL
 from config import OPENAI_API_KEY
+from typing import List
 import openai
 import io
 import pandas as pd
@@ -359,6 +360,29 @@ async def get_chat_messages(CROOM_IDX: int, db: Session = Depends(get_db)):
             "message_id": chat.CHAT_IDX,
             "user_id": chat.USER_ID,
             "croom_idx": chat.CROOM_IDX,
+            "message": chat.GPT_RESPONSE,  # GPT 응답이 채팅 메시지로 저장됨
+            "created_at": chat.CREATED_AT
+        }
+        for chat in chat_messages
+    ]
+
+
+# ✅ 특정 회원의 채팅룸 조회
+@router.get("/chat/user/{USER_ID}", response_model=List[dict])
+async def get_user_chat_messages(USER_ID: str, db: Session = Depends(get_db)):
+    """
+    특정 사용자의 대화 내용을 조회하는 API
+    """
+    chat_messages = db.query(TB_CHATTING).filter(TB_CHATTING.USER_ID == USER_ID).all()
+
+    if not chat_messages:
+        raise HTTPException(status_code=404, detail="해당 사용자의 대화 기록이 없습니다.")
+
+    return [
+        {
+            "message_id": chat.CHAT_IDX,
+            "croom_idx": chat.CROOM_IDX,
+            "user_id": chat.USER_ID,
             "message": chat.GPT_RESPONSE,  # GPT 응답이 채팅 메시지로 저장됨
             "created_at": chat.CREATED_AT
         }

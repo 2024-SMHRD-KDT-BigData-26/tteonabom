@@ -31,24 +31,57 @@
   let currentSpotPage = 1;
   const itemsPerPage = 5;
 
-   // FastAPI의 특정 사용자가 만든 채팅방 목록 조회 API 호출 함수
-   async function fetchUserChatrooms() {
+  async function fetchUserChatrooms() {
     if (!userId) {
-        console.error("userId가 설정되지 않았습니다.");
+        console.error("❌ userId가 설정되지 않았습니다.");
         return;
     }
-    
+
     try {
-        const response = await fetch(`http://localhost:9000/crooms/user/${userId}`);
-        if (response.ok) {
-            userChatrooms = await response.json();
-        } else {
-            console.error("채팅방 목록을 불러오지 못했습니다. 상태 코드:", response.status);
+        // 1️⃣ 특정 사용자의 채팅 목록 가져오기
+        console.log(`📢 [API 호출] 사용자 채팅 목록 가져오기: http://localhost:9000/chat/user/${userId}`);
+        const userChatResponse = await fetch(`http://localhost:9000/chat/user/${userId}`);
+
+        if (!userChatResponse.ok) {
+            console.error("❌ 사용자의 채팅 목록을 불러오지 못했습니다.", userChatResponse.status);
+            return;
         }
+
+        const userChats = await userChatResponse.json();
+        console.log("✅ [응답 확인] 사용자 채팅 목록:", userChats);
+
+        if (userChats.length === 0) {
+            console.warn("⚠️ 사용자의 채팅 목록이 비어 있습니다.");
+            return;
+        }
+
+        // 2️⃣ 사용자가 만든 채팅방 목록 가져오기
+        console.log(`📢 [API 호출] 사용자가 만든 채팅방 목록 가져오기: http://localhost:9000/crooms/user/${userId}`);
+        const userRoomsResponse = await fetch(`http://localhost:9000/crooms/user/${userId}`);
+
+        if (!userRoomsResponse.ok) {
+            console.error("❌ 사용자가 만든 채팅방 목록을 불러오지 못했습니다.", userRoomsResponse.status);
+            return;
+        }
+
+        const userRooms = await userRoomsResponse.json();
+        console.log("✅ [응답 확인] 사용자가 만든 채팅방 목록:", userRooms);
+
+        // 3️⃣ 사용자 채팅 목록에서 `croom_idx` 리스트 추출
+        const userChatCroomIds = userChats.map(chat => chat.croom_idx);
+        console.log("🔍 [매칭 작업] 사용자의 채팅방 번호 목록:", userChatCroomIds);
+
+        // 4️⃣ 사용자가 만든 채팅방 목록에서 `croom_idx`가 있는 채팅방만 필터링
+        userChatrooms = userRooms.filter(room => userChatCroomIds.includes(room.CROOM_IDX));
+        console.log("✅ [최종 데이터] 사용자가 참여한 채팅방 목록:", userChatrooms);
+
     } catch (error) {
-        console.error("채팅방 목록 불러오기 중 에러 발생:", error);
+        console.error("❌ [오류 발생] 채팅방 데이터 불러오기 중 예외 발생:", error);
     }
-  }
+}
+
+
+
 
   
   // 현재 페이지에 해당하는 데이터만 반환
@@ -202,19 +235,20 @@
           <table class="table">
             <thead>
               <tr>
-                <th>번호</th>
-                <th>채팅방 제목</th>
-                <th>생성일</th>
+                <th class="idx-th">번호</th>
+                <th class="title-th">채팅방 제목</th>
+                <th class="date-th">생성일</th>
               </tr>
             </thead>
             <tbody>
               {#each userChatrooms as chatroom, index}
                 <tr class="clickable" on:click={() => goToDetail(chatroom.CROOM_IDX)}>
                   <!-- API 응답 모델의 필드에 맞게 표시 -->
-                  <td>{index + 1}</td>
-                  <td>{chatroom.CROOM_TITLE}</td>
+                  <td class="idx">{index + 1}</td>
+                  <td class="title">{chatroom.CROOM_TITLE}</td>
                   <!-- 날짜는 JavaScript Date 객체를 활용해 포맷팅할 수 있음 -->
-                  <td>{new Date(chatroom.CREATED_AT).toLocaleString()}</td>
+                  <td class="date">{new Date(chatroom.CREATED_AT).toISOString().split('T')[0]}</td>
+
                 </tr>
               {/each}
               {#if userChatrooms.length === 0}
