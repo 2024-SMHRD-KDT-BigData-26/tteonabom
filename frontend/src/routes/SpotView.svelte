@@ -487,7 +487,7 @@ export const loadMoreReviews = (entries, observer) => {
           <div id="map" class="map-container"></div>
         </div>
       </div>
-
+      
       <!-- 관련 후기 -->
       {#if $displayedReviews.length > 0}
         <p class="card-title reply-title">관련후기</p>

@@ -68,7 +68,19 @@ async def get_croom(CROOM_IDX: int, db: Session = Depends(get_db)):
 @router.get("/crooms/user/{USER_ID}", response_model=list[CroomResponse])
 async def get_crooms_by_user(USER_ID: str, db: Session = Depends(get_db)):
     """ 특정 사용자가 생성한 채팅방 리스트 조회 """
+
+    # ✅ 1. 전체 테이블에서 모든 데이터 조회 (USER_ID 필터 없이)
+    all_crooms = db.query(TB_CROOM).all()
+    print("전체 채팅방 개수:", len(all_crooms))  # 콘솔에 총 개수 출력
+
+    # ✅ 2. USER_ID 필터링 없이 USER_ID가 무엇으로 저장되어 있는지 확인
+    for croom in all_crooms:
+        print(f"DB 저장된 USER_ID: {croom.USER_ID}")
+
+    # ✅ 3. 필터링된 데이터 조회
     crooms = db.query(TB_CROOM).filter(TB_CROOM.USER_ID == USER_ID).all()
+    print("조회된 채팅방 개수:", len(crooms))
+
     return crooms
 
 

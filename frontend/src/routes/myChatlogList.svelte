@@ -49,15 +49,7 @@
         console.error("채팅방 목록 불러오기 중 에러 발생:", error);
     }
   }
-  // 컴포넌트가 마운트될 때 localStorage에서 userId를 가져와서 API 호출
-  onMount(() => {
-    userId = localStorage.getItem('userId') || '';
-    if (userId) {
-      fetchUserChatrooms();
-    } else {
-      console.error("localStorage에서 userId를 찾을 수 없습니다.");
-    }
-  });
+
   
   // 현재 페이지에 해당하는 데이터만 반환
   function getCurrentPageItems() {
