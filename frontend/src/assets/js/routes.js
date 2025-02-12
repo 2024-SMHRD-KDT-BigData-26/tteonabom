@@ -35,7 +35,7 @@
    '/ReviewView/:REVIEW_IDX': ReviewView,
    '/ReviewUpdate/:REVIEW_IDX': ReviewUpdate,
    '/My/': MyChatlogList,
-   '/MyChatlogView/': MyChatlogView,
+   '/MyChatlogView/:CROOM_IDX': MyChatlogView,
    '/MyReview/': MyReviewList,
    '/MyReviewView/': MyReviewView,
    '/MyInfo/': MyInfoUpdate,

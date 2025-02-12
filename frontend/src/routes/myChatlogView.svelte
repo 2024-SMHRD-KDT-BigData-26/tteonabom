@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+import { onMount } from "svelte";
 
 let messages = [];
 let croomId = 0;
@@ -101,7 +101,7 @@ function goToDetail(id) {
                 {@html message.text
                   .replace(/```html/g, "")  // 백틱 블록 제거
                   .replace(/```/g, "")      // 남은 백틱 제거
-                  .replace(/<br>/g, "")}    // 불필요한 <br> 제거
+                  .replace(/<br>/g, "")}    
                 </div>
               </div>
             {/each}
