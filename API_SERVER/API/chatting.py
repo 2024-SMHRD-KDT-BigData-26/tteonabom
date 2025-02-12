@@ -1,8 +1,8 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Body, Request
+from fastapi import APIRouter, Depends, HTTPException, Request  # Body와 StreamingResponse는 불필요하므로 제거
+from fastapi.responses import StreamingResponse  # StreamingResponse를 올바르게 import
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from fastapi.responses import FileResponse
 from DataBase.conn import get_db
 from DataBase.models import TB_CROOM, TB_CHATTING, TB_SHOPPING_MALL
 from config import OPENAI_API_KEY
@@ -20,8 +20,8 @@ openai.api_key = OPENAI_API_KEY
 class TravelPlaceRecommend(BaseModel):
     USER_ID: str
     COMPANION: str  # 동반자
-    PURPOSE: list  # 목적 (최대 2개 선택)
-    PREFERENCE: str  # 자연/도시 선호
+    THEME: str  # 여행 테마 (ex: 엑티비티, 힐링, 핫플레이스)
+    REGION: str  # 지역 선택
 
     class Config:
         from_attributes = True
@@ -47,9 +47,19 @@ class ChatSaveRequest(BaseModel):
 
 # ✅ GPT 응답을 HTML로 변환하는 함수
 def format_gpt_response_to_html(response: str) -> str:
-    """GPT 응답을 HTML 태그로 변환하여 저장"""
-    response = response.replace("**", "<strong>").replace("\n", "<br>")
-    return response
+    """GPT 응답을 HTML 형식으로 변환하여 날짜별 일정 구분"""
+
+    days = response.split("\n\n")  # 날짜별 구분 (GPT가 개행을 기준으로 구분할 가능성이 큼)
+    formatted_response = ""
+
+    for day in days:
+        formatted_response += f"""
+        <div class="day-schedule" style=ㅋ"padding: 20px; gap=20px; border-radius: 10px; max-width: 600px; margin-bottom: 10px;">
+            {day}
+        </div>
+        """
+
+    return formatted_response
 
 
 # ✅ GPT 프롬프트 생성 함수 (HTML 변환 포함)
@@ -65,17 +75,20 @@ def generate_travel_prompt(travel_data: dict) -> str:
 
         prompt = (
             f"다음은 사용자가 요청한 여행 정보입니다.<br>"
-            f"📅 <strong>여행 기간:</strong> {start_date} ~ {end_date}<br>"
-            f"👥 <strong>동반자:</strong> {companion}<br>"
-            f"📍 <strong>여행 지역:</strong> {region}<br>"
-            f"🎭 <strong>선호 여행 스타일:</strong> {style}<br>"
-            f"⏳ <strong>일정 스타일:</strong> {schedule}<br><br>"
-            f"🔥 <strong>각 날짜별로 상세 일정을 추천해 주세요.</strong> 날짜별로 아침, 점심, 저녁으로 나누어 주세요.<br>"
-            f"👉 <strong>HTML 형식으로 작성해 주세요.</strong>"
+            f"<h3>📅 여행 일정 추천</h3>"
+            f"<h3>📍 여행 지역: {region}</h3>"
+            f"<h3>👥 동반자: {companion}</h3>"
+            f"<h3>🎭 여행 스타일: {style} | ⏳ 일정 스타일: {schedule}</h3><br>"
+            f"<strong>🔥 날짜별로 상세 일정을 제공해 주세요.</strong><br>"
+            f"<strong>👉 HTML 형식으로 작성해 주세요.</strong> "
+            f"각 일정은 다음과 같은 형식으로 제공해 주세요:<br>"
+            f"<div style='background-color: #FEF7E5; padding: 15px; border-radius: 10px; max-width: 600px;'>"
+            f"<h3 style='font-size: 20px;'>📅 2025년 MM월 DD일 - 첫째 날 <br></h3>"
+            f"<p><strong>10:00</strong> - 일정 설명</p>"
+            f"<p><strong>12:00</strong> - 일정 설명</p>"
+            f"</div>"
         )
-
         return prompt
-
     except KeyError as e:
         raise ValueError(f"필수 키가 누락되었습니다: {e}")
 
@@ -84,15 +97,15 @@ def generate_travel_place_prompt(recommend_data: dict) -> str:
     """여행지 추천 조건에 맞는 GPT 프롬프트 생성"""
     try:
         companion = recommend_data["companion"]
-        purpose = ", ".join(recommend_data["purpose"])
-        preference = recommend_data["preference"]
+        theme = recommend_data["theme"]
+        region = recommend_data["region"]
 
         prompt = (
             f"다음은 사용자가 요청한 여행지 추천 조건입니다.<br>"
             f"👥 <strong>동반자:</strong> {companion}<br>"
-            f"🎭 <strong>목적:</strong> {purpose}<br>"
-            f"🏞 <strong>자연/도시 선호:</strong> {preference}<br><br>"
-            f"🔥 <strong>위 조건에 맞는 여행지를 추천해 주세요.</strong><br>"
+            f"🎭 <strong>여행 테마:</strong> {theme}<br>"
+            f"📍 <strong>여행 지역:</strong> {region}<br><br>"
+            f"🔥 <strong>위 조건에 맞는 대한민국 여행지를 추천해 주세요.</strong><br>"
             f"👉 <strong>HTML 형식으로 작성해 주세요.</strong>"
         )
         return prompt
@@ -134,6 +147,7 @@ async def generate_travel_place_response(recommend_data: dict) -> str:
 
 
 
+
 # ✅ 사용자 입력 데이터를 기반으로 GPT 응답을 생성하고 TB_CROOM에 저장
 @router.post("/chat")
 async def create_chat(chat: ChatCreate, request: Request, db: Session = Depends(get_db)):
@@ -164,7 +178,7 @@ async def create_chat(chat: ChatCreate, request: Request, db: Session = Depends(
             CROOM_LIMIT=0,
             CROOM_STATUS="active",
             GPT_RESPONSE=gpt_response,
-            CREATED_AT=datetime.utcnow(),
+            CREATED_AT=datetime.now(),
         )
         db.add(db_croom)
         db.commit()
@@ -202,7 +216,7 @@ async def save_chat_response(request: ChatSaveRequest, db: Session = Depends(get
         USER_ID=request.USER_ID,
         TRAVEL_DATA=latest_chat.GPT_RESPONSE,  # ✅ HTML 변환된 데이터 저장
         GPT_RESPONSE=latest_chat.GPT_RESPONSE,
-        CREATED_AT=datetime.utcnow(),
+        CREATED_AT=datetime.now(),
     )
     db.add(db_chat)
     db.commit()
@@ -217,20 +231,20 @@ async def recommend_travel_place(data: TravelPlaceRecommend, db: Session = Depen
     try:
         gpt_response = await generate_travel_place_response({
             "companion": data.COMPANION,
-            "purpose": data.PURPOSE,
-            "preference": data.PREFERENCE
+            "theme": data.THEME,
+            "region": data.REGION
         })
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     db_croom = TB_CROOM(
-        CROOM_TITLE=f"여행지 추천_{data.USER_ID}_{datetime.utcnow()}",
+        CROOM_TITLE=f"여행지 추천_{data.USER_ID}_{datetime.now()}",
         CROOM_INFO="여행지 추천 데이터",
         USER_ID=data.USER_ID,
         CROOM_LIMIT=0,
         CROOM_STATUS="active",
         GPT_RESPONSE=gpt_response,
-        CREATED_AT=datetime.utcnow(),
+        CREATED_AT=datetime.now(),
     )
     db.add(db_croom)
     db.commit()
@@ -241,8 +255,8 @@ async def recommend_travel_place(data: TravelPlaceRecommend, db: Session = Depen
         "user_id": data.USER_ID,
         "recommend_data": {
             "companion": data.COMPANION,
-            "purpose": data.PURPOSE,
-            "preference": data.PREFERENCE
+            "theme": data.THEME,
+            "region": data.REGION
         },
         "gpt_response": gpt_response
     }
@@ -280,44 +294,55 @@ async def get_shopping_malls_by_category(category: str, db: Session = Depends(ge
     ]
 
 
-@router.get("/chat/download/{CHAT_IDX}")
-async def download_gpt_response(CHAT_IDX: int = 91, db: Session = Depends(get_db)):  # 기본값 91
-    """TB_CHATTING의 GPT 응답을 엑셀로 다운로드"""
+@router.get("/chat/download/{CROOM_IDX}")
+async def download_gpt_response(CROOM_IDX: int, db: Session = Depends(get_db)):
+    """CROOM_IDX에 해당하는 GPT 응답을 엑셀로 다운로드"""
+    try:
+        print(f"📌 [백엔드] 요청된 CROOM_IDX: {CROOM_IDX}")
 
-    # CHAT_IDX를 192로 강제 설정
-    CHAT_IDX = 192
+        # CROOM_IDX에 해당하는 가장 최근의 채팅을 가져옴
+        chat = db.query(TB_CHATTING).filter(TB_CHATTING.CROOM_IDX == CROOM_IDX).order_by(TB_CHATTING.CREATED_AT.desc()).first()
 
-    chat = db.query(TB_CHATTING).filter(TB_CHATTING.CHAT_IDX == CHAT_IDX).first()
+        if not chat:  # 해당 채팅 기록이 없을 경우
+            print(f"🚨 [백엔드 오류] CROOM_IDX {CROOM_IDX}에 해당하는 채팅 데이터가 없습니다.")
+            raise HTTPException(status_code=404, detail="해당 채팅방에 대화 기록이 없습니다.")
 
-    if not chat:  # DB에서 해당 CHAT_IDX가 없을 경우 임의값으로 설정
-        print(f"CHAT_IDX {CHAT_IDX}가 존재하지 않음. 임의 값 123으로 처리.")
-        chat = db.query(TB_CHATTING).filter(TB_CHATTING.CHAT_IDX == 123).first()  # 임의 값 123 사용
-        croom_id = 192  # CROOM_IDX 임의값 192로 설정
-    else:
-        croom_id = chat.CROOM_IDX  # CHAT_IDX가 있을 경우 해당 CROOM_IDX 사용
+        if not chat.GPT_RESPONSE:  # GPT 응답이 없을 경우
+            print(f"🚨 [백엔드 오류] GPT 응답이 없습니다.")
+            raise HTTPException(status_code=404, detail="GPT 응답이 없습니다.")
 
-    if not chat or not chat.GPT_RESPONSE:
-        raise HTTPException(status_code=404, detail="해당 채팅이 존재하지 않거나 GPT 응답이 없습니다.")
+        # 데이터를 pandas DataFrame으로 변환
+        data = [{
+            "채팅 ID": chat.CHAT_IDX,
+            "사용자 ID": chat.USER_ID,
+            "GPT 응답": chat.GPT_RESPONSE,
+            "생성 날짜": chat.CREATED_AT,
+            "CROOM_IDX": chat.CROOM_IDX,
+        }]
 
-    data = [{
-        "채팅 ID": chat.CHAT_IDX,
-        "사용자 ID": chat.USER_ID,
-        "GPT 응답": chat.GPT_RESPONSE,
-        "생성 날짜": chat.CREATED_AT,
-        "CROOM_IDX": croom_id,  # CROOM_IDX도 함께 반환
-    }]
+        # 데이터를 엑셀로 변환
+        df = pd.DataFrame(data)
 
-    # 데이터를 pandas DataFrame으로 변환
-    df = pd.DataFrame(data)
+        # BytesIO 객체 생성 (메모리에서 엑셀 파일을 생성)
+        excel_file = io.BytesIO()
+        try:
+            df.to_excel(excel_file, index=False, engine='openpyxl')
+        except Exception as e:
+            print(f"🚨 [백엔드 오류] 엑셀 파일 생성 중 오류 발생: {e}")
+            raise HTTPException(status_code=500, detail="엑셀 파일 생성 중 오류 발생")
 
-    # BytesIO 객체 생성 (메모리에서 엑셀 파일을 생성)
-    excel_file = io.BytesIO()
-    df.to_excel(excel_file, index=False, engine='openpyxl')
-    excel_file.seek(0)  # BytesIO 버퍼의 시작으로 포인터 이동
+        excel_file.seek(0)  # 버퍼의 시작으로 포인터 이동
 
-    # 엑셀 파일을 메모리에서 반환
-    return FileResponse(excel_file, filename=f"GPT_Response_{CHAT_IDX}.xlsx",
-                        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        # StreamingResponse를 사용하여 메모리에서 엑셀 파일을 다운로드
+        return StreamingResponse(excel_file, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename=GPT_Response_{CROOM_IDX}.xlsx"})
+
+    except Exception as e:
+        print(f"🚨 [서버 오류] 엑셀 파일 생성 또는 반환 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="서버 내부 오류")
+
+
+
+
 
 
 # ✅ 특정 채팅방의 대화 내용 조회

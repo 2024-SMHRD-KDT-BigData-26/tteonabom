@@ -50,7 +50,6 @@
         messages = result.updatedMessages;
 
         currentCroomId = 192; // 항상 192로 설정
-        
       } else {
         console.error(
           "sendMessage 함수에서 올바른 updatedMessages를 반환하지 않았습니다.",
@@ -183,7 +182,8 @@
                           saveChatContent(croomId, userId); // 저장 함수 호출
                         }
                       }
-                    }}
+                    }
+                  }
                   >
                     {button.text}
                   </button>
@@ -277,6 +277,11 @@
     max-width: 50%;
     font-size: 14px;
     text-align: right;
+    min-height: 0px;
+    display: none;
+  }
+  .message-user:not(:empty) {
+    display: block; /* 내용이 있을 때만 표시 */
   }
 
   .button-wrapper {

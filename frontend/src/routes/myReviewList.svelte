@@ -209,6 +209,21 @@ function goToDetail(id) {
   .spinner-border {
     margin-bottom: 20px;
   }
+
+  .no-list-message {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #888;
+    padding: 50px 0;
+    min-height: 200px; /* 필요에 따라 조정 */
+}
+
   
 </style>
   
@@ -264,6 +279,9 @@ function goToDetail(id) {
         </div>
       {/each}
     </div>
+    {#if $displayedReviews.length === 0}
+      <div class="no-list-message">목록이 없습니다</div>
+    {/if}
 
     <!-- 스크롤 감지 요소 -->
     <div id="load-more" class="load-more-sentinel"></div>
