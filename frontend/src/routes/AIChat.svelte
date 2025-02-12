@@ -177,7 +177,7 @@
                           downloadExcelFile(chatId); // 엑셀 다운로드 함수 호출
                         } else if (button.text === "채팅 내용 저장") {
                           const userId = "kakao_3910835997"; // 로그인된 사용자 ID로 변경
-                          const croomId = 313; // 임의 croomId 설정 (또는 실제 croomId 사용)
+                          const croomId = 315; // 임의 croomId 설정 (또는 실제 croomId 사용)
                           saveChatContent(croomId, userId); // 저장 함수 호출
                         }
                       }
