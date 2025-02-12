@@ -1,26 +1,61 @@
 <script>
   import { onMount } from "svelte";
-  import { getChatMessageById } from "../assets/js/myChatlogView.js"; // 채팅 데이터 가져오기
 
-  let messages = [];
-  let chatId = "";
-
-  onMount(() => {
-    // 현재 URL에서 id 값 추출 (ex: #/chatlog/123)
-    const hash = window.location.hash; 
-    const match = hash.match(/#\/chatlog\/(.+)/);
-    
-    if (match) {
-      chatId = match[1];
-      getChatMessageById(chatId).then(data => {
-        messages = data;
-      });
+let messages = [];
+let croomId = 0;
+// ✅ 백엔드에서 대화 내역을 가져오는 함수
+async function fetchChatMessages(croomId) {
+    if (isNaN(croomId) || croomId <= 0) {
+      console.error("🚨 올바르지 않은 CROOM_IDX:", croomId);
+      return;
     }
-  });
 
-  function goToDetail(id) {
-    window.location.href = `#/chatlog/${id}`;
+    try {
+      const response = await fetch(`http://localhost:9000/chat/croom/${croomId}`);
+      console.log("✅ API 응답 상태 코드:", response.status);
+
+      // ✅ JSON 응답인지 확인
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("❌ API가 JSON 응답이 아님 (HTML 응답일 가능성 있음)");
+      }
+
+      const data = await response.json();
+      console.log("✅ API 응답 데이터:", data);
+
+      // ✅ 응답이 배열인지 확인
+      if (!Array.isArray(data)) {
+        console.error("🚨 API 응답이 배열이 아님:", data);
+        return;
+      }
+
+      messages = data.map(chat => ({
+        type: chat.user_id === "봄봄" ? "bot" : "user",
+        text: chat.message
+      }));
+    } catch (error) {
+      console.error("❌ Error loading chat messages:", error);
+    }
   }
+
+  // ✅ 페이지가 로드될 때 CROOM_IDX 가져오기
+  onMount(() => {
+  const hashParts = window.location.hash.split("/").filter(Boolean); // 빈 요소 제거
+  console.log("📌 URL 해시 경로:", hashParts); // 디버깅 로그
+
+  if (hashParts.length > 1 && /^\d+$/.test(hashParts[hashParts.length - 1])) {
+    croomId = parseInt(hashParts[hashParts.length - 1], 10);
+    console.log("✅ 변환된 CROOM_IDX:", croomId);
+    fetchChatMessages(croomId);
+  } else {
+    console.error("🚨 CROOM_IDX를 찾을 수 없거나 올바르지 않습니다.", hashParts);
+  }
+});
+
+// ✅ 상세 페이지 이동
+function goToDetail(id) {
+  window.location.href = `#/${id}`;
+}
 </script>
 
 <main class="main-content">
@@ -44,39 +79,40 @@
         <div class="chatbot-window" id="chatWindow">
           <div class="chat-header"><h3>챗봇 봄봄</h3></div>
           <div class="chat-body">
-            {#if messages.length > 0}
-              {#each messages as message}
-                <div class="message-wrapper {message.type}">
-                  {#if message.type === "bot"}
-                    <div class="bot-profile-wrapper">
-                      <div class="bot-profile">
-                        <img
-                          src="/src/assets/img/chatbot_profile.png"
-                          alt="봄봄"
-                          class="bot-img"
-                        />
-                        <span class="bot-name">여행AI 봄봄</span>
-                      </div>
+            {#each messages as message}
+              <div class="message-wrapper {message.type}">
+                {#if message.type === "bot"}
+                  <div class="bot-profile-wrapper">
+                    <div class="bot-profile">
+                      <img
+                        src="/src/assets/img/chatbot_profile.png"
+                        alt="봄봄"
+                        class="bot-img"
+                      />
+                      <span class="bot-name">여행AI 봄봄</span>
                     </div>
-                  {/if}
-                  <div
-                    class={message.type === "bot"
-                      ? "message-bot"
-                      : "message-user"}
-                  >
-                    {@html message.text}
                   </div>
+                {/if}
+                <div
+                  class={message.type === "bot"
+                    ? "message-bot"
+                    : "message-user"}
+                >
+                {@html message.text
+                  .replace(/```html/g, "")  // 백틱 블록 제거
+                  .replace(/```/g, "")      // 남은 백틱 제거
+                  .replace(/<br>/g, "")}    // 불필요한 <br> 제거
                 </div>
-              {/each}
-            {:else}
-              <p class="no-messages">저장된 채팅이 없습니다.</p>
-            {/if}
+              </div>
+            {/each}
           </div>
         </div>
-
         <!-- 목록 버튼 -->
         <div class="btn-container-back">
-          <button class="btn btn-secondary" on:click={() => window.history.back()}>목록</button>
+          <button
+            class="btn btn-secondary"
+            on:click={() => window.history.back()}>목록</button
+          >
         </div>
       </div>
     </div>
