@@ -66,7 +66,7 @@
     gyeongbuk: "경북",
     gyeongnam: "경남",
     jeonbuk: "전북",
-    jeonnam: "전남",
+    jeonnam: "전라", // DB에서 검색할 수 있게 전남에서 전라로 변경
     jeju: "제주",
     sejong: "세종",
   };

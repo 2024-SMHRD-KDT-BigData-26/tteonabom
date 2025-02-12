@@ -131,9 +131,12 @@
   $: filteredSpots = pois
   .filter(spot => {
     if (nationwideChecked) return true;
+
     return Object.keys(regionsChecked).some(region => 
-      regionsChecked[region] && spot.POI_ADDR.includes(regionNameMap[region]));
+      regionsChecked[region] && spot.POI_REGION === regionNameMap[region]
+    );
   })
+  
   .filter(spot => {
     if (!searchQuery) return true;
     return (
