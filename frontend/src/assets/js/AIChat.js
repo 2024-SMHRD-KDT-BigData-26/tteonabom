@@ -78,7 +78,6 @@ const shoppingMallLinks = {
     ]
 };
 
-
 // 엑셀 다운로드 처리 함수
 export async function downloadExcelFile(chatId = 91) {  // 기본값을 91로 설정
     if (!chatId) {
@@ -116,9 +115,8 @@ export async function downloadExcelFile(chatId = 91) {  // 기본값을 91로 �
 
 
 
-// 저장 처리 함수
+// 채팅 내용 저장 함수
 export async function saveChatContent(croomId, userId) {
-    // 입력값 검증 추가 (옵션)
     if (!croomId || !userId) {
         console.error("저장 실패: croomId와 userId가 모두 제공되어야 합니다.");
         return;
@@ -141,8 +139,7 @@ export async function saveChatContent(croomId, userId) {
     }
 }
 
-
-
+// API 요청 함수
 export async function fetchDataFromAPI(url, requestData) {
     try {
         const response = await fetch(url, {
@@ -160,25 +157,15 @@ export async function fetchDataFromAPI(url, requestData) {
         return data;
     } catch (error) {
         console.error("API 호출 오류:", error);
-        // 추가: 오류가 발생했을 때 사용자에게 알림을 표시
-        updateMessages({
-            type: "bot",
-            text: "서버와의 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-            buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
-        });
-        return null;
+        return { error: "서버와의 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요." };
     }
 }
-
-
-
-
-
+// 챗봇 처음
 export function initializeChat(callback) {
     const initialMessages = [
         {
             type: "bot",
-            text: "안녕하세요! 여행의 시작부터 끝까지 떠나봄의 여행AI 떠나봄입니다! AI가 당신의 완벽한 여행을 도와드립니다! 아래에서 원하는 버튼을 클릭해주세요!",
+            text: "안녕하세요!<br>여행의 시작부터 끝까지<br>떠나봄의 여행AI 떠나봄입니다!<br><br>AI가 당신의 완벽한 여행을 도와드립니다!<br><br>아래에서 원하는 버튼을 클릭해주세요!",
             buttons: [
                 { text: "여행 일정 추천", action: "schedule" },
                 { text: "여행지 추천", action: "destination" },
@@ -188,7 +175,7 @@ export function initializeChat(callback) {
     ];
     callback(initialMessages);
 }
-
+// 챗봇 초기화
 export function sendMessage(messages, text, setShowCalendar, updateMessages, selectedData) {
     let botResponse = null;
     let updatedMessages = [...messages, { type: "user", text }];
@@ -204,7 +191,7 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
         const initialMessages = [
             {
                 type: "bot",
-                text: "안녕하세요! 여행의 시작부터 끝까지 떠나봄의 여행AI 떠나봄입니다! AI가 당신의 완벽한 여행을 도와드립니다! 아래에서 원하는 버튼을 클릭해주세요!",
+                text: "안녕하세요!<br>여행의 시작부터 끝까지<br>떠나봄의 여행AI 떠나봄입니다!<br><br>AI가 당신의 완벽한 여행을 도와드립니다!<br><br>아래에서 원하는 버튼을 클릭해주세요!",
                 buttons: [
                     { text: "여행 일정 추천", action: "schedule" },
                     { text: "여행지 추천", action: "destination" },
@@ -223,12 +210,12 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
     if (text === "여행 일정 추천") {
         botResponse = {
             type: "bot",
-            text: "여행일정 추천을 선택하셨군요! 일정을 추천하기 위해 몇가지 질문에 답변해주세요.(1/5) 언제부터 언제까지 여행하실 계획이신가요?",
+            text: "여행일정 추천을 선택하셨군요! <br>일정을 추천하기 위해 몇가지 질문에 답변해주세요.<br><br>(1/5) 언제부터 언제까지 여행하실 계획이신가요?",
             showCalendar: true,
         };
         setShowCalendar(true);
     } else if (text.startsWith("📅 여행 일정:")) {
-        selectedData["여행 일정"] = text.replace("📅 여행 일정: ", "");
+        selectedData["여행 일정"] = text.replace("📅 여행 일정:<br> ", "");
         botResponse = {
             type: "bot",
             text: "(2/5) 이번 여행은 누구랑 함께 하실 예정이신가요?",
@@ -308,15 +295,18 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             messages = messages.filter(msg => msg !== loadingMessage);
 
             if (result && result.gpt_response) {
-                updateMessages({ type: "bot", text: result.gpt_response });
+                let cleanedResponse = result.gpt_response
+                    .replace(/```html/g, '')  // ✅ ``html 제거
+                    .replace(/```/g, '')       // ✅ ``` (닫는 코드 블록) 제거
+                    .trim();                   // ✅ 앞뒤 공백 제거
+                updateMessages({ type: "bot", text: cleanedResponse });
 
                 // result에 croom_id가 존재하는지 확인하고, 해당 값을 시스템 메시지로 추가
                 let croomId = 192;  // croom_id 값을 192로 설정
-                updateMessages({ type: "system", croom_id: croomId });
+                if (!messages.some(msg => msg.type === "system" && msg.croom_id)) {
+                    updateMessages({ type: "system", croom_id: croomId });
+                }
 
-
-                // 시스템 메시지에 croom_id 추가
-                updateMessages({ type: "system", croom_id: croomId });
 
                 updateMessages({
                     type: "bot",
@@ -340,133 +330,124 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
     }
 
 
-    /*** ✅ 2. 여행지 추천 ***/
+    // 2. 여행지 추천
     else if (text === "여행지 추천") {
-        // ✅ Q1: 동반자 질문
         botResponse = {
             type: "bot",
-            text: "여행지를 추천 드릴게요! 누구와 함께 여행하시나요?",
+            text: "어떤 여행으로 추천 드릴까요?",
             buttons: [
-                { text: "🚶‍♂ 혼자 여행", action: "recommend_alone" },
-                { text: "👨‍👩‍👦 가족 여행", action: "recommend_family" },
-                { text: "👥 2인 여행", action: "recommend_two" },
-                { text: "👥 3인 이상 여행", action: "recommend_group" },
+                { text: "엑티비티, 체험", action: "recommend_activity" },
+                { text: "힐링, 관광", action: "recommend_healing" },
+                { text: "핫플레이스", action: "recommend_hotplace" },
+                { text: "먹거리", action: "recommend_food" },
             ],
         };
-    }
-    else if (["🚶‍♂ 혼자 여행", "👨‍👩‍👦 가족 여행", "👥 2인 여행", "👥 3인 이상 여행"].includes(text)) {
-        // ✅ 동반자 저장 및 Q2로 이동
-        selectedData["동반자"] = text.replace(/🚶‍♂|👨‍👩‍👦|👥/g, "").trim(); // 동반자 정보 저장
+    } else if (["엑티비티, 체험", "힐링, 관광", "핫플레이스", "먹거리"].includes(text)) {
+        selectedData["여행 테마"] = text;
         botResponse = {
             type: "bot",
-            text: "여행의 목적을 두 가지 선택해주세요!",
+            text: "누구와 함께 떠나시나요?",
             buttons: [
-                { text: "🎭 스트레스 해소", action: "purpose_stress" },
-                { text: "💞 관계 증진", action: "purpose_relationship" },
-                { text: "📷 트렌드/핫플", action: "purpose_trend" },
-                { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
+                { text: "가족", action: "recommend_family" },
+                { text: "연인", action: "recommend_couple" },
+                { text: "친구", action: "recommend_friends" },
+                { text: "혼자", action: "recommend_alone" },
             ],
         };
-    } else if (["🎭 스트레스 해소", "💞 관계 증진", "📷 트렌드/핫플", "🏛 문화/역사 탐방"].includes(text)) {
-        // ✅ Q2: 목적 선택 (최대 2개)
-        if (!selectedData["목적"]) {
-            selectedData["목적"] = [];
-        }
-
-        // 동일 항목 선택 방지
-        if (selectedData["목적"].includes(text)) {
-            botResponse = {
-                type: "bot",
-                text: "이미 선택하신 항목입니다. 다른 항목을 선택해주세요!",
-                buttons: [
-                    { text: "🎭 스트레스 해소", action: "purpose_stress" },
-                    { text: "💞 관계 증진", action: "purpose_relationship" },
-                    { text: "📷 트렌드/핫플", action: "purpose_trend" },
-                    { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
-                ],
-            };
-        } else {
-            // 최대 2개까지 선택 가능
-            if (selectedData["목적"].length < 2) {
-                selectedData["목적"].push(text); // 목적 추가
-            }
-
-            if (selectedData["목적"].length < 2) {
-                // 아직 2개 미만 선택 시
-                botResponse = {
-                    type: "bot",
-                    text: "한 가지 더 선택해주세요!",
-                    buttons: [
-                        { text: "🎭 스트레스 해소", action: "purpose_stress" },
-                        { text: "💞 관계 증진", action: "purpose_relationship" },
-                        { text: "📷 트렌드/핫플", action: "purpose_trend" },
-                        { text: "🏛 문화/역사 탐방", action: "purpose_culture" },
-                    ],
-                };
-            } else {
-                // ✅ 2개 선택 완료 후 Q3로 이동
-                botResponse = {
-                    type: "bot",
-                    text: "자연과 도시 중 무엇을 선호하시나요?",
-                    buttons: [
-                        { text: "🏞 자연 선호", action: "preference_nature" },
-                        { text: "⚖ 중립", action: "preference_neutral" },
-                        { text: "🏙 도시 선호", action: "preference_city" },
-                    ],
-                };
-            }
-        }
-    } else if (["🏞 자연 선호", "⚖ 중립", "🏙 도시 선호"].includes(text)) {
-        // ✅ Q3: 자연/도시 선호도 선택
-        selectedData["선호도"] = text.replace(/🏞|⚖|🏙/g, "").trim(); // 선호도 정보 저장
-
-        updateMessages({
+    } else if (["가족", "연인", "친구", "혼자"].includes(text)) {
+        selectedData["동반자"] = text;
+        botResponse = {
             type: "bot",
-            text: "추천 여행지를 불러오는 중입니다. 잠시만 기다려주세요... 🚀",
-        });
-
-        // ✅ 백엔드로 여행지 추천 요청
+            text: `${text} 떠나시는군요! 지역을 선택해주세요!`,
+            buttons: [
+                { text: "수도권", action: "recommend_seoul" },
+                { text: "강원권", action: "recommend_gangwon" },
+                { text: "충청권", action: "recommend_chungcheong" },
+                { text: "호남권", action: "recommend_honam" },
+                { text: "영남권", action: "recommend_yeongnam" },
+                { text: "제주권", action: "recommend_jeju" },
+            ],
+        };
+    } else if (["수도권", "강원권", "충청권", "호남권", "영남권", "제주권"].includes(text)) {
+        selectedData["목적지"] = text;
+    
+        updateMessages({ type: "bot", text: "추천 여행지를 불러오는 중입니다... 🚀" });
+    
+        // ✅ FastAPI 요청 데이터
         const recommendData = {
-            USER_ID: "test_user_123", // FastAPI에서 기대하는 대문자 키
-            COMPANION: selectedData["동반자"], // 동반자 정보
-            PURPOSE: selectedData["목적"], // 목적 리스트
-            PREFERENCE: selectedData["선호도"], // 자연/도시 선호
+            USER_ID: "test_user_123",
+            COMPANION: selectedData["동반자"],
+            THEME: selectedData["여행 테마"],
+            REGION: selectedData["목적지"]
         };
-
-        fetchDataFromAPI("http://localhost:9000/chat", scheduleData).then((result) => {
-            messages = messages.filter(msg => msg !== loadingMessage);
-
+    
+        console.log("📌 [프론트엔드] 요청 데이터:", JSON.stringify(recommendData, null, 2));
+    
+        fetchDataFromAPI("http://localhost:9000/travel/recommend", recommendData).then((result) => {
             if (result && result.gpt_response) {
-                updateMessages({ type: "bot", text: result.gpt_response });
-
-                // croom_id가 없으면 192로 설정
-                const croomId = 192;  // 항상 192로 설정
-
-
-                // 임의로 생성된 croom_id를 시스템 메시지에 추가
-                updateMessages({ type: "system", croom_id: croomId });
-
+                let cleanedResponse = result.gpt_response
+                    .replace(/```html/g, '')  // ✅ ``html 제거
+                    .replace(/```/g, '')       // ✅ ``` (닫는 코드 블록) 제거
+                    .trim();                   // ✅ 앞뒤 공백 제거
+    
+                updateMessages({ type: "bot", text: cleanedResponse });
+    
                 updateMessages({
                     type: "bot",
-                    text: "추천 일정이 마음에 드셨나요?",
+                    text: "추천 여행지가 마음에 드셨나요?",
                     buttons: [
-                        { text: "일정 다운로드", action: "download" },
-                        { text: "채팅 내용 저장", action: "save_chat" },
+                        { text: "추천 다시 받기", action: "recommend_retry" },
                         { text: "처음으로 돌아가기", action: "restart" },
                     ],
                 });
+            }
+        });
+    } else if (text === "추천 다시 받기") {
+        updateMessages({ type: "bot", text: "새로운 여행지를 추천하는 중입니다. 잠시만 기다려주세요... 🚀" });
+    
+        const recommendData = {
+            USER_ID: "test_user_123",
+            COMPANION: selectedData["동반자"],
+            THEME: selectedData["여행 테마"],
+            REGION: selectedData["목적지"]
+        };
+    
+        console.log("📌 [프론트엔드] 다시 추천 요청 데이터:", JSON.stringify(recommendData, null, 2));
+    
+        fetchDataFromAPI("http://localhost:9000/travel/recommend", recommendData).then((result) => {
+            if (result && result.gpt_response) {
+                let cleanedResponse = result.gpt_response
+                    .replace(/```html/g, '')  // ✅ ``html 제거
+                    .replace(/```/g, '')       // ✅ ``` (닫는 코드 블록) 제거
+                    .trim();                   // ✅ 앞뒤 공백 제거
+    
+                updateMessages({ type: "bot", text: cleanedResponse });
+    
+                updateMessages({
+                    type: "bot",
+                    text: "새로운 추천 여행지는 마음에 드셨나요?",
+                    buttons: [
+                        { text: "추천 다시 받기", action: "recommend_retry" },
+                        { text: "처음으로 돌아가기", action: "restart" }
+                    ]
+                });
             } else {
                 updateMessages({
                     type: "bot",
-                    text: "일정을 생성하지 못했습니다. 다시 시도해주세요.",
-                    buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
+                    text: "새로운 추천 여행지를 가져오지 못했습니다. 다시 시도해주세요.",
+                    buttons: [{ text: "처음으로 돌아가기", action: "restart" }]
                 });
             }
+        }).catch(error => {
+            console.error("🚨 추천 다시 받기 오류:", error);
+            updateMessages({
+                type: "bot",
+                text: "여행지 추천 중 오류가 발생했습니다. 다시 시도해주세요.",
+                buttons: [{ text: "처음으로 돌아가기", action: "restart" }]
+            });
         });
-
-
     }
-
+    
 
     // 3. 쇼핑몰 추천하기
     /*** ✅ 쇼핑몰 추천 기능 ***/
@@ -519,10 +500,9 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             .map(mall => `${mall.name}<br><a href="${mall.url}" target="_blank">${mall.url}</a>`)
             .join("<br><br>");
 
-
         botResponse = {
             type: "bot",
-            text: `"${theme}"과 관련된 다른 쇼핑몰 목록입니다!<br>필요한 물품들을 쇼핑해보세요!😀<br><br>${mallList}`,
+            text: ` "${theme}"과 관련된 다른 쇼핑몰 목록입니다!<br>필요한 물품들을 쇼핑해보세요!😀<br><br>${mallList}`,
             buttons: [
                 { text: "다른 쇼핑몰 목록 보기", action: "shopping" }, // ✅ 쇼핑 테마 선택 화면으로 이동
                 { text: "다시 추천 받기", action: "shopping_retry" },
