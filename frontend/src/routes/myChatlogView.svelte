@@ -1,4 +1,10 @@
 <script>
+  // 비주얼존 배경명
+  let currentPage = 'visual_my';
+
+  // 비주얼존 CSS
+  import '../assets/css/VisualZone.css';
+
 import { onMount } from "svelte";
 
 let messages = [];
@@ -59,6 +65,11 @@ function goToDetail(id) {
 </script>
 
 <main class="main-content">
+        <!-- 비주얼 존 -->
+        <div class={`visual-zone ${currentPage}`}>
+          <p>나와 관련된 정보를 확인하세요</p>
+          <h1>내여행</h1>
+        </div>
   <div class="content">
     <div class="container">
       <!-- 왼쪽 메뉴 -->
@@ -76,23 +87,7 @@ function goToDetail(id) {
 
       <!-- 오른쪽 콘텐츠 -->
       <div class="my-content">
-        <div class="chatbot-window" id="chatWindow">
-          <div class="chat-header"><h3>챗봇 봄봄</h3></div>
-          <div class="chat-body">
             {#each messages as message}
-              <div class="message-wrapper {message.type}">
-                {#if message.type === "bot"}
-                  <div class="bot-profile-wrapper">
-                    <div class="bot-profile">
-                      <img
-                        src="/src/assets/img/chatbot_profile.png"
-                        alt="봄봄"
-                        class="bot-img"
-                      />
-                      <span class="bot-name">여행AI 봄봄</span>
-                    </div>
-                  </div>
-                {/if}
                 <div
                   class={message.type === "bot"
                     ? "message-bot"
@@ -103,10 +98,8 @@ function goToDetail(id) {
                   .replace(/```/g, "")      // 남은 백틱 제거
                   .replace(/<br>/g, "")}    
                 </div>
-              </div>
             {/each}
-          </div>
-        </div>
+
         <!-- 목록 버튼 -->
         <div class="btn-container-back">
           <button
@@ -120,6 +113,16 @@ function goToDetail(id) {
 </main>
 
 <style>
+  /* 내용 제목 스타일 강제 적용 */
+  :global(.message-user h1) {
+  font-size: 22px !important;
+}
+
+  /* 내용 제목 스타일 강제 적용 */
+  :global(.message-user h2) {
+  font-size: 20px !important;
+}
+
   .container {
     display: flex;
   }
@@ -147,63 +150,6 @@ function goToDetail(id) {
     margin-top: 5px;
   }
 
-  .chatbot-window {
-    height: 586px;
-    overflow-y: auto;
-    background-color: #ffecb9;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-height: 80vh;
-  }
-
-  .chat-header {
-    text-align: center;
-    color: #000;
-    padding: 10px;
-    border-radius: 10px 10px 0 0;
-  }
-
-  .message-wrapper {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-  }
-
-  .message-wrapper.bot {
-    align-items: flex-start;
-  }
-
-  .message-wrapper.user {
-    align-items: flex-end;
-  }
-
-  .bot-profile-wrapper {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-    margin-left: 10px;
-  }
-
-  .bot-profile {
-    display: flex;
-    align-items: center;
-  }
-
-  .bot-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-
-  .bot-name {
-    font-size: 14px;
-    font-weight: bold;
-    font-family: "Paperlogy-6SemiBold";
-  }
-
   .message-bot {
     background-color: #f8f9fa;
     color: #000;
@@ -215,13 +161,12 @@ function goToDetail(id) {
   }
 
   .message-user {
-    background-color: #d1e7dd;
+    background-color: #ffecb9;
     color: #000;
-    padding: 12px 18px;
+    padding: 20px;
     border-radius: 10px;
-    max-width: 50%;
     font-size: 14px;
-    text-align: right;
+    margin-top: 20px;
   }
 
   /* 목록 버튼 */
