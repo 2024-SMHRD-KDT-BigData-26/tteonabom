@@ -39,19 +39,77 @@ const shoppingMallLinks = {
     ]
 };
 
+// 엑셀 다운로드 처리 함수
+export async function downloadExcelFile(chatId = 91) {  // 기본값을 91로 설정
+    if (!chatId) {
+        console.error("엑셀 다운로드 실패: 채팅방 ID(chatId)가 제공되지 않았습니다.");
+        return;
+    }
+    try {
+        // chatId가 91일 경우, CROOM_IDX를 192로 설정하여 요청
+        if (chatId === 91) {
+            chatId = 192; // CROOM_IDX에 맞춰서 192로 설정
+        }
+
+        const response = await fetch(`http://localhost:9000/chat/download/${chatId}`, {
+            method: 'GET',
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            throw new Error('엑셀 다운로드 실패');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = `gpt_response_${chatId}.xlsx`;
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("엑셀 다운로드 오류:", error);
+    }
+}
+
+
+
+// 저장 처리 함수
+export async function saveChatContent(croomId, userId) {
+    // 입력값 검증 추가 (옵션)
+    if (!croomId || !userId) {
+        console.error("저장 실패: croomId와 userId가 모두 제공되어야 합니다.");
+        return;
+    }
+    try {
+        const response = await fetch('http://localhost:9000/chat/save', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ CROOM_IDX: croomId, USER_ID: userId }),
+        });
+
+        if (!response.ok) {
+            throw new Error('저장 실패');
+        }
+
+        const data = await response.json();
+        console.log('채팅 내용 저장 성공:', data);
+    } catch (error) {
+        console.error("저장 오류:", error);
+    }
+}
+
+
 
 export async function fetchDataFromAPI(url, requestData) {
     try {
-        console.log(`📌 API 호출 URL: ${url}`);
-        console.log(`📌 API 요청 데이터:`, requestData);  // 🛑 여기에 JSON 확인
-
         const response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestData),
         });
-
-        console.log("📌 API 응답 상태 코드:", response.status);  // 응답 상태 확인
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -59,13 +117,19 @@ export async function fetchDataFromAPI(url, requestData) {
         }
 
         const data = await response.json();
-        console.log("📌 API 응답 데이터:", data);  // 응답 데이터 확인
         return data;
     } catch (error) {
-        console.error("📌 API 호출 오류:", error);
+        console.error("API 호출 오류:", error);
+        // 추가: 오류가 발생했을 때 사용자에게 알림을 표시
+        updateMessages({
+            type: "bot",
+            text: "서버와의 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+            buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
+        });
         return null;
     }
 }
+
 
 
 
@@ -171,7 +235,7 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             ],
         };
     }
-    /*** ✅ 일정 스타일 선택 후 자동 요약 및 날짜별 일정 생성 ***/
+    // ✅ 일정 스타일 선택 후 자동 요약 및 날짜별 일정 생성
     else if (["타이트한 일정", "여유로운 일정"].includes(text) && selectedData["여행 일정"]) {
         selectedData["일정 스타일"] = text;
 
@@ -183,36 +247,37 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             });
         }, 0);
 
-        // ✅ GPT 요청 전에 로딩 메시지 추가
         const loadingMessage = { type: "bot", text: "⏳ 여행 일정을 추천하는 중입니다. 잠시만 기다려 주세요!" };
         updateMessages(loadingMessage);
 
-        // ✅ 임의 사용자 ID 유지
         const USER_ID = "test_user_123";
-
-        // ✅ 정확한 일정 추출
         const [start_date, end_date] = selectedData["여행 일정"].split(" ~ ");
-
-        // ✅ 백엔드 요청 데이터 구성
         const scheduleData = {
-            USER_ID: USER_ID,  // ✅ 여전히 "test_user_123" 유지
+            USER_ID: USER_ID,
             TRAVEL_DATA: {
-                start_date: start_date.trim(),  // ✅ 사용자가 입력한 출발 날짜
-                end_date: end_date.trim(),      // ✅ 사용자가 입력한 도착 날짜
-                companion: selectedData["동반자"],  // ✅ 사용자가 선택한 동반자
-                region: selectedData["목적지"],  // ✅ 사용자가 선택한 목적지
-                style: selectedData["여행 스타일"],  // ✅ 사용자가 선택한 여행 스타일
-                schedule: selectedData["일정 스타일"]  // ✅ 사용자가 선택한 일정 스타일
+                start_date: start_date.trim(),
+                end_date: end_date.trim(),
+                companion: selectedData["동반자"],
+                region: selectedData["목적지"],
+                style: selectedData["여행 스타일"],
+                schedule: selectedData["일정 스타일"]
             }
         };
 
-        // ✅ GPT 요청 후, 응답이 오면 로딩 메시지 제거하고 결과 출력
         fetchDataFromAPI("http://localhost:9000/chat", scheduleData).then((result) => {
-            // ✅ 로딩 메시지 제거
             messages = messages.filter(msg => msg !== loadingMessage);
 
             if (result && result.gpt_response) {
                 updateMessages({ type: "bot", text: result.gpt_response });
+
+                // result에 croom_id가 존재하는지 확인하고, 해당 값을 시스템 메시지로 추가
+                let croomId = 192;  // croom_id 값을 192로 설정
+                updateMessages({ type: "system", croom_id: croomId });
+
+
+                // 시스템 메시지에 croom_id 추가
+                updateMessages({ type: "system", croom_id: croomId });
+
                 updateMessages({
                     type: "bot",
                     text: "추천 일정이 마음에 드셨나요?",
@@ -229,9 +294,9 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
                     buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
                 });
             }
-
-            
         });
+
+
     }
 
 
@@ -328,29 +393,37 @@ export function sendMessage(messages, text, setShowCalendar, updateMessages, sel
             PREFERENCE: selectedData["선호도"], // 자연/도시 선호
         };
 
-        fetchDataFromAPI("http://localhost:9000/travel/recommend", recommendData).then((result) => {
+        fetchDataFromAPI("http://localhost:9000/chat", scheduleData).then((result) => {
+            messages = messages.filter(msg => msg !== loadingMessage);
+
             if (result && result.gpt_response) {
-                // GPT 응답 표시
                 updateMessages({ type: "bot", text: result.gpt_response });
 
-                // 결과 확인 버튼 제공
+                // croom_id가 없으면 192로 설정
+                const croomId = 192;  // 항상 192로 설정
+
+
+                // 임의로 생성된 croom_id를 시스템 메시지에 추가
+                updateMessages({ type: "system", croom_id: croomId });
+
                 updateMessages({
                     type: "bot",
-                    text: "추천 여행지가 마음에 드셨나요?",
+                    text: "추천 일정이 마음에 드셨나요?",
                     buttons: [
-                        { text: "다시 추천 받기", action: "destination_retry" },
+                        { text: "일정 다운로드", action: "download" },
+                        { text: "채팅 내용 저장", action: "save_chat" },
                         { text: "처음으로 돌아가기", action: "restart" },
                     ],
                 });
             } else {
-                // 실패 처리
                 updateMessages({
                     type: "bot",
-                    text: "추천 여행지를 불러오지 못했습니다. 다시 시도해주세요.",
+                    text: "일정을 생성하지 못했습니다. 다시 시도해주세요.",
                     buttons: [{ text: "처음으로 돌아가기", action: "restart" }],
                 });
             }
         });
+
 
     }
 
